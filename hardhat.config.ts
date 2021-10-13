@@ -62,6 +62,12 @@ const config: HardhatUserConfig = {
     gasReporter: {
         excludeContracts: ["test"],
     },
+    typechain: {
+        outDir: "typechain",
+        target: "ethers-v5",
+        alwaysGenerateOverloads: false,
+        externalArtifacts: ["./node_modules/@perp/lushan/artifacts/contracts/**/*.json"],
+    },
     mocha: {
         require: ["ts-node/register/files"],
         jobs: 4,
