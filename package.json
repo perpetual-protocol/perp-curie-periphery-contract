@@ -1,0 +1,37 @@
+{
+  "name": "@perp/lushan-periphery",
+  "version": "0.11.0",
+  "description": "",
+  "main": "hardhat.config.js",
+  "scripts": {
+    "typechain": "npm run typechain-openzeppelin",
+    "typechain-openzeppelin": "typechain --target ethers-v5 --out-dir ./typechain/openzeppelin ./node_modules/@openzeppelin/contracts/build/contracts/**/*.json",
+    "clean": "rm -rf typechain && rm -rf artifacts && rm -rf cache",
+    "test": "rm -rf deployments/hardhat | hardhat test",
+    "build": "npm run typechain && hardhat compile"
+  },
+  "author": "",
+  "license": "GPL-2.0-or-later",
+  "devDependencies": {
+    "@nomiclabs/hardhat-ethers": "npm:hardhat-deploy-ethers@0.3.0-beta.11",
+    "@nomiclabs/hardhat-waffle": "2.0.1",
+    "@openzeppelin/contracts-upgradeable": "3.4.2",
+    "@openzeppelin/contracts": "3.4.0",
+    "@openzeppelin/hardhat-upgrades": "1.10.0",
+    "@perp/lushan": "file:../perp-lushan",
+    "@typechain/ethers-v5": "7.0.0",
+    "@typechain/hardhat": "2.0.1",
+    "@uniswap/v3-core": "https://github.com/Uniswap/uniswap-v3-core/tarball/v1.0.0",
+    "@uniswap/v3-periphery": "1.0.1",
+    "ethers": "5.2.0",
+    "hardhat-contract-sizer": "2.0.3",
+    "hardhat-dependency-compiler": "1.1.1",
+    "hardhat-deploy-ethers": "0.3.0-beta.11",
+    "hardhat-deploy": "0.8.8",
+    "hardhat-gas-reporter": "1.0.4",
+    "hardhat": "2.3.0",
+    "ts-node": "10.0.0",
+    "typechain": "5.0.0",
+    "typescript": "4.3.2"
+  }
+}
