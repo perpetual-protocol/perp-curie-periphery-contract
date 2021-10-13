@@ -3,17 +3,21 @@ import "@nomiclabs/hardhat-waffle"
 import "@openzeppelin/hardhat-upgrades"
 import "@typechain/hardhat"
 import "hardhat-contract-sizer"
-import "hardhat-dependency-compiler"
 import "hardhat-deploy"
 import "hardhat-deploy-ethers"
 import "hardhat-gas-reporter"
-import { HardhatUserConfig, task } from "hardhat/config"
+import { HardhatUserConfig } from "hardhat/config"
 
 enum ChainId {
     ARBITRUM_ONE_CHAIN_ID = 42161,
     ARBITRUM_RINKEBY_CHAIN_ID = 421611,
     RINKEBY_CHAIN_ID = 4,
 }
+
+const ARBITRUM_RINKEBY_DEPLOYER_MNEMONIC = process.env.ARBITRUM_RINKEBY_DEPLOYER_MNEMONIC
+const ARBITRUM_RINKEBY_WEB3_ENDPOINT = process.env.ARBITRUM_RINKEBY_WEB3_ENDPOINT
+const RINKEBY_DEPLOYER_MNEMONIC = process.env.RINKEBY_DEPLOYER_MNEMONIC
+const RINKEBY_WEB3_ENDPOINT = process.env.RINKEBY_WEB3_ENDPOINT
 
 const config: HardhatUserConfig = {
     solidity: {
@@ -33,33 +37,22 @@ const config: HardhatUserConfig = {
         hardhat: {
             allowUnlimitedContractSize: true,
         },
-        // arbitrumRinkeby: {
-        //     url: ARBITRUM_RINKEBY_WEB3_ENDPOINT,
-        //     accounts: {
-        //         mnemonic: ARBITRUM_RINKEBY_DEPLOYER_MNEMONIC,
-        //     },
-        //     chainId: ChainId.ARBITRUM_RINKEBY_CHAIN_ID,
-        // },
-        // rinkeby: {
-        //     url: RINKEBY_WEB3_ENDPOINT,
-        //     accounts: {
-        //         mnemonic: RINKEBY_DEPLOYER_MNEMONIC,
-        //     },
-        // },
+        arbitrumRinkeby: {
+            url: ARBITRUM_RINKEBY_WEB3_ENDPOINT,
+            accounts: {
+                mnemonic: ARBITRUM_RINKEBY_DEPLOYER_MNEMONIC,
+            },
+            chainId: ChainId.ARBITRUM_RINKEBY_CHAIN_ID,
+        },
+        rinkeby: {
+            url: RINKEBY_WEB3_ENDPOINT,
+            accounts: {
+                mnemonic: RINKEBY_DEPLOYER_MNEMONIC,
+            },
+        },
     },
     namedAccounts: {
         deployer: 0, // 0 means ethers.getSigners[0]
-    },
-    dependencyCompiler: {
-        // We have to compile from source since UniswapV3 doesn't provide artifacts in their npm package
-        paths: ["@uniswap/v3-core/contracts/UniswapV3Factory.sol", "@uniswap/v3-core/contracts/UniswapV3Pool.sol"],
-    },
-    external: {
-        contracts: [
-            {
-                artifacts: "node_modules/@openzeppelin/contracts/build",
-            },
-        ],
     },
     contractSizer: {
         alphaSort: true,
