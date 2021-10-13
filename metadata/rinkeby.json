@@ -1,0 +1,15 @@
+{
+    "contracts": {
+        "Multicall2": {
+            "address": "0xd81B042f74F18c0B1DF60262ee5FAc91Ad6Df0D8",
+            "createdBlockNumber": 9458064,
+            "name": "contracts/lens/Multicall2.sol:Multicall2"
+        },
+        "Quoter": {
+            "address": "0x48d132007DB199B42E66562535a35507FDA9d160",
+            "createdBlockNumber": 9458063,
+            "name": "contracts/lens/Quoter.sol:Quoter"
+        }
+    },
+    "network": "rinkeby"
+}
