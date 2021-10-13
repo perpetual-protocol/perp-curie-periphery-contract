@@ -58,6 +58,17 @@ const config: HardhatUserConfig = {
         // ethers.getContractFactory(artifactName) can read artifacts from @perp/lushan
         imports: "node_modules/@perp/lushan/artifacts/contracts",
     },
+    external: {
+        contracts: [
+            {
+                artifacts: "/Users/vinta/Projects/perp-lushan/artifacts",
+            },
+        ],
+        deployments: {
+            arbitrumRinkeby: ["/Users/vinta/Projects/perp-lushan/deployments/arbitrumRinkeby"],
+            rinkeby: ["/Users/vinta/Projects/perp-lushan/deployments/rinkeby"],
+        },
+    },
     namedAccounts: {
         deployer: 0, // 0 means ethers.getSigners[0]
     },
