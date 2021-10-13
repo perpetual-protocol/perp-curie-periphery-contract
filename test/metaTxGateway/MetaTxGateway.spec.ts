@@ -34,7 +34,7 @@ describe("MetaTxGateway Spec", () => {
         }
     })
 
-    it("Meta tx signed on L1", async () => {
+    it("meta tx signed on L1", async () => {
         expect(await metaTxGatewayRecipient.pokedBy()).to.eq("0x0000000000000000000000000000000000000000")
 
         const metaTx = {
@@ -59,7 +59,7 @@ describe("MetaTxGateway Spec", () => {
         expect(await metaTxGatewayRecipient.pokedBy()).to.eq(alice.address)
     })
 
-    it("Meta tx signed on L2", async () => {
+    it("meta tx signed on L2", async () => {
         expect(await metaTxGatewayRecipient.pokedBy()).to.eq("0x0000000000000000000000000000000000000000")
 
         const metaTx = {

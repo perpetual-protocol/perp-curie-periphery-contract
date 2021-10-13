@@ -51,6 +51,13 @@ const config: HardhatUserConfig = {
             },
         },
     },
+    paths: {
+        deploy: "deploy",
+        deployments: "deployments",
+        // https://github.com/wighawag/hardhat-deploy#access-to-artifacts-non-deployed-contract-code-and-abi
+        // ethers.getContractFactory(artifactName) can read artifacts from @perp/lushan
+        imports: "node_modules/@perp/lushan/artifacts/contracts",
+    },
     namedAccounts: {
         deployer: 0, // 0 means ethers.getSigners[0]
     },
