@@ -1,4 +1,4 @@
-# perp-lushan-periphery
+# perp-curie-periphery
 
 ## Deployment
 
