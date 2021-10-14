@@ -3,6 +3,7 @@ import "@nomiclabs/hardhat-waffle"
 import "@openzeppelin/hardhat-upgrades"
 import "@typechain/hardhat"
 import "hardhat-contract-sizer"
+import "hardhat-dependency-compiler"
 import "hardhat-deploy"
 import "hardhat-deploy-ethers"
 import "hardhat-gas-reporter"
@@ -59,16 +60,15 @@ const config: HardhatUserConfig = {
         // so we must run "npm run clean-dbg" manually to remove those files
         externalArtifacts: ["./node_modules/@perp/lushan/artifacts/contracts/**/*.json"],
     },
-    paths: {
-        deploy: "deploy",
-        deployments: "deployments",
-        // https://github.com/wighawag/hardhat-deploy#access-to-artifacts-non-deployed-contract-code-and-abi
-        // ethers.getContractFactory(artifactName) can read artifacts from @perp/lushan
-        imports: "node_modules/@perp/lushan/artifacts/contracts",
+    dependencyCompiler: {
+        // We have to compile from source since UniswapV3 doesn't provide artifacts in their npm package
+        paths: ["@uniswap/v3-core/contracts/UniswapV3Factory.sol", "@uniswap/v3-core/contracts/UniswapV3Pool.sol"],
     },
     external: {
         contracts: [
             {
+                // https://github.com/wighawag/hardhat-deploy#access-to-artifacts-non-deployed-contract-code-and-abi
+                // ethers.getContractFactory(artifactName) can read artifacts from @perp/lushan
                 artifacts: "node_modules/@perp/lushan/artifacts",
             },
         ],
