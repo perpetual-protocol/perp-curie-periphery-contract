@@ -1,0 +1,15 @@
+{
+    "contracts": {
+        "Multicall2": {
+            "address": "0xcF0E4Ac43553D27732368A5E115D7a9b8D37Fc65",
+            "createdBlockNumber": 5577195,
+            "name": "contracts/lens/Multicall2.sol:Multicall2"
+        },
+        "Quoter": {
+            "address": "0x85Ae3B5D21f10db47d3dA8fD307D24E3b52B78EA",
+            "createdBlockNumber": 5577191,
+            "name": "contracts/lens/Quoter.sol:Quoter"
+        }
+    },
+    "network": "arbitrumRinkeby"
+}

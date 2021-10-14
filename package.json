@@ -1,0 +1,83 @@
+{
+  "name": "@perp/lushan-periphery",
+  "version": "0.11.0",
+  "description": "Perpetual Protocol v2 periphery contracts",
+  "author": "Perpetual Protocol",
+  "license": "GPL-2.0-or-later",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/perpetual-protocol/perp-lushan-periphery.git"
+  },
+  "main": "index.js",
+  "scripts": {
+    "prepare": "husky install",
+    "typechain": "npm run typechain-openzeppelin",
+    "typechain-openzeppelin": "typechain --target ethers-v5 --out-dir ./typechain/openzeppelin ./node_modules/@openzeppelin/contracts/build/contracts/**/*.json",
+    "clean": "rm -rf typechain/ && rm -rf artifacts/ && rm -rf cache/ && npm run clean-dbg",
+    "clean-dbg": "find node_modules/@perp/lushan/artifacts/contracts -name '*.dbg.json' -delete",
+    "test": "hardhat test",
+    "build": "npm run typechain && hardhat compile",
+    "lint": "npm run lint-contracts && npm run lint-tests",
+    "lint-contracts": "solhint 'contracts/**/*.sol'",
+    "lint-tests": "if grep -qr 'test' -e '.only('; then echo 'found .only() in tests'; exit 1; else echo 'not found .only() in tests'; fi",
+    "lint-staged": "lint-staged",
+    "deploy:arbitrumRinkeby": "hardhat deploy --network arbitrumRinkeby",
+    "deploy:rinkeby": "hardhat deploy --network rinkeby",
+    "clean-deploy:arbitrumRinkeby": "rm -rf deployments/arbitrumRinkeby/ && rm -f .openzeppelin/unknown-421611.json && hardhat deploy --network arbitrumRinkeby",
+    "clean-deploy:rinkeby": "rm -rf deployments/rinkeby/ && rm -f .openzeppelin/rinkeby.json && hardhat deploy --network rinkeby",
+    "system-test:arbitrumRinkeby": "npm run deploy:arbitrumRinkeby -- --tags system-test",
+    "system-test:rinkeby": "npm run deploy:rinkeby -- --tags system-test"
+  },
+  "devDependencies": {
+    "@eth-optimism/smock": "1.1.4",
+    "@ethereumjs/block": "3.3.0",
+    "@ethereumjs/blockchain": "5.3.0",
+    "@ethereumjs/common": "2.3.0",
+    "@ethereumjs/tx": "3.2.0",
+    "@ethereumjs/vm": "5.4.0",
+    "@nomiclabs/ethereumjs-vm": "4.2.2",
+    "@nomiclabs/hardhat-ethers": "npm:hardhat-deploy-ethers@0.3.0-beta.11",
+    "@nomiclabs/hardhat-waffle": "2.0.1",
+    "@openzeppelin/contracts-upgradeable": "3.4.2",
+    "@openzeppelin/contracts": "3.4.0",
+    "@openzeppelin/hardhat-upgrades": "1.10.0",
+    "@perp/lushan": "file:../perp-lushan",
+    "@typechain/ethers-v5": "7.0.0",
+    "@typechain/hardhat": "2.3.1",
+    "@types/chai": "4.2.18",
+    "@types/json-stable-stringify": "1.0.33",
+    "@types/mocha": "9.0.0",
+    "@types/node": "15.6.1",
+    "@uniswap/v3-core": "https://github.com/Uniswap/uniswap-v3-core/tarball/v1.0.0",
+    "@uniswap/v3-periphery": "1.0.1",
+    "bignumber.js": "9.0.1",
+    "chai": "4.3.4",
+    "ethereum-waffle": "3.4.0",
+    "ethers": "5.2.0",
+    "hardhat-contract-sizer": "2.0.3",
+    "hardhat-dependency-compiler": "1.1.1",
+    "hardhat-deploy-ethers": "0.3.0-beta.11",
+    "hardhat-deploy": "0.8.8",
+    "hardhat-gas-reporter": "1.0.4",
+    "hardhat": "2.3.0",
+    "husky": "6.0.0",
+    "json-stable-stringify": "1.0.1",
+    "lint-staged": "11.0.0",
+    "prettier-plugin-solidity": "1.0.0-beta.11",
+    "solc": "0.7.6",
+    "solhint-plugin-prettier": "0.0.5",
+    "solhint": "3.3.6",
+    "ts-node": "10.0.0",
+    "typechain": "5.0.0",
+    "typescript": "4.3.2"
+  },
+  "lint-staged": {
+    "*.ts": [
+      "prettier --write"
+    ],
+    "*.sol": [
+      "prettier --write",
+      "solhint"
+    ]
+  }
+}
