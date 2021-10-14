@@ -51,6 +51,13 @@ const config: HardhatUserConfig = {
             },
         },
     },
+    typechain: {
+        outDir: "typechain",
+        target: "ethers-v5",
+        alwaysGenerateOverloads: false,
+        // fix "MalformedAbiError: Not a valid ABI" since typechain doesn't recognize xxx.dbg.json
+        externalArtifacts: ["./node_modules/@perp/lushan/artifacts/contracts/**/*.json"],
+    },
     paths: {
         deploy: "deploy",
         deployments: "deployments",
@@ -61,12 +68,12 @@ const config: HardhatUserConfig = {
     external: {
         contracts: [
             {
-                artifacts: "/Users/vinta/Projects/perp-lushan/artifacts",
+                artifacts: "node_modules/@perp/lushan/artifacts",
             },
         ],
         deployments: {
-            arbitrumRinkeby: ["/Users/vinta/Projects/perp-lushan/deployments/arbitrumRinkeby"],
-            rinkeby: ["/Users/vinta/Projects/perp-lushan/deployments/rinkeby"],
+            arbitrumRinkeby: ["node_modules/@perp/lushan/deployments/arbitrumRinkeby"],
+            rinkeby: ["node_modules/@perp/lushan/deployments/rinkeby"],
         },
     },
     namedAccounts: {
@@ -79,12 +86,6 @@ const config: HardhatUserConfig = {
     },
     gasReporter: {
         excludeContracts: ["test"],
-    },
-    typechain: {
-        outDir: "typechain",
-        target: "ethers-v5",
-        alwaysGenerateOverloads: false,
-        externalArtifacts: ["./node_modules/@perp/lushan/artifacts/contracts/**/*.json"],
     },
     mocha: {
         require: ["ts-node/register/files"],
