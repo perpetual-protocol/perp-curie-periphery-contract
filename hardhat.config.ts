@@ -55,7 +55,8 @@ const config: HardhatUserConfig = {
         outDir: "typechain",
         target: "ethers-v5",
         alwaysGenerateOverloads: false,
-        // fix "MalformedAbiError: Not a valid ABI" since typechain doesn't recognize xxx.dbg.json
+        // there would be an error "MalformedAbiError: Not a valid ABI" since typechain doesn't recognize xxx.dbg.json,
+        // so we must run "npm run clean-dbg" manually to remove those files
         externalArtifacts: ["./node_modules/@perp/lushan/artifacts/contracts/**/*.json"],
     },
     paths: {
