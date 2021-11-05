@@ -13,12 +13,15 @@ enum ChainId {
     ARBITRUM_ONE_CHAIN_ID = 42161,
     ARBITRUM_RINKEBY_CHAIN_ID = 421611,
     RINKEBY_CHAIN_ID = 4,
+    OPTIMISM_KOVAN_CHAIN_ID = 69,
 }
 
 const ARBITRUM_RINKEBY_DEPLOYER_MNEMONIC = process.env.ARBITRUM_RINKEBY_DEPLOYER_MNEMONIC
 const ARBITRUM_RINKEBY_WEB3_ENDPOINT = process.env.ARBITRUM_RINKEBY_WEB3_ENDPOINT
 const RINKEBY_DEPLOYER_MNEMONIC = process.env.RINKEBY_DEPLOYER_MNEMONIC
 const RINKEBY_WEB3_ENDPOINT = process.env.RINKEBY_WEB3_ENDPOINT
+const OPTIMISM_KOVAN_DEPLOYER_MNEMONIC = process.env.OPTIMISM_KOVAN_DEPLOYER_MNEMONIC
+const OPTIMISM_KOVAN_WEB3_ENDPOINT = process.env.OPTIMISM_KOVAN_WEB3_ENDPOINT
 
 const config: HardhatUserConfig = {
     solidity: {
@@ -50,6 +53,13 @@ const config: HardhatUserConfig = {
             accounts: {
                 mnemonic: RINKEBY_DEPLOYER_MNEMONIC,
             },
+        },
+        optimismKovan: {
+            url: OPTIMISM_KOVAN_WEB3_ENDPOINT,
+            accounts: {
+                mnemonic: OPTIMISM_KOVAN_DEPLOYER_MNEMONIC,
+            },
+            chainId: ChainId.OPTIMISM_KOVAN_CHAIN_ID,
         },
     },
     typechain: {
