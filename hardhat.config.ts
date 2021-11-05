@@ -82,10 +82,6 @@ const config: HardhatUserConfig = {
                 artifacts: "node_modules/@perp/lushan/artifacts",
             },
         ],
-        deployments: {
-            arbitrumRinkeby: ["node_modules/@perp/lushan/deployments/arbitrumRinkeby"],
-            rinkeby: ["node_modules/@perp/lushan/deployments/rinkeby"],
-        },
     },
     namedAccounts: {
         deployer: 0, // 0 means ethers.getSigners[0]
