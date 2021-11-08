@@ -113,3 +113,5 @@ coverage.json
 flattened/
 slither/
 typechain/
+
+.env*
