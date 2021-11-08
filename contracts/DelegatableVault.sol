@@ -71,37 +71,49 @@ contract DelegatableVault is SafeOwnable, DelegatableVaultStorageV1 {
     }
 
     //
-    // fund owner and fund manager
+    // only fund owner and fund manager
     //
     function addLiquidity(IClearingHouse.AddLiquidityParams calldata params)
         external
         onlyFundOwnerOrFundManager
         returns (IClearingHouse.AddLiquidityResponse memory)
-    {}
+    {
+        return IClearingHouse(_clearingHouse).addLiquidity(params);
+    }
 
     function removeLiquidity(IClearingHouse.RemoveLiquidityParams calldata params)
         external
         onlyFundOwnerOrFundManager
         returns (IClearingHouse.RemoveLiquidityResponse memory response)
-    {}
+    {
+        return IClearingHouse(_clearingHouse).removeLiquidity(params);
+    }
 
     function openPosition(IClearingHouse.OpenPositionParams memory params)
         external
         onlyFundOwnerOrFundManager
         returns (uint256 deltaBase, uint256 deltaQuote)
-    {}
+    {
+        return IClearingHouse(_clearingHouse).openPosition(params);
+    }
 
     function closePosition(IClearingHouse.ClosePositionParams calldata params)
         external
         onlyFundOwnerOrFundManager
         returns (uint256 deltaAvailableBase, uint256 deltaAvailableQuote)
-    {}
+    {
+        return IClearingHouse(_clearingHouse).closePosition(params);
+    }
 
     function cancelExcessOrders(
         address maker,
         address baseToken,
         bytes32[] calldata orderIds
-    ) external onlyFundOwnerOrFundManager {}
+    ) external onlyFundOwnerOrFundManager {
+        IClearingHouse(_clearingHouse).cancelExcessOrders(maker, baseToken, orderIds);
+    }
 
-    function cancelAllExcessOrders(address maker, address baseToken) external onlyFundOwnerOrFundManager {}
+    function cancelAllExcessOrders(address maker, address baseToken) external onlyFundOwnerOrFundManager {
+        IClearingHouse(_clearingHouse).cancelAllExcessOrders(maker, baseToken);
+    }
 }
