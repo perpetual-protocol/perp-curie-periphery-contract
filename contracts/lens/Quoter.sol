@@ -2,14 +2,13 @@
 pragma solidity 0.7.6;
 pragma abicoder v2;
 
-import { AddressUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol";
-import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/Initializable.sol";
+import { Address } from "@openzeppelin/contracts/utils/Address.sol";
 import { IUniswapV3Pool } from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
 import { TickMath } from "@uniswap/v3-core/contracts/libraries/TickMath.sol";
 import { IUniswapV3SwapCallback } from "@uniswap/v3-core/contracts/interfaces/callback/IUniswapV3SwapCallback.sol";
 import { FullMath } from "@uniswap/v3-core/contracts/libraries/FullMath.sol";
-import { SafeMathUpgradeable } from "@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
-import { SignedSafeMathUpgradeable } from "@openzeppelin/contracts-upgradeable/math/SignedSafeMathUpgradeable.sol";
+import { SafeMath } from "@openzeppelin/contracts/math/SafeMath.sol";
+import { SignedSafeMath } from "@openzeppelin/contracts/math/SignedSafeMath.sol";
 import { PerpSafeCast } from "@perp/lushan/contracts/lib/PerpSafeCast.sol";
 import { PerpMath } from "@perp/lushan/contracts/lib/PerpMath.sol";
 import { FeeMath } from "@perp/lushan/contracts/lib/FeeMath.sol";
@@ -19,12 +18,12 @@ import { IMarketRegistry } from "@perp/lushan/contracts/interface/IMarketRegistr
 /// @notice Allows getting the expected amount out or amount in for a given swap without executing the swap
 /// @dev These functions are not gas efficient and should _not_ be called on chain. Instead, optimistically execute
 /// the swap and check the amounts in the callback.
-contract Quoter is IUniswapV3SwapCallback, Initializable {
-    using SafeMathUpgradeable for uint256;
+contract Quoter is IUniswapV3SwapCallback {
+    using SafeMath for uint256;
     using PerpSafeCast for uint256;
-    using SignedSafeMathUpgradeable for int256;
+    using SignedSafeMath for int256;
     using PerpMath for int256;
-    using AddressUpgradeable for address;
+    using Address for address;
 
     struct SwapParams {
         address baseToken;
@@ -44,10 +43,7 @@ contract Quoter is IUniswapV3SwapCallback, Initializable {
 
     address public marketRegistry;
 
-    // __gap is reserved storage
-    uint256[50] private __gap;
-
-    function initialize(address marketRegistryArg) external initializer {
+    constructor(address marketRegistryArg) {
         // Q_ANC: Exchange address is not contract
         require(marketRegistryArg.isContract(), "Q_ANC");
         marketRegistry = marketRegistryArg;

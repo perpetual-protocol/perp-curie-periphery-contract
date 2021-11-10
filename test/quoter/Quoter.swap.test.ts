@@ -50,8 +50,7 @@ describe("Quoter.swap", () => {
         await marketRegistry.addPool(baseToken.address, "10000")
 
         const quoterFactory = await ethers.getContractFactory("Quoter")
-        quoter = (await quoterFactory.deploy()) as Quoter
-        await quoter.initialize(marketRegistry.address)
+        quoter = (await quoterFactory.deploy(marketRegistry.address)) as Quoter
 
         lowerTick = 49000
         upperTick = 51400
@@ -79,8 +78,7 @@ describe("Quoter.swap", () => {
     describe("initialize", () => {
         it("force error, invalid exchange address", async () => {
             const quoterFactory = await ethers.getContractFactory("Quoter")
-            quoter = (await quoterFactory.deploy()) as Quoter
-            await expect(quoter.initialize(alice.address)).to.be.revertedWith("Q_ANC")
+            await expect(quoterFactory.deploy(alice.address)).to.be.revertedWith("Q_ANC")
         })
     })
 

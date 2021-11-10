@@ -1,17 +1,16 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 pragma solidity 0.7.6;
 
-import { AddressUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol";
-import { SafeMathUpgradeable } from "@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
+import { Address } from "@openzeppelin/contracts/utils/Address.sol";
+import { SafeMath } from "@openzeppelin/contracts/math/SafeMath.sol";
 import { LowLevelErrorMessage } from "@perp/lushan/contracts/base/LowLevelErrorMessage.sol";
-import { SafeOwnable } from "@perp/lushan/contracts/base/SafeOwnable.sol";
+import { SafeOwnable } from "./base/SafeOwnable.sol";
 
 // this is functionally identical to
 // https://github.com/bcnmy/metatx-standard/blob/master/src/contracts/EIP712MetaTransaction.sol
-// except it implements openzeppelin Initializable
 contract MetaTxGateway is SafeOwnable, LowLevelErrorMessage {
-    using AddressUpgradeable for address;
-    using SafeMathUpgradeable for uint256;
+    using Address for address;
+    using SafeMath for uint256;
 
     //
     // EVENTS
@@ -65,13 +64,8 @@ contract MetaTxGateway is SafeOwnable, LowLevelErrorMessage {
     //
     // FUNCTIONS
     //
-    function initialize(
-        string memory name,
-        string memory version,
-        uint256 chainIdL1
-    ) external initializer {
-        __SafeOwnable_init();
 
+    constructor(string memory name, string memory version, uint256 chainIdL1) {
         _domainSeparatorL1 = keccak256(
             abi.encode(
                 _EIP712_DOMAIN_TYPEHASH,
