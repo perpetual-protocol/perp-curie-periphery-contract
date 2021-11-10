@@ -1,50 +1,27 @@
 # perp-curie-periphery
 
-## Deployment
+## Local Development and Testing
 
-1. Deploy contracts
+### Requirements
+
+You should have Node 12 installed. Use [nvm](https://github.com/nvm-sh/nvm) to install it.
+
+### Development
+
+Currently we use `"file:../perp-lushan"` in `package.json`, so you need to clone both repositories.
 
 ```bash
-export ARBITRUM_RINKEBY_WEB3_ENDPOINT="YOUR_RPC_ENDPOINT"
-export ARBITRUM_RINKEBY_DEPLOYER_MNEMONIC="YOUR_MNEMONIC"
-
-# deploy and WILL NOT reuse any existing contracts
-npm run clean-deploy:arbitrumRinkeby
-
-# deploy and WILL reuse existing contracts
-npm run deploy:arbitrumRinkeby
-
-# only run the specific deployment script
-npm run deploy:arbitrumRinkeby -- --tags Quoter
+git clone git@github.com:perpetual-protocol/perp-lushan.git
+git clone git@github.com:perpetual-protocol/perp-curie-periphery.git
+cd perp-curie-periphery
+npm i
+npm run build
 ```
 
-2. Update CHANGELOG.md
+### Testing
 
-3. Update `version` of `package.json` and `package-lock.json`
-
-4. Verify contracts on Tenderly
-   - apply `access_key` from Tenderly settings
-      - the access token on the Tenderly dashboard, under Settings -> Authorization.
-   - create a `config.yaml` file at `$HOME/.tenderly/config.yaml` and add an access_key field to it:
-        ```yaml
-        access_key: super_secret_access_key
-        ```
-   - run `export RINKEBY_WEB3_ENDPOINT=YOUR_RPC_ENDPOINT`
-   - run `npm run verify-tenderly:rinkeby`
-
-5. Verify what's included in the packed npm package
+To run all the test cases:
 
 ```bash
-npm pack
-```
-
-6. Publish npm package
-
-```bash
-# push tag to trigger "Publish NPM package" workflow
-git tag vX.X.X
-git push origin --tags
-
-# create GitHub release
-gh release create vX.X.X -t "vX.X.X" -F CHANGELOG.md
+npm run test
 ```
