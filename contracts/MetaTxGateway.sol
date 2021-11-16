@@ -3,7 +3,7 @@ pragma solidity 0.7.6;
 
 import { Address } from "@openzeppelin/contracts/utils/Address.sol";
 import { SafeMath } from "@openzeppelin/contracts/math/SafeMath.sol";
-import { LowLevelErrorMessage } from "@perp/lushan/contracts/base/LowLevelErrorMessage.sol";
+import { LowLevelErrorMessage } from "./LowLevelErrorMessage.sol";
 import { SafeOwnable } from "./base/SafeOwnable.sol";
 
 // this is functionally identical to
