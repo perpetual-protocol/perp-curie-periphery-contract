@@ -3,6 +3,7 @@ import "@nomiclabs/hardhat-etherscan"
 import "@nomiclabs/hardhat-waffle"
 import "@openzeppelin/hardhat-upgrades"
 import "@typechain/hardhat"
+import * as dotenv from "dotenv"
 import "hardhat-contract-sizer"
 import "hardhat-dependency-compiler"
 import "hardhat-deploy"
@@ -10,6 +11,8 @@ import "hardhat-deploy-ethers"
 import "hardhat-gas-reporter"
 import { HardhatUserConfig, task } from "hardhat/config"
 import { verifyAndPushContract } from "./scripts/verify"
+
+dotenv.config()
 
 enum ChainId {
     ARBITRUM_ONE_CHAIN_ID = 42161,
