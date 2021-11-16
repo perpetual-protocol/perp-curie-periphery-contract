@@ -1,4 +1,5 @@
 import fs from "fs"
+import { NomicLabsHardhatPluginError } from "hardhat/plugins"
 import { HardhatRuntimeEnvironment } from "hardhat/types"
 import { resolve } from "path"
 
@@ -32,14 +33,18 @@ export async function verifyAndPushContract(hre: HardhatRuntimeEnvironment): Pro
     const contractsInfo = getContractsInfo(network)
 
     for (const { name, address, args } of contractsInfo) {
-        console.log(`verifying contract ${name} on ${address}`)
+        console.log(`Verifying contract ${name} on ${address}`)
         await hre
             .run("verify:verify", {
                 address: address,
                 constructorArguments: args,
             })
             .catch(e => {
-                console.log(e)
+                if (e instanceof NomicLabsHardhatPluginError) {
+                    console.error(`NomicLabsHardhatPluginError: ${(e as NomicLabsHardhatPluginError).message}`)
+                } else {
+                    console.error(e)
+                }
             })
     }
 }
