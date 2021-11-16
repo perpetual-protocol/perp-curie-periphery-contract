@@ -1,4 +1,5 @@
 import "@nomiclabs/hardhat-ethers"
+import "@nomiclabs/hardhat-etherscan"
 import "@nomiclabs/hardhat-waffle"
 import "@openzeppelin/hardhat-upgrades"
 import "@typechain/hardhat"
@@ -7,7 +8,8 @@ import "hardhat-dependency-compiler"
 import "hardhat-deploy"
 import "hardhat-deploy-ethers"
 import "hardhat-gas-reporter"
-import { HardhatUserConfig } from "hardhat/config"
+import { HardhatUserConfig, task } from "hardhat/config"
+import { verifyAndPushContract } from "./scripts/verify"
 
 enum ChainId {
     ARBITRUM_ONE_CHAIN_ID = 42161,
@@ -22,6 +24,11 @@ const RINKEBY_DEPLOYER_MNEMONIC = process.env.RINKEBY_DEPLOYER_MNEMONIC || ""
 const RINKEBY_WEB3_ENDPOINT = process.env.RINKEBY_WEB3_ENDPOINT || ""
 const OPTIMISM_KOVAN_DEPLOYER_MNEMONIC = process.env.OPTIMISM_KOVAN_DEPLOYER_MNEMONIC || ""
 const OPTIMISM_KOVAN_WEB3_ENDPOINT = process.env.OPTIMISM_KOVAN_WEB3_ENDPOINT || ""
+const ETHERSCAN_API_KEY = process.env.ETHERSCAN_API_KEY || ""
+
+task("verifyEtherscan", "Contract verification and push on Etherscan").setAction(async ({ stage }, hre) => {
+    await verifyAndPushContract(hre)
+})
 
 const config: HardhatUserConfig = {
     solidity: {
@@ -61,6 +68,9 @@ const config: HardhatUserConfig = {
             },
             chainId: ChainId.OPTIMISM_KOVAN_CHAIN_ID,
         },
+    },
+    etherscan: {
+        apiKey: ETHERSCAN_API_KEY,
     },
     typechain: {
         outDir: "typechain",

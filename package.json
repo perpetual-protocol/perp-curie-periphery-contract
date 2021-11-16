@@ -32,6 +32,7 @@
     "deploy:optimismKovan": "hardhat deploy --network optimismKovan",
     "deploy:arbitrumRinkeby": "hardhat deploy --network arbitrumRinkeby",
     "deploy:rinkeby": "hardhat deploy --network rinkeby",
+    "verifyEtherscan:arbitrumRinkeby": "hardhat verifyEtherscan --network arbitrumRinkeby",
     "system-test:optimismKovan": "npm run deploy:optimismKovan -- --tags system-test",
     "system-test:arbitrumRinkeby": "npm run deploy:arbitrumRinkeby -- --tags system-test",
     "system-test:rinkeby": "npm run deploy:rinkeby -- --tags system-test",
