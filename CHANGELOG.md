@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.14.0-staging] - 2021-11-17
+- Deploy a new `Quoter` contract on **Optimism Kovan** based on `@perp/curie-contract#v0.14.0-staging`.
+- Deploy a new `Multicall2` contract on **Optimism Kovan**.
+
 ## [0.13.1-staging] - 2021-11-17
 - Add `LowLevelErrorMessage.sol`
 - Re-deploy `Quoter` contract based on `@perp/curie-contract#v0.13.3-staging`
