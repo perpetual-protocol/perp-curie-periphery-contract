@@ -1,0 +1,15 @@
+{
+    "contracts": {
+        "Multicall2": {
+            "address": "0x8Ee0676fd743Efd75508e0b95aFc26BeBad5A069",
+            "createdBlockNumber": 82753,
+            "name": "contracts/lens/Multicall2.sol:Multicall2"
+        },
+        "Quoter": {
+            "address": "0xb624362F9CdfE78c9Ef5E96c3B5F6e7602C8D3C0",
+            "createdBlockNumber": 82752,
+            "name": "contracts/lens/Quoter.sol:Quoter"
+        }
+    },
+    "network": "optimismKovan"
+}
