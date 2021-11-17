@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.13.1-staging] - 2021-11-17
+- Add `LowLevelErrorMessage.sol`
+- Re-deploy `Quoter` contract based on `@perp/curie-contract#v0.13.3-staging`
+- Re-deploy `Multicall2` contract
+- The above contracts are deployed to **Arbitrum Rinkeby** only
+
 ## [0.13.0-staging] - 2021-11-10
 
 ### Added
