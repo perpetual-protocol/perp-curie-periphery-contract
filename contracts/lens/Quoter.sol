@@ -11,7 +11,7 @@ import { SafeMath } from "@openzeppelin/contracts/math/SafeMath.sol";
 import { SignedSafeMath } from "@openzeppelin/contracts/math/SignedSafeMath.sol";
 import { PerpSafeCast } from "@perp/lushan/contracts/lib/PerpSafeCast.sol";
 import { PerpMath } from "@perp/lushan/contracts/lib/PerpMath.sol";
-import { FeeMath } from "@perp/lushan/contracts/lib/FeeMath.sol";
+import { SwapMath } from "@perp/lushan/contracts/lib/SwapMath.sol";
 import { IMarketRegistry } from "@perp/lushan/contracts/interface/IMarketRegistry.sol";
 
 /// @title Provides quotes for swaps
@@ -61,22 +61,20 @@ contract Quoter is IUniswapV3SwapCallback {
         uint24 uniswapFeeRatio = marketInfo.uniswapFeeRatio;
         uint24 exchangeFeeRatio = marketInfo.exchangeFeeRatio;
         // scale up before swap to achieve customized fee/ignore Uniswap fee
-        uint256 scaledAmount =
-            FeeMath.calcScaledAmountForUniswapV3PoolSwap(
+        (, int256 scaledAmountForReplaySwap) =
+            SwapMath.calcScaledAmountForSwaps(
                 params.isBaseToQuote,
                 params.isExactInput,
                 params.amount,
                 exchangeFeeRatio,
                 uniswapFeeRatio
             );
-        // UniswapV3Pool uses the sign to determine isExactInput or not
-        int256 specifiedAmount = params.isExactInput ? scaledAmount.toInt256() : -scaledAmount.toInt256();
 
         try
             IUniswapV3Pool(pool).swap(
                 address(this),
                 params.isBaseToQuote,
-                specifiedAmount,
+                scaledAmountForReplaySwap,
                 params.sqrtPriceLimitX96 == 0
                     ? (params.isBaseToQuote ? TickMath.MIN_SQRT_RATIO + 1 : TickMath.MAX_SQRT_RATIO - 1)
                     : params.sqrtPriceLimitX96,
@@ -95,7 +93,7 @@ contract Quoter is IUniswapV3SwapCallback {
             if (params.isBaseToQuote) {
                 fee = FullMath.mulDivRoundingUp(quote, exchangeFeeRatio, 1e6);
                 // short: exchangedPositionSize <= 0 && exchangedPositionNotional >= 0
-                exchangedPositionSize = -(FeeMath.calcAmountScaledByFeeRatio(base, uniswapFeeRatio, false).toInt256());
+                exchangedPositionSize = -(SwapMath.calcAmountScaledByFeeRatio(base, uniswapFeeRatio, false).toInt256());
                 // due to base to quote fee, exchangedPositionNotional contains the fee
                 // s.t. we can take the fee away from exchangedPositionNotional
                 exchangedPositionNotional = quote.toInt256();
@@ -103,7 +101,7 @@ contract Quoter is IUniswapV3SwapCallback {
                 // check the doc of custom fee for more details
                 // let x : uniswapFeeRatio, y : clearingHouseFeeRatio
                 // qr * y * (1 - x) / (1 - y)
-                fee = FeeMath
+                fee = SwapMath
                     .calcAmountWithFeeRatioReplaced(
                     quote.mul(exchangeFeeRatio),
                     uniswapFeeRatio,
@@ -115,7 +113,7 @@ contract Quoter is IUniswapV3SwapCallback {
                 // long: exchangedPositionSize >= 0 && exchangedPositionNotional <= 0
                 exchangedPositionSize = base.toInt256();
                 exchangedPositionNotional = -(
-                    FeeMath.calcAmountScaledByFeeRatio(quote, uniswapFeeRatio, false).toInt256()
+                    SwapMath.calcAmountScaledByFeeRatio(quote, uniswapFeeRatio, false).toInt256()
                 );
             }
             response = SwapResponse(
