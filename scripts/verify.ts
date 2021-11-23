@@ -28,7 +28,7 @@ function getContractsInfo(network: String): Array<ContractInfo> {
     return contractsInfo
 }
 
-export async function verifyAndPushContract(hre: HardhatRuntimeEnvironment): Promise<void> {
+export async function verifyAndPushContractOnEtherscan(hre: HardhatRuntimeEnvironment): Promise<void> {
     const network = hre.network.name
     const contractsInfo = getContractsInfo(network)
 
@@ -45,6 +45,32 @@ export async function verifyAndPushContract(hre: HardhatRuntimeEnvironment): Pro
                 } else {
                     console.error(e)
                 }
+            })
+    }
+}
+
+export async function verifyAndPushContractOnTenderly(hre: HardhatRuntimeEnvironment): Promise<void> {
+    const network = hre.network.name
+    const contractsInfo = getContractsInfo(network)
+
+    for (const { name, address } of contractsInfo) {
+        console.log(`verifying contract ${name} on ${address}`)
+        await hre.tenderly
+            .verify({
+                name,
+                address,
+            })
+            .catch(e => {
+                console.log(e)
+            })
+        console.log(`pushing contract ${name}`)
+        await hre.tenderly
+            .push({
+                name,
+                address,
+            })
+            .catch(e => {
+                console.log(e)
             })
     }
 }
