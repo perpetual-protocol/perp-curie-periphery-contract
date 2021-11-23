@@ -30,7 +30,7 @@ const OPTIMISM_KOVAN_DEPLOYER_MNEMONIC = process.env.OPTIMISM_KOVAN_DEPLOYER_MNE
 const OPTIMISM_KOVAN_WEB3_ENDPOINT = process.env.OPTIMISM_KOVAN_WEB3_ENDPOINT || ""
 const ETHERSCAN_API_KEY = process.env.ETHERSCAN_API_KEY || ""
 
-task("verify", "Contract verification and push").setAction(async ({}, hre) => {
+task("verifyContract", "Contract verification and push").setAction(async ({}, hre) => {
     console.log("Start to verify contract and push on Etherscan...")
     await verifyAndPushContractOnEtherscan(hre)
 
@@ -117,6 +117,10 @@ const config: HardhatUserConfig = {
         jobs: 4,
         timeout: 120000,
         color: true,
+    },
+    tenderly: {
+        project: "curie-op-kovan-0-15",
+        username: "perpprotocol",
     },
 }
 
