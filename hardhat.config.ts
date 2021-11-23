@@ -2,6 +2,7 @@ import "@nomiclabs/hardhat-ethers"
 import "@nomiclabs/hardhat-etherscan"
 import "@nomiclabs/hardhat-waffle"
 import "@openzeppelin/hardhat-upgrades"
+import "@tenderly/hardhat-tenderly"
 import "@typechain/hardhat"
 import * as dotenv from "dotenv"
 import "hardhat-contract-sizer"
@@ -10,7 +11,7 @@ import "hardhat-deploy"
 import "hardhat-deploy-ethers"
 import "hardhat-gas-reporter"
 import { HardhatUserConfig, task } from "hardhat/config"
-import { verifyAndPushContract } from "./scripts/verify"
+import { verifyAndPushContractOnEtherscan, verifyAndPushContractOnTenderly } from "./scripts/verify"
 
 dotenv.config()
 
@@ -29,8 +30,12 @@ const OPTIMISM_KOVAN_DEPLOYER_MNEMONIC = process.env.OPTIMISM_KOVAN_DEPLOYER_MNE
 const OPTIMISM_KOVAN_WEB3_ENDPOINT = process.env.OPTIMISM_KOVAN_WEB3_ENDPOINT || ""
 const ETHERSCAN_API_KEY = process.env.ETHERSCAN_API_KEY || ""
 
-task("verifyEtherscan", "Contract verification and push on Etherscan").setAction(async ({ stage }, hre) => {
-    await verifyAndPushContract(hre)
+task("verify", "Contract verification and push").setAction(async ({}, hre) => {
+    console.log("Start to verify contract and push on Etherscan...")
+    await verifyAndPushContractOnEtherscan(hre)
+
+    console.log("Start to verify contract and push on Tenderly...")
+    await verifyAndPushContractOnTenderly(hre)
 })
 
 const config: HardhatUserConfig = {

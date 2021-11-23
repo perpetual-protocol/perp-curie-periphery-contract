@@ -32,22 +32,20 @@ npm run deploy:arbitrumRinkeby
 
 4. Update `version` of `package.json` and `package-lock.json`
 
-5. Verify contracts on Etherscan
+5. Verify contracts on Etherscan and Tenderly
 ```bash
 export ETHERSCAN_API_KEY="YOUR_ETHERSCAN_API_KEY"
 
-npm run verifyEtherscan:arbitrumRinkeby
+npm run verify:arbitrumRinkeby
 ```
 
-6. TODO: Verify contracts on Tenderly
-
-7. Verify what's included in the packed npm package
+6. Verify what's included in the packed npm package
 
 ```bash
 npm pack
 ```
 
-8. Publish npm package
+7. Publish npm package
 
 ```bash
 git tag vX.X.X
