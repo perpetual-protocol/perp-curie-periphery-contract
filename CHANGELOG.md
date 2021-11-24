@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.0] - 2021-11-24
+
+- Deploy a new `Quoter` contract on **Optimism** based on `@perp/curie-contract#1.0.0`.
+- Deploy a new `Multicall2` contract on **Optimism**.
+
 ## [1.0.0-staging] - 2021-11-24
 - Deploy a new `Quoter` contract based on `@perp/curie-contract#v1.0.0-staging`.
 - Deploy a new `Multicall2` contract.
