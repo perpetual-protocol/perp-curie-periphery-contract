@@ -1,6 +1,6 @@
 {
   "name": "@perp/curie-periphery",
-  "version": "1.0.0-staging",
+  "version": "1.0.0",
   "description": "Perpetual Protocol Curie (V2) periphery contracts",
   "license": "GPL-2.0-or-later",
   "author": {
@@ -29,16 +29,15 @@
     "lint-contracts": "solhint 'contracts/**/*.sol'",
     "lint-tests": "if grep -qr 'test' -e '.only('; then echo 'found .only() in tests'; exit 1; else echo 'not found .only() in tests'; fi",
     "lint-staged": "lint-staged",
-    "deploy:optimismKovan": "hardhat deploy --network optimismKovan",
-    "deploy:arbitrumRinkeby": "hardhat deploy --network arbitrumRinkeby",
-    "deploy:rinkeby": "hardhat deploy --network rinkeby",
-    "clean-deploy:optimismKovan": "rm -rf deployments/optimismKovan/ && hardhat deploy --network optimismKovan",
-    "clean-deploy:arbitrumRinkeby": "rm -rf deployments/arbitrumRinkeby/ && hardhat deploy --network arbitrumRinkeby",
+    "deploy:optimism": "rm -rf deployments/optimism/ && hardhat deploy --network optimism",
+    "deploy:optimismKovan": "rm -rf deployments/optimismKovan/ && hardhat deploy --network optimismKovan",
+    "deploy:arbitrumRinkeby": "rm -rf deployments/arbitrumRinkeby/ && hardhat deploy --network arbitrumRinkeby",
+    "verify:optimism": "hardhat verifyContract --network optimism",
     "verify:optimismKovan": "hardhat verifyContract --network optimismKovan",
     "verify:arbitrumRinkeby": "hardhat verifyContract --network arbitrumRinkeby",
+    "system-test:optimism": "npm run deploy:optimism -- --tags system-test",
     "system-test:optimismKovan": "npm run deploy:optimismKovan -- --tags system-test",
     "system-test:arbitrumRinkeby": "npm run deploy:arbitrumRinkeby -- --tags system-test",
-    "system-test:rinkeby": "npm run deploy:rinkeby -- --tags system-test",
     "prepack": "ts-node --files scripts/prepack.ts"
   },
   "devDependencies": {

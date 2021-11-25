@@ -20,6 +20,7 @@ enum ChainId {
     ARBITRUM_RINKEBY_CHAIN_ID = 421611,
     RINKEBY_CHAIN_ID = 4,
     OPTIMISM_KOVAN_CHAIN_ID = 69,
+    OPTIMISM_CHAIN_ID = 10,
 }
 
 const ARBITRUM_RINKEBY_DEPLOYER_MNEMONIC = process.env.ARBITRUM_RINKEBY_DEPLOYER_MNEMONIC || ""
@@ -28,6 +29,8 @@ const RINKEBY_DEPLOYER_MNEMONIC = process.env.RINKEBY_DEPLOYER_MNEMONIC || ""
 const RINKEBY_WEB3_ENDPOINT = process.env.RINKEBY_WEB3_ENDPOINT || ""
 const OPTIMISM_KOVAN_DEPLOYER_MNEMONIC = process.env.OPTIMISM_KOVAN_DEPLOYER_MNEMONIC || ""
 const OPTIMISM_KOVAN_WEB3_ENDPOINT = process.env.OPTIMISM_KOVAN_WEB3_ENDPOINT || ""
+const OPTIMISM_DEPLOYER_MNEMONIC = process.env.OPTIMISM_DEPLOYER_MNEMONIC || ""
+const OPTIMISM_WEB3_ENDPOINT = process.env.OPTIMISM_WEB3_ENDPOINT || ""
 const ETHERSCAN_API_KEY = process.env.ETHERSCAN_API_KEY || ""
 
 task("verifyContract", "Contract verification and push").setAction(async ({}, hre) => {
@@ -76,6 +79,13 @@ const config: HardhatUserConfig = {
             },
             chainId: ChainId.OPTIMISM_KOVAN_CHAIN_ID,
         },
+        optimism: {
+            url: OPTIMISM_WEB3_ENDPOINT,
+            accounts: {
+                mnemonic: OPTIMISM_DEPLOYER_MNEMONIC,
+            },
+            chainId: ChainId.OPTIMISM_CHAIN_ID,
+        },
     },
     etherscan: {
         apiKey: ETHERSCAN_API_KEY,
@@ -119,7 +129,7 @@ const config: HardhatUserConfig = {
         color: true,
     },
     tenderly: {
-        project: "curie-v1-0-x-staging",
+        project: "curie-v1-0-x",
         username: "perpprotocol",
     },
 }
