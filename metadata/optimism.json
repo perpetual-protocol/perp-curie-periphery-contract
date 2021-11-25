@@ -1,13 +1,13 @@
 {
     "contracts": {
         "Multicall2": {
-            "address": "0x9d51148EAC545e3616A7Ea22492F87c9B783605d",
-            "createdBlockNumber": 411156,
+            "address": "0xc087482F00dF3C1eB58dC23aF04347dd78709ab8",
+            "createdBlockNumber": 439367,
             "name": "contracts/lens/Multicall2.sol:Multicall2"
         },
         "Quoter": {
-            "address": "0x75E51dBBfE9Ea2C3c52a70A78b58D6c0eaebAFB3",
-            "createdBlockNumber": 411153,
+            "address": "0x21B6558a58A8d89A789d9EAE7D331ba9AC98c1ed",
+            "createdBlockNumber": 439365,
             "name": "contracts/lens/Quoter.sol:Quoter"
         }
     },

@@ -66,6 +66,7 @@ describe("Quoter.swap", () => {
             upperTick,
             minBase: 0,
             minQuote: 0,
+            useTakerBalance: false,
             deadline: ethers.constants.MaxUint256,
         })
 
@@ -115,8 +116,8 @@ describe("Quoter.swap", () => {
 
             const sqrtPriceX96 = (await pool.slot0())[0]
             const partialSwapResponse = [
-                swapResponse.deltaAvailableBase,
-                swapResponse.deltaAvailableQuote,
+                swapResponse.base,
+                swapResponse.quote,
                 swapResponse.exchangedPositionSize,
                 swapResponse.exchangedPositionNotional,
                 sqrtPriceX96,
@@ -159,8 +160,8 @@ describe("Quoter.swap", () => {
                 sqrtPriceLimitX96: priceLimit,
             })
 
-            expect(quoteResponse.deltaAvailableBase).to.be.eq(swapResponse.deltaAvailableBase)
-            expect(quoteResponse.deltaAvailableQuote).to.be.closeTo(swapResponse.deltaAvailableQuote, 1)
+            expect(quoteResponse.deltaAvailableBase).to.be.eq(swapResponse.base)
+            expect(quoteResponse.deltaAvailableQuote).to.be.closeTo(swapResponse.quote, 1)
             expect(quoteResponse.exchangedPositionSize).to.be.eq(swapResponse.exchangedPositionSize)
             expect(quoteResponse.exchangedPositionNotional).to.be.eq(swapResponse.exchangedPositionNotional)
             expect(quoteResponse.sqrtPriceX96).to.be.eq((await pool.slot0())[0])
@@ -197,8 +198,8 @@ describe("Quoter.swap", () => {
                 sqrtPriceLimitX96: 0,
             })
 
-            expect(quoteResponse.deltaAvailableBase).to.be.eq(swapResponse.deltaAvailableBase)
-            expect(quoteResponse.deltaAvailableQuote).to.be.closeTo(swapResponse.deltaAvailableQuote, 1)
+            expect(quoteResponse.deltaAvailableBase).to.be.eq(swapResponse.base)
+            expect(quoteResponse.deltaAvailableQuote).to.be.closeTo(swapResponse.quote, 1)
             expect(quoteResponse.exchangedPositionSize).to.be.eq(swapResponse.exchangedPositionSize)
             expect(quoteResponse.exchangedPositionNotional).to.be.eq(swapResponse.exchangedPositionNotional)
             expect(quoteResponse.sqrtPriceX96).to.be.eq((await pool.slot0())[0])
@@ -225,8 +226,8 @@ describe("Quoter.swap", () => {
                 amount: baseAmount,
                 sqrtPriceLimitX96: 0,
             })
-            expect(quoteResponse.deltaAvailableBase).to.be.eq(swapResponse.deltaAvailableBase)
-            expect(quoteResponse.deltaAvailableQuote).to.be.closeTo(swapResponse.deltaAvailableQuote, 1)
+            expect(quoteResponse.deltaAvailableBase).to.be.eq(swapResponse.base)
+            expect(quoteResponse.deltaAvailableQuote).to.be.closeTo(swapResponse.quote, 1)
             expect(quoteResponse.exchangedPositionSize).to.be.eq(swapResponse.exchangedPositionSize)
             expect(quoteResponse.exchangedPositionNotional).to.be.eq(swapResponse.exchangedPositionNotional)
         })
@@ -255,8 +256,8 @@ describe("Quoter.swap", () => {
                 amount: baseAmount,
                 sqrtPriceLimitX96: priceLimit,
             })
-            expect(quoteResponse.deltaAvailableBase).to.be.eq(swapResponse.deltaAvailableBase)
-            expect(quoteResponse.deltaAvailableQuote).to.be.closeTo(swapResponse.deltaAvailableQuote, 1)
+            expect(quoteResponse.deltaAvailableBase).to.be.eq(swapResponse.base)
+            expect(quoteResponse.deltaAvailableQuote).to.be.closeTo(swapResponse.quote, 1)
             expect(quoteResponse.exchangedPositionSize).to.be.eq(swapResponse.exchangedPositionSize)
             expect(quoteResponse.exchangedPositionNotional).to.be.eq(swapResponse.exchangedPositionNotional)
         })
@@ -319,8 +320,8 @@ describe("Quoter.swap", () => {
             })
 
             const partialSwapResponse = [
-                swapResponse.deltaAvailableBase,
-                swapResponse.deltaAvailableQuote,
+                swapResponse.base,
+                swapResponse.quote,
                 swapResponse.exchangedPositionSize,
                 swapResponse.exchangedPositionNotional,
                 (await pool.slot0())[0],
@@ -364,8 +365,8 @@ describe("Quoter.swap", () => {
             })
 
             const partialSwapResponse = [
-                swapResponse.deltaAvailableBase,
-                swapResponse.deltaAvailableQuote,
+                swapResponse.base,
+                swapResponse.quote,
                 swapResponse.exchangedPositionSize,
                 swapResponse.exchangedPositionNotional,
                 (await pool.slot0())[0],
@@ -405,8 +406,8 @@ describe("Quoter.swap", () => {
             })
 
             const partialSwapResponse = [
-                swapResponse.deltaAvailableBase,
-                swapResponse.deltaAvailableQuote,
+                swapResponse.base,
+                swapResponse.quote,
                 swapResponse.exchangedPositionSize,
                 swapResponse.exchangedPositionNotional,
                 (await pool.slot0())[0],
@@ -447,8 +448,8 @@ describe("Quoter.swap", () => {
             })
 
             const partialSwapResponse = [
-                swapResponse.deltaAvailableBase,
-                swapResponse.deltaAvailableQuote,
+                swapResponse.base,
+                swapResponse.quote,
                 swapResponse.exchangedPositionSize,
                 swapResponse.exchangedPositionNotional,
                 (await pool.slot0())[0],
@@ -492,8 +493,8 @@ describe("Quoter.swap", () => {
             })
 
             const partialSwapResponse = [
-                swapResponse.deltaAvailableBase,
-                swapResponse.deltaAvailableQuote,
+                swapResponse.base,
+                swapResponse.quote,
                 swapResponse.exchangedPositionSize,
                 swapResponse.exchangedPositionNotional,
                 (await pool.slot0())[0],
@@ -577,7 +578,7 @@ describe("Quoter.swap", () => {
                     amount: "100",
                     sqrtPriceLimitX96: "0",
                 }),
-            ).revertedWith("Q_BTNE")
+            ).revertedWith("MR_PNE")
         })
 
         it("force error, unexpected call to callback function", async () => {

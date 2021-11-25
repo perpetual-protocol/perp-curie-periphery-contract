@@ -1,6 +1,6 @@
 {
   "name": "@perp/curie-periphery",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Perpetual Protocol Curie (V2) periphery contracts",
   "license": "GPL-2.0-or-later",
   "author": {
@@ -15,14 +15,16 @@
   "main": "index.js",
   "files": [
     "artifacts/contracts/",
+    "contracts/",
     "metadata/"
   ],
   "scripts": {
     "prepare": "husky install",
-    "typechain": "npm run typechain-openzeppelin",
+    "typechain": "npm run typechain-openzeppelin & npm run typechain-perp-oracle",
     "typechain-openzeppelin": "typechain --target ethers-v5 --out-dir ./typechain/openzeppelin ./node_modules/@openzeppelin/contracts/build/contracts/**/*.json",
+    "typechain-perp-oracle": "typechain --target ethers-v5 --out-dir ./typechain/perp-oracle ./node_modules/@perp/perp-oracle-contract/artifacts/contracts/**/*.json",
     "clean": "rm -rf typechain/ && rm -rf artifacts/ && rm -rf cache/ && npm run clean-dbg",
-    "clean-dbg": "find node_modules/@perp/lushan/artifacts/contracts -name '*.dbg.json' -delete",
+    "clean-dbg": "find node_modules/@perp/curie-contract/artifacts/contracts -name '*.dbg.json' -delete",
     "test": "hardhat test",
     "build": "npm run typechain && hardhat compile",
     "lint": "npm run lint-contracts && npm run lint-tests",
@@ -35,12 +37,10 @@
     "verify:optimism": "hardhat verifyContract --network optimism",
     "verify:optimismKovan": "hardhat verifyContract --network optimismKovan",
     "verify:arbitrumRinkeby": "hardhat verifyContract --network arbitrumRinkeby",
-    "system-test:optimism": "npm run deploy:optimism -- --tags system-test",
-    "system-test:optimismKovan": "npm run deploy:optimismKovan -- --tags system-test",
-    "system-test:arbitrumRinkeby": "npm run deploy:arbitrumRinkeby -- --tags system-test",
     "prepack": "ts-node --files scripts/prepack.ts"
   },
   "devDependencies": {
+    "@chainlink/contracts": "0.1.7",
     "@eth-optimism/smock": "1.1.4",
     "@ethereumjs/block": "3.3.0",
     "@ethereumjs/blockchain": "5.3.0",
@@ -54,7 +54,8 @@
     "@openzeppelin/contracts": "3.4.0",
     "@openzeppelin/contracts-upgradeable": "3.4.2",
     "@openzeppelin/hardhat-upgrades": "1.10.0",
-    "@perp/lushan": "file:../perp-lushan",
+    "@perp/curie-contract": "1.0.1",
+    "@perp/perp-oracle-contract": "0.1.2",
     "@tenderly/hardhat-tenderly": "1.0.13",
     "@typechain/ethers-v5": "7.0.0",
     "@typechain/hardhat": "2.3.1",
