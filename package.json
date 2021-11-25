@@ -36,9 +36,6 @@
     "verify:optimism": "hardhat verifyContract --network optimism",
     "verify:optimismKovan": "hardhat verifyContract --network optimismKovan",
     "verify:arbitrumRinkeby": "hardhat verifyContract --network arbitrumRinkeby",
-    "system-test:optimism": "npm run deploy:optimism -- --tags system-test",
-    "system-test:optimismKovan": "npm run deploy:optimismKovan -- --tags system-test",
-    "system-test:arbitrumRinkeby": "npm run deploy:arbitrumRinkeby -- --tags system-test",
     "prepack": "ts-node --files scripts/prepack.ts"
   },
   "devDependencies": {
