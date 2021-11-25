@@ -3,15 +3,12 @@ import { ethers } from "hardhat"
 import {
     AccountBalance,
     BaseToken,
-    ChainlinkPriceFeed,
     ClearingHouse,
     ClearingHouseConfig,
     Exchange,
     InsuranceFund,
     MarketRegistry,
     OrderBook,
-    QuoteToken,
-    TestAccountBalance,
     TestClearingHouse,
     TestERC20,
     TestExchange,
@@ -20,20 +17,23 @@ import {
     UniswapV3Pool,
     Vault,
 } from "../../typechain"
+import { ChainlinkPriceFeed } from "../../typechain/perp-oracle"
+import { QuoteToken } from "../../typechain/QuoteToken"
+import { TestAccountBalance } from "../../typechain/TestAccountBalance"
 import { createQuoteTokenFixture, token0Fixture, tokensFixture, uniswapV3FactoryFixture } from "../shared/fixtures"
 
-interface ClearingHouseFixture {
+export interface ClearingHouseFixture {
     clearingHouse: TestClearingHouse | ClearingHouse
     orderBook: OrderBook
     accountBalance: TestAccountBalance | AccountBalance
     marketRegistry: MarketRegistry
     clearingHouseConfig: ClearingHouseConfig
-    exchange: Exchange
+    exchange: TestExchange | Exchange
     vault: Vault
     insuranceFund: InsuranceFund
     uniV3Factory: UniswapV3Factory
     pool: UniswapV3Pool
-    feeTier: number
+    uniFeeTier: number
     USDC: TestERC20
     quoteToken: QuoteToken
     baseToken: BaseToken
@@ -53,7 +53,10 @@ export enum BaseQuoteOrdering {
 }
 
 // caller of this function should ensure that (base, quote) = (token0, token1) is always true
-export function createClearingHouseFixture(canMockTime: boolean = true): () => Promise<ClearingHouseFixture> {
+export function createClearingHouseFixture(
+    canMockTime: boolean = true,
+    uniFeeTier = 10000, // 1%
+): () => Promise<ClearingHouseFixture> {
     return async (): Promise<ClearingHouseFixture> => {
         // deploy test tokens
         const tokenFactory = await ethers.getContractFactory("TestERC20")
@@ -77,8 +80,7 @@ export function createClearingHouseFixture(canMockTime: boolean = true): () => P
         await clearingHouseConfig.initialize()
 
         // prepare uniswap factory
-        const feeTier = 10000
-        await uniV3Factory.createPool(baseToken.address, quoteToken.address, feeTier)
+        await uniV3Factory.createPool(baseToken.address, quoteToken.address, uniFeeTier)
         const poolFactory = await ethers.getContractFactory("UniswapV3Pool")
 
         const marketRegistryFactory = await ethers.getContractFactory("MarketRegistry")
@@ -87,7 +89,7 @@ export function createClearingHouseFixture(canMockTime: boolean = true): () => P
 
         const orderBookFactory = await ethers.getContractFactory("OrderBook")
         const orderBook = (await orderBookFactory.deploy()) as OrderBook
-        await orderBook.initialize(marketRegistry.address, quoteToken.address)
+        await orderBook.initialize(marketRegistry.address)
 
         let accountBalance
         let exchange
@@ -110,17 +112,12 @@ export function createClearingHouseFixture(canMockTime: boolean = true): () => P
         await insuranceFund.initialize(USDC.address)
 
         // deploy exchange
-        await exchange.initialize(
-            marketRegistry.address,
-            orderBook.address,
-            clearingHouseConfig.address,
-            insuranceFund.address,
-        )
+        await exchange.initialize(marketRegistry.address, orderBook.address, clearingHouseConfig.address)
         exchange.setAccountBalance(accountBalance.address)
 
         await orderBook.setExchange(exchange.address)
 
-        await accountBalance.initialize(clearingHouseConfig.address, exchange.address)
+        await accountBalance.initialize(clearingHouseConfig.address, orderBook.address)
 
         const vaultFactory = await ethers.getContractFactory("Vault")
         const vault = (await vaultFactory.deploy()) as Vault
@@ -134,7 +131,7 @@ export function createClearingHouseFixture(canMockTime: boolean = true): () => P
         await accountBalance.setVault(vault.address)
 
         // deploy a pool
-        const poolAddr = await uniV3Factory.getPool(baseToken.address, quoteToken.address, feeTier)
+        const poolAddr = await uniV3Factory.getPool(baseToken.address, quoteToken.address, uniFeeTier)
         const pool = poolFactory.attach(poolAddr) as UniswapV3Pool
         await baseToken.addWhitelist(pool.address)
         await quoteToken.addWhitelist(pool.address)
@@ -143,8 +140,8 @@ export function createClearingHouseFixture(canMockTime: boolean = true): () => P
         const _token0Fixture = await token0Fixture(quoteToken.address)
         const baseToken2 = _token0Fixture.baseToken
         const mockedBaseAggregator2 = _token0Fixture.mockedAggregator
-        await uniV3Factory.createPool(baseToken2.address, quoteToken.address, feeTier)
-        const pool2Addr = await uniV3Factory.getPool(baseToken2.address, quoteToken.address, feeTier)
+        await uniV3Factory.createPool(baseToken2.address, quoteToken.address, uniFeeTier)
+        const pool2Addr = await uniV3Factory.getPool(baseToken2.address, quoteToken.address, uniFeeTier)
         const pool2 = poolFactory.attach(pool2Addr) as UniswapV3Pool
 
         await baseToken2.addWhitelist(pool2.address)
@@ -162,6 +159,7 @@ export function createClearingHouseFixture(canMockTime: boolean = true): () => P
                 uniV3Factory.address,
                 exchange.address,
                 accountBalance.address,
+                insuranceFund.address,
             )
         } else {
             const clearingHouseFactory = await ethers.getContractFactory("ClearingHouse")
@@ -173,8 +171,11 @@ export function createClearingHouseFixture(canMockTime: boolean = true): () => P
                 uniV3Factory.address,
                 exchange.address,
                 accountBalance.address,
+                insuranceFund.address,
             )
         }
+
+        await clearingHouseConfig.setSettlementTokenBalanceCap(ethers.constants.MaxUint256)
 
         await quoteToken.mintMaximumTo(clearingHouse.address)
         await baseToken.mintMaximumTo(clearingHouse.address)
@@ -186,6 +187,7 @@ export function createClearingHouseFixture(canMockTime: boolean = true): () => P
         await orderBook.setClearingHouse(clearingHouse.address)
         await exchange.setClearingHouse(clearingHouse.address)
         await accountBalance.setClearingHouse(clearingHouse.address)
+        await vault.setClearingHouse(clearingHouse.address)
 
         return {
             clearingHouse,
@@ -198,7 +200,7 @@ export function createClearingHouseFixture(canMockTime: boolean = true): () => P
             insuranceFund,
             uniV3Factory,
             pool,
-            feeTier,
+            uniFeeTier,
             USDC,
             quoteToken,
             baseToken,
@@ -249,8 +251,9 @@ export async function mockedBaseTokenTo(longerThan: boolean, targetAddr: string)
         const mockedAggregator = await smockit(aggregator)
 
         const chainlinkPriceFeedFactory = await ethers.getContractFactory("ChainlinkPriceFeed")
-        const chainlinkPriceFeed = (await chainlinkPriceFeedFactory.deploy()) as ChainlinkPriceFeed
-        await chainlinkPriceFeed.initialize(mockedAggregator.address)
+        const chainlinkPriceFeed = (await chainlinkPriceFeedFactory.deploy(
+            mockedAggregator.address,
+        )) as ChainlinkPriceFeed
 
         const baseTokenFactory = await ethers.getContractFactory("BaseToken")
         const token = (await baseTokenFactory.deploy()) as BaseToken
@@ -269,7 +272,7 @@ export async function mockedClearingHouseFixture(): Promise<MockedClearingHouseF
     // deploy test tokens
     const tokenFactory = await ethers.getContractFactory("TestERC20")
     const USDC = (await tokenFactory.deploy()) as TestERC20
-    await USDC.initialize("TestUSDC", "USDC")
+    await USDC.__TestERC20_init("TestUSDC", "USDC", 6)
 
     const insuranceFundFactory = await ethers.getContractFactory("InsuranceFund")
     const insuranceFund = (await insuranceFundFactory.deploy()) as InsuranceFund
@@ -299,17 +302,12 @@ export async function mockedClearingHouseFixture(): Promise<MockedClearingHouseF
     const mockedMarketRegistry = await smockit(marketRegistry)
     const orderBookFactory = await ethers.getContractFactory("OrderBook")
     const orderBook = (await orderBookFactory.deploy()) as OrderBook
-    await orderBook.initialize(marketRegistry.address, mockedQuoteToken.address)
+    await orderBook.initialize(marketRegistry.address)
     const mockedOrderBook = await smockit(orderBook)
 
     const exchangeFactory = await ethers.getContractFactory("Exchange")
     const exchange = (await exchangeFactory.deploy()) as Exchange
-    await exchange.initialize(
-        mockedMarketRegistry.address,
-        mockedOrderBook.address,
-        clearingHouseConfig.address,
-        insuranceFund.address,
-    )
+    await exchange.initialize(mockedMarketRegistry.address, mockedOrderBook.address, clearingHouseConfig.address)
     const mockedExchange = await smockit(exchange)
 
     const accountBalanceFactory = await ethers.getContractFactory("AccountBalance")
@@ -331,6 +329,7 @@ export async function mockedClearingHouseFixture(): Promise<MockedClearingHouseF
         mockedUniV3Factory.address,
         mockedExchange.address,
         mockedAccountBalance.address,
+        insuranceFund.address,
     )
     return {
         clearingHouse,

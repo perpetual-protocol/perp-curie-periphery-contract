@@ -20,8 +20,9 @@
   ],
   "scripts": {
     "prepare": "husky install",
-    "typechain": "npm run typechain-openzeppelin",
+    "typechain": "npm run typechain-openzeppelin & npm run typechain-perp-oracle",
     "typechain-openzeppelin": "typechain --target ethers-v5 --out-dir ./typechain/openzeppelin ./node_modules/@openzeppelin/contracts/build/contracts/**/*.json",
+    "typechain-perp-oracle": "typechain --target ethers-v5 --out-dir ./typechain/perp-oracle ./node_modules/@perp/perp-oracle-contract/artifacts/contracts/**/*.json",
     "clean": "rm -rf typechain/ && rm -rf artifacts/ && rm -rf cache/ && npm run clean-dbg",
     "clean-dbg": "find node_modules/@perp/curie-contract/artifacts/contracts -name '*.dbg.json' -delete",
     "test": "hardhat test",
@@ -39,6 +40,7 @@
     "prepack": "ts-node --files scripts/prepack.ts"
   },
   "devDependencies": {
+    "@chainlink/contracts": "0.1.7",
     "@eth-optimism/smock": "1.1.4",
     "@ethereumjs/block": "3.3.0",
     "@ethereumjs/blockchain": "5.3.0",
