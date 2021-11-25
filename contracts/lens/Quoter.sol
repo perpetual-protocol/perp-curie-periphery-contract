@@ -53,6 +53,7 @@ contract Quoter is IUniswapV3SwapCallback {
         // Q_ZI: zero input
         require(params.amount > 0, "Q_ZI");
 
+        // getMarketInfo will revert with MR_PNE if pool not exists
         IMarketRegistry.MarketInfo memory marketInfo = IMarketRegistry(marketRegistry).getMarketInfo(params.baseToken);
         address pool = marketInfo.pool;
 
