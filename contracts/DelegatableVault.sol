@@ -44,6 +44,9 @@ contract DelegatableVault is SafeOwnable, DelegatableVaultStorageV1 {
     ) external initializer {
         // DV_CHNC: ClearingHouse address is not contract
         require(clearingHouseArg.isContract(), "DV_CHNC");
+
+        __SafeOwnable_init();
+
         _clearingHouse = clearingHouseArg;
 
         _fundOwner = fundOwnerArg;
