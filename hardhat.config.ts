@@ -96,7 +96,7 @@ const config: HardhatUserConfig = {
         alwaysGenerateOverloads: false,
         // there would be an error "MalformedAbiError: Not a valid ABI" since typechain doesn't recognize xxx.dbg.json,
         // so we must run "npm run clean-dbg" manually to remove those files
-        externalArtifacts: ["./node_modules/@perp/lushan/artifacts/contracts/**/*.json"],
+        externalArtifacts: ["./node_modules/@perp/curie-contract/artifacts/contracts/**/*.json"],
     },
     dependencyCompiler: {
         // We have to compile from source since UniswapV3 doesn't provide artifacts in their npm package
@@ -105,9 +105,13 @@ const config: HardhatUserConfig = {
     external: {
         contracts: [
             {
-                // https://github.com/wighawag/hardhat-deploy#access-to-artifacts-non-deployed-contract-code-and-abi
-                // ethers.getContractFactory(artifactName) can read artifacts from @perp/lushan
-                artifacts: "node_modules/@perp/lushan/artifacts",
+                artifacts: "node_modules/@openzeppelin/contracts/build",
+            },
+            {
+                artifacts: "node_modules/@perp/perp-oracle-contract/artifacts",
+            },
+            {
+                artifacts: "node_modules/@perp/curie-contract/artifacts",
             },
         ],
     },

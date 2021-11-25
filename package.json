@@ -1,6 +1,6 @@
 {
   "name": "@perp/curie-periphery",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Perpetual Protocol Curie (V2) periphery contracts",
   "license": "GPL-2.0-or-later",
   "author": {
@@ -15,6 +15,7 @@
   "main": "index.js",
   "files": [
     "artifacts/contracts/",
+    "contracts/",
     "metadata/"
   ],
   "scripts": {
@@ -22,7 +23,7 @@
     "typechain": "npm run typechain-openzeppelin",
     "typechain-openzeppelin": "typechain --target ethers-v5 --out-dir ./typechain/openzeppelin ./node_modules/@openzeppelin/contracts/build/contracts/**/*.json",
     "clean": "rm -rf typechain/ && rm -rf artifacts/ && rm -rf cache/ && npm run clean-dbg",
-    "clean-dbg": "find node_modules/@perp/lushan/artifacts/contracts -name '*.dbg.json' -delete",
+    "clean-dbg": "find node_modules/@perp/curie-contract/artifacts/contracts -name '*.dbg.json' -delete",
     "test": "hardhat test",
     "build": "npm run typechain && hardhat compile",
     "lint": "npm run lint-contracts && npm run lint-tests",
@@ -54,7 +55,8 @@
     "@openzeppelin/contracts": "3.4.0",
     "@openzeppelin/contracts-upgradeable": "3.4.2",
     "@openzeppelin/hardhat-upgrades": "1.10.0",
-    "@perp/lushan": "file:../perp-lushan",
+    "@perp/curie-contract": "1.0.1",
+    "@perp/perp-oracle-contract": "0.1.2",
     "@tenderly/hardhat-tenderly": "1.0.13",
     "@typechain/ethers-v5": "7.0.0",
     "@typechain/hardhat": "2.3.1",

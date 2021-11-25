@@ -9,10 +9,10 @@ import { IUniswapV3SwapCallback } from "@uniswap/v3-core/contracts/interfaces/ca
 import { FullMath } from "@uniswap/v3-core/contracts/libraries/FullMath.sol";
 import { SafeMath } from "@openzeppelin/contracts/math/SafeMath.sol";
 import { SignedSafeMath } from "@openzeppelin/contracts/math/SignedSafeMath.sol";
-import { PerpSafeCast } from "@perp/lushan/contracts/lib/PerpSafeCast.sol";
-import { PerpMath } from "@perp/lushan/contracts/lib/PerpMath.sol";
-import { SwapMath } from "@perp/lushan/contracts/lib/SwapMath.sol";
-import { IMarketRegistry } from "@perp/lushan/contracts/interface/IMarketRegistry.sol";
+import { PerpSafeCast } from "@perp/curie-contract/contracts/lib/PerpSafeCast.sol";
+import { PerpMath } from "@perp/curie-contract/contracts/lib/PerpMath.sol";
+import { SwapMath } from "@perp/curie-contract/contracts/lib/SwapMath.sol";
+import { IMarketRegistry } from "@perp/curie-contract/contracts/interface/IMarketRegistry.sol";
 
 /// @title Provides quotes for swaps
 /// @notice Allows getting the expected amount out or amount in for a given swap without executing the swap
