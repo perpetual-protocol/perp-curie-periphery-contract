@@ -4,9 +4,9 @@ pragma abicoder v2;
 
 import { AddressUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol";
 import { SafeMathUpgradeable } from "@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
-import { SafeOwnable } from "@perp/lushan/contracts/base/SafeOwnable.sol";
-import { IClearingHouse } from "@perp/lushan/contracts/interface/IClearingHouse.sol";
-import { IVault } from "@perp/lushan/contracts/interface/IVault.sol";
+import { SafeOwnable } from "@perp/curie-contract/contracts/base/SafeOwnable.sol";
+import { IClearingHouse } from "@perp/curie-contract/contracts/interface/IClearingHouse.sol";
+import { IVault } from "@perp/curie-contract/contracts/interface/IVault.sol";
 import { DelegatableVaultStorageV1 } from "./storage/DelegatableVaultStorage.sol";
 import {
     SafeERC20Upgradeable,
