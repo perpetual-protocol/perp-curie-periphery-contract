@@ -1,0 +1,14 @@
+{
+    "chainId": 69,
+    "contracts": {
+        "DelegatableVault001": {
+            "address": "0xfbff903e4Dd856E9f1c04088fD22bc184C0dF59E",
+            "createdBlockNumber": 143049,
+            "name": "contracts/DelegatableVault.sol:DelegatableVault"
+        }
+    },
+    "externalContracts": {
+        "DefaultProxyAdmin": "0xBD7178CBF841c5f8025A01f5422029a36222d4C0"
+    },
+    "network": "optimismKovan"
+}

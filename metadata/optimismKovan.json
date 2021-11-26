@@ -1,4 +1,5 @@
 {
+    "chainId": 69,
     "contracts": {
         "Multicall2": {
             "address": "0xA68EB6bc537fC992901474c6Bb064aEA4C940610",
@@ -10,6 +11,8 @@
             "createdBlockNumber": 136274,
             "name": "contracts/lens/Quoter.sol:Quoter"
         }
+    },
+    "externalContracts": {
     },
     "network": "optimismKovan"
 }
