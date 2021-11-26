@@ -107,7 +107,7 @@ describe("DelegatableVault test", () => {
             await delegatableVault.connect(fundOwner).deposit(usdc.address, depositAmount)
         })
 
-        it("open/close position and verify delegatableVault's position size", async () => {
+        it("open/close position and verify delegatableVault's position size by fundManager", async () => {
             await delegatableVault.connect(fundManager).openPosition({
                 baseToken: baseToken.address,
                 isBaseToQuote: false,
@@ -132,7 +132,7 @@ describe("DelegatableVault test", () => {
             expect(await accountBalance.getTakerPositionSize(delegatableVault.address, baseToken.address)).eq("0")
         })
 
-        it("add/remove liquidity and verify delegatableVault's open orders", async () => {
+        it("add/remove liquidity and verify delegatableVault's open orders by fundManager", async () => {
             const lowerTick = 50000
             const upperTick = 50200
 
@@ -171,15 +171,86 @@ describe("DelegatableVault test", () => {
             openOrder = await orderBook.getOpenOrder(delegatableVault.address, baseToken.address, lowerTick, upperTick)
             expect(openOrder.liquidity).eq(0)
         })
+
+        it("open/close position and verify delegatableVault's position size by fundOwner", async () => {
+            await delegatableVault.connect(fundOwner).openPosition({
+                baseToken: baseToken.address,
+                isBaseToQuote: false,
+                isExactInput: false,
+                oppositeAmountBound: 0,
+                amount: parseEther("1"),
+                sqrtPriceLimitX96: 0,
+                deadline: ethers.constants.MaxUint256,
+                referralCode: ethers.constants.HashZero,
+            })
+            expect(await accountBalance.getTakerPositionSize(delegatableVault.address, baseToken.address)).eq(
+                parseEther("1"),
+            )
+
+            await delegatableVault.connect(fundOwner).closePosition({
+                baseToken: baseToken.address,
+                sqrtPriceLimitX96: 0,
+                oppositeAmountBound: 0,
+                deadline: ethers.constants.MaxUint256,
+                referralCode: ethers.constants.HashZero,
+            })
+            expect(await accountBalance.getTakerPositionSize(delegatableVault.address, baseToken.address)).eq("0")
+        })
+
+        it("add/remove liquidity and verify delegatableVault's open orders by fundOwner", async () => {
+            const lowerTick = 50000
+            const upperTick = 50200
+
+            // add liquidity below current price
+            await delegatableVault.connect(fundOwner).addLiquidity({
+                baseToken: baseToken.address,
+                base: 0,
+                quote: parseUnits("10000", await quoteToken.decimals()),
+                lowerTick: lowerTick,
+                upperTick: upperTick,
+                minBase: 0,
+                minQuote: 0,
+                useTakerBalance: false,
+                deadline: ethers.constants.MaxUint256,
+            })
+
+            let openOrder = await orderBook.getOpenOrder(
+                delegatableVault.address,
+                baseToken.address,
+                lowerTick,
+                upperTick,
+            )
+            expect(openOrder.liquidity).eq("81689571696303801037492")
+
+            // remove full liquidity
+            await delegatableVault.connect(fundOwner).removeLiquidity({
+                baseToken: baseToken.address,
+                lowerTick: lowerTick,
+                upperTick: upperTick,
+                liquidity: openOrder.liquidity,
+                minBase: 0,
+                minQuote: 0,
+                deadline: ethers.constants.MaxUint256,
+            })
+
+            openOrder = await orderBook.getOpenOrder(delegatableVault.address, baseToken.address, lowerTick, upperTick)
+            expect(openOrder.liquidity).eq(0)
+        })
     })
 
     it("force error, deposit not allow except fundOwner", async () => {
         await expect(delegatableVault.connect(fundManager).deposit(usdc.address, depositAmount)).to.be.reverted
     })
 
-    it("force error, withdraw not allow except fundOwner", async () => {
+    it("force error, fundManager can't withdraw", async () => {
         await delegatableVault.connect(fundOwner).deposit(usdc.address, depositAmount)
 
         await expect(delegatableVault.connect(fundManager).withdraw(usdc.address, depositAmount)).to.be.reverted
+    })
+
+    it("force error, contract owner can't withdraw", async () => {
+        await delegatableVault.connect(fundOwner).deposit(usdc.address, depositAmount)
+
+        await expect(delegatableVault.connect(admin).withdraw(usdc.address, depositAmount)).to.be.reverted
     })
 })
