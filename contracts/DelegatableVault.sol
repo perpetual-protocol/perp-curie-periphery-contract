@@ -8,12 +8,14 @@ import { SafeOwnable } from "@perp/curie-contract/contracts/base/SafeOwnable.sol
 import { IClearingHouse } from "@perp/curie-contract/contracts/interface/IClearingHouse.sol";
 import { IVault } from "@perp/curie-contract/contracts/interface/IVault.sol";
 import { DelegatableVaultStorageV1 } from "./storage/DelegatableVaultStorage.sol";
+import { Multicall2 } from "./lens/Multicall2.sol";
+
 import {
     SafeERC20Upgradeable,
     IERC20Upgradeable
 } from "@openzeppelin/contracts-upgradeable/token/ERC20/SafeERC20Upgradeable.sol";
 
-contract DelegatableVault is SafeOwnable, DelegatableVaultStorageV1 {
+contract DelegatableVault is SafeOwnable, Multicall2, DelegatableVaultStorageV1 {
     using AddressUpgradeable for address;
     using SafeMathUpgradeable for uint256;
 
