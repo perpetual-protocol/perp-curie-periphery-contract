@@ -25,27 +25,41 @@ const config: HardhatUserConfig = {
 export ARBITRUM_RINKEBY_WEB3_ENDPOINT="YOUR_RPC_ENDPOINT"
 export ARBITRUM_RINKEBY_DEPLOYER_MNEMONIC="YOUR_MNEMONIC"
 
-npm run deploy:arbitrumRinkeby
+# Deploy lens contracts
+npm run deploy:optimismKovan
+
+# Deploy delegatable vaults
+npm run deployDV:optimismKovan
+
+# Run the specific deployment script
+hardhat deploy --network optimismKovan --tags Quoter
+# or
+hardhat deploy --network optimismKovan --tags DelegatableVault001
 ```
 
 3. Update CHANGELOG.md
 
 4. Update `version` of `package.json` and `package-lock.json`
 
-5. Verify contracts on Etherscan and Tenderly
+5. Verify contracts on Etherscan
 ```bash
 export ETHERSCAN_API_KEY="YOUR_ETHERSCAN_API_KEY"
 
-npm run verify:arbitrumRinkeby
+npm run etherscan:arbitrumRinkeby
 ```
 
-6. Verify what's included in the packed npm package
+6. Verify contracts on Tenderly
+```bash
+npm run tenderly:arbitrumRinkeby
+```
+
+7. Verify what's included in the packed npm package
 
 ```bash
 npm pack
 ```
 
-7. Publish npm package
+8. Publish npm package
 
 ```bash
 git tag vX.X.X
