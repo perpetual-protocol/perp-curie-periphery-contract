@@ -1,6 +1,6 @@
 {
   "name": "@perp/curie-periphery",
-  "version": "1.0.2-staging",
+  "version": "1.0.2",
   "description": "Perpetual Protocol Curie (V2) periphery contracts",
   "license": "GPL-2.0-or-later",
   "author": {
@@ -54,7 +54,7 @@
     "@openzeppelin/contracts": "3.4.0",
     "@openzeppelin/contracts-upgradeable": "3.4.2",
     "@openzeppelin/hardhat-upgrades": "1.10.0",
-    "@perp/curie-contract": "1.0.2-staging",
+    "@perp/curie-contract": "1.0.2",
     "@perp/perp-oracle-contract": "0.1.2",
     "@tenderly/hardhat-tenderly": "1.0.13",
     "@typechain/ethers-v5": "7.0.0",
