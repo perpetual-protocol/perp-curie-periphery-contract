@@ -1,6 +1,6 @@
 {
   "name": "@perp/curie-periphery",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Perpetual Protocol Curie (V2) periphery contracts",
   "license": "GPL-2.0-or-later",
   "author": {
@@ -37,12 +37,15 @@
     "deployDV:optimism": "hardhat deploy --network optimism --tags delegatable-vaults",
     "deployDV:optimismKovan": "hardhat deploy --network optimismKovan --tags delegatable-vaults",
     "deployDV:arbitrumRinkeby": "hardhat deploy --network arbitrumRinkeby --tags delegatable-vaults",
+    "system-test:optimism": "hardhat deploy --network optimism --tags system-test",
+    "system-test:optimismKovan": "hardhat deploy --network optimismKovan --tags system-test",
+    "system-test:arbitrumRinkeby": "hardhat deploy --network arbitrumRinkeby --tags system-test",
     "tenderly:optimism": "hardhat --network optimism run scripts/tenderly.ts",
     "tenderly:optimismKovan": "hardhat --network optimismKovan run scripts/tenderly.ts",
-    "tenderly:rinkeby": "hardhat --network rinkeby run scripts/tenderly.ts",
+    "tenderly:arbitrumRinkeby": "hardhat --network arbitrumRinkeby run scripts/tenderly.ts",
     "etherscan:optimism": "hardhat --network optimism run scripts/etherscan.ts",
     "etherscan:optimismKovan": "hardhat --network optimismKovan run scripts/etherscan.ts",
-    "etherscan:rinkeby": "hardhat --network rinkeby run scripts/etherscan.ts",
+    "etherscan:arbitrumRinkeby": "hardhat --network arbitrumRinkeby run scripts/etherscan.ts",
     "prepack": "ts-node --files scripts/prepack.ts"
   },
   "devDependencies": {
@@ -60,7 +63,7 @@
     "@openzeppelin/contracts": "3.4.0",
     "@openzeppelin/contracts-upgradeable": "3.4.2",
     "@openzeppelin/hardhat-upgrades": "1.10.0",
-    "@perp/curie-contract": "1.0.1",
+    "@perp/curie-contract": "1.0.2",
     "@perp/perp-oracle-contract": "0.1.2",
     "@tenderly/hardhat-tenderly": "1.0.13",
     "@typechain/ethers-v5": "7.0.0",
