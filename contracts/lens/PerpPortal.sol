@@ -71,11 +71,11 @@ contract PerpPortal {
         uint256 totalPositionValue = IAccountBalance(_accountBalance).getTotalAbsPositionValue(trader);
         uint24 mmRatio = IClearingHouseConfig(_clearingHouseConfig).getMmRatio();
 
-        int256 magic = positionSize > 0 ? uint256(1e6 - mmRatio).toInt256() : uint256(1e6 + mmRatio).toInt256();
+        int256 multiplier = positionSize > 0 ? uint256(1e6 - mmRatio).toInt256() : uint256(1e6 + mmRatio).toInt256();
         int256 liquidationPrice =
             indexPrice.toInt256().sub(
                 accountValue.sub(totalPositionValue.mulRatio(mmRatio).toInt256()).mul(1e18).div(
-                    PerpMath.mulDiv(positionSize, magic, 1e6)
+                    PerpMath.mulDiv(positionSize, multiplier, 1e6)
                 )
             );
 
