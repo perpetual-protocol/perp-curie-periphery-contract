@@ -78,8 +78,12 @@ const config: HardhatUserConfig = {
             chainId: ChainId.OPTIMISM_CHAIN_ID,
         },
     },
-    etherscan: {
-        apiKey: ETHERSCAN_API_KEY,
+    namedAccounts: {
+        deployer: 0, // 0 means ethers.getSigners[0]
+        gnosisSafeAddress: {
+            // It's EOA for now to test easier.
+            [ChainId.OPTIMISM_KOVAN_CHAIN_ID]: "0x374152052700eDf29Fc2D4ed5eF93cA7d3fdF38e",
+        },
     },
     typechain: {
         outDir: "typechain",
@@ -106,9 +110,6 @@ const config: HardhatUserConfig = {
             },
         ],
     },
-    namedAccounts: {
-        deployer: 0, // 0 means ethers.getSigners[0]
-    },
     contractSizer: {
         alphaSort: true,
         runOnCompile: true,
@@ -122,6 +123,9 @@ const config: HardhatUserConfig = {
         jobs: 4,
         timeout: 120000,
         color: true,
+    },
+    etherscan: {
+        apiKey: ETHERSCAN_API_KEY,
     },
     tenderly: {
         project: "curie-v1-0-x",
