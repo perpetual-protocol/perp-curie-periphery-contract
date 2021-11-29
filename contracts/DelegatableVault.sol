@@ -8,16 +8,24 @@ import { SafeOwnable } from "@perp/curie-contract/contracts/base/SafeOwnable.sol
 import { IClearingHouse } from "@perp/curie-contract/contracts/interface/IClearingHouse.sol";
 import { IVault } from "@perp/curie-contract/contracts/interface/IVault.sol";
 import { DelegatableVaultStorageV1 } from "./storage/DelegatableVaultStorage.sol";
-import { Multicall2 } from "./lens/Multicall2.sol";
+import { LowLevelErrorMessage } from "./LowLevelErrorMessage.sol";
 
 import {
     SafeERC20Upgradeable,
     IERC20Upgradeable
 } from "@openzeppelin/contracts-upgradeable/token/ERC20/SafeERC20Upgradeable.sol";
 
-contract DelegatableVault is SafeOwnable, Multicall2, DelegatableVaultStorageV1 {
+contract DelegatableVault is SafeOwnable, LowLevelErrorMessage, DelegatableVaultStorageV1 {
     using AddressUpgradeable for address;
     using SafeMathUpgradeable for uint256;
+
+    struct Call {
+        bytes callData;
+    }
+    struct Result {
+        bool success;
+        bytes returnData;
+    }
 
     //
     // MODIFIER
@@ -53,10 +61,20 @@ contract DelegatableVault is SafeOwnable, Multicall2, DelegatableVaultStorageV1 
 
         _fundOwner = fundOwnerArg;
         _fundManager = fundManagerArg;
+
+        // only enable addLiquidity, removeLiquidity, openPosition and closePosition when initialize for now.
+        whiteFunctionMap[IClearingHouse.addLiquidity.selector] = true;
+        whiteFunctionMap[IClearingHouse.removeLiquidity.selector] = true;
+        whiteFunctionMap[IClearingHouse.openPosition.selector] = true;
+        whiteFunctionMap[IClearingHouse.closePosition.selector] = true;
     }
 
     function setFundManager(address fundManagerArg) external onlyOwner {
         _fundManager = fundManagerArg;
+    }
+
+    function setWhiteFunction(bytes4 functionSelector, bool enable) external onlyOwner {
+        whiteFunctionMap[functionSelector] = enable;
     }
 
     //
@@ -108,5 +126,25 @@ contract DelegatableVault is SafeOwnable, Multicall2, DelegatableVaultStorageV1 
         returns (uint256 deltaAvailableBase, uint256 deltaAvailableQuote)
     {
         return IClearingHouse(_clearingHouse).closePosition(params);
+    }
+
+    function aggregate(bytes[] calldata calls)
+        external
+        onlyFundOwnerOrFundManager
+        returns (uint256 blockNumber, bytes[] memory returnData)
+    {
+        blockNumber = block.number;
+        returnData = new bytes[](calls.length);
+        for (uint256 i = 0; i < calls.length; i++) {
+            // DV_FNIW: function not in white list
+            require(whiteFunctionMap[_getSelector(calls[i])], "DV_FNIW");
+            (bool success, bytes memory ret) = _clearingHouse.call(calls[i]);
+            require(success, _getRevertMessage(ret));
+            returnData[i] = ret;
+        }
+    }
+
+    function _getSelector(bytes memory data) private pure returns (bytes4) {
+        return data[0] | (bytes4(data[1]) >> 8) | (bytes4(data[2]) >> 16) | (bytes4(data[3]) >> 24);
     }
 }

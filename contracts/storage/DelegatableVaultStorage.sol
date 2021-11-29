@@ -9,4 +9,6 @@ abstract contract DelegatableVaultStorageV1 {
 
     address internal _fundOwner;
     address internal _fundManager;
+
+    mapping(bytes4 => bool) public whiteFunctionMap;
 }

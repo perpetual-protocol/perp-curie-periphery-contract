@@ -238,6 +238,180 @@ describe("DelegatableVault test", () => {
         })
     })
 
+    describe("multicall", () => {
+        beforeEach(async () => {
+            await delegatableVault.connect(fundOwner).deposit(usdc.address, depositAmount)
+        })
+
+        it("open 1 position and reduce half of position by fundManager", async () => {
+            const data1 = clearingHouse.interface.encodeFunctionData("openPosition", [
+                {
+                    baseToken: baseToken.address,
+                    isBaseToQuote: false,
+                    isExactInput: false,
+                    oppositeAmountBound: 0,
+                    amount: parseEther("1"),
+                    sqrtPriceLimitX96: 0,
+                    deadline: ethers.constants.MaxUint256,
+                    referralCode: ethers.constants.HashZero,
+                },
+            ])
+
+            const data2 = clearingHouse.interface.encodeFunctionData("openPosition", [
+                {
+                    baseToken: baseToken.address,
+                    isBaseToQuote: true,
+                    isExactInput: true,
+                    oppositeAmountBound: 0,
+                    amount: parseEther("0.5"),
+                    sqrtPriceLimitX96: 0,
+                    deadline: ethers.constants.MaxUint256,
+                    referralCode: ethers.constants.HashZero,
+                },
+            ])
+
+            await delegatableVault.connect(fundManager).aggregate([data1, data2])
+
+            expect(await accountBalance.getTakerPositionSize(delegatableVault.address, baseToken.address)).eq(
+                parseEther("0.5"),
+            )
+        })
+
+        it("open 1 position and reduce half of position by fundOwner", async () => {
+            const data1 = clearingHouse.interface.encodeFunctionData("openPosition", [
+                {
+                    baseToken: baseToken.address,
+                    isBaseToQuote: false,
+                    isExactInput: false,
+                    oppositeAmountBound: 0,
+                    amount: parseEther("1"),
+                    sqrtPriceLimitX96: 0,
+                    deadline: ethers.constants.MaxUint256,
+                    referralCode: ethers.constants.HashZero,
+                },
+            ])
+
+            const data2 = clearingHouse.interface.encodeFunctionData("openPosition", [
+                {
+                    baseToken: baseToken.address,
+                    isBaseToQuote: true,
+                    isExactInput: true,
+                    oppositeAmountBound: 0,
+                    amount: parseEther("0.5"),
+                    sqrtPriceLimitX96: 0,
+                    deadline: ethers.constants.MaxUint256,
+                    referralCode: ethers.constants.HashZero,
+                },
+            ])
+
+            await delegatableVault.connect(fundOwner).aggregate([data1, data2])
+
+            expect(await accountBalance.getTakerPositionSize(delegatableVault.address, baseToken.address)).eq(
+                parseEther("0.5"),
+            )
+        })
+
+        it("cannot invoke openPosition after removed from white list and add back", async () => {
+            await delegatableVault
+                .connect(admin)
+                .setWhiteFunction(clearingHouse.interface.getSighash("openPosition"), false)
+
+            const data1 = clearingHouse.interface.encodeFunctionData("openPosition", [
+                {
+                    baseToken: baseToken.address,
+                    isBaseToQuote: false,
+                    isExactInput: false,
+                    oppositeAmountBound: 0,
+                    amount: parseEther("1"),
+                    sqrtPriceLimitX96: 0,
+                    deadline: ethers.constants.MaxUint256,
+                    referralCode: ethers.constants.HashZero,
+                },
+            ])
+
+            await expect(delegatableVault.connect(fundManager).aggregate([data1])).to.be.revertedWith("DV_FNIW")
+
+            await delegatableVault
+                .connect(admin)
+                .setWhiteFunction(clearingHouse.interface.getSighash("openPosition"), true)
+
+            await delegatableVault.connect(fundOwner).aggregate([data1])
+
+            expect(await accountBalance.getTakerPositionSize(delegatableVault.address, baseToken.address)).eq(
+                parseEther("1"),
+            )
+        })
+
+        it("force error, multicall not allow except fundOwner and fundManager", async () => {
+            const data1 = clearingHouse.interface.encodeFunctionData("openPosition", [
+                {
+                    baseToken: baseToken.address,
+                    isBaseToQuote: false,
+                    isExactInput: false,
+                    oppositeAmountBound: 0,
+                    amount: parseEther("1"),
+                    sqrtPriceLimitX96: 0,
+                    deadline: ethers.constants.MaxUint256,
+                    referralCode: ethers.constants.HashZero,
+                },
+            ])
+
+            const data2 = clearingHouse.interface.encodeFunctionData("openPosition", [
+                {
+                    baseToken: baseToken.address,
+                    isBaseToQuote: true,
+                    isExactInput: true,
+                    oppositeAmountBound: 0,
+                    amount: parseEther("0.5"),
+                    sqrtPriceLimitX96: 0,
+                    deadline: ethers.constants.MaxUint256,
+                    referralCode: ethers.constants.HashZero,
+                },
+            ])
+
+            await expect(delegatableVault.connect(admin).aggregate([data1, data2])).to.be.reverted
+        })
+
+        it("force error, only functions in whitelist can be invoked through multicall", async () => {
+            const data1 = clearingHouse.interface.encodeFunctionData("openPosition", [
+                {
+                    baseToken: baseToken.address,
+                    isBaseToQuote: false,
+                    isExactInput: false,
+                    oppositeAmountBound: 0,
+                    amount: parseEther("1"),
+                    sqrtPriceLimitX96: 0,
+                    deadline: ethers.constants.MaxUint256,
+                    referralCode: ethers.constants.HashZero,
+                },
+            ])
+            const data2 = clearingHouse.interface.encodeFunctionData("settleAllFunding", [delegatableVault.address])
+
+            await expect(delegatableVault.connect(fundManager).aggregate([data1, data2])).to.be.revertedWith("DV_FNIW")
+        })
+
+        it("force error, cannot withdraw through multicall", async () => {
+            const data1 = clearingHouse.interface.encodeFunctionData("openPosition", [
+                {
+                    baseToken: baseToken.address,
+                    isBaseToQuote: false,
+                    isExactInput: false,
+                    oppositeAmountBound: 0,
+                    amount: parseEther("1"),
+                    sqrtPriceLimitX96: 0,
+                    deadline: ethers.constants.MaxUint256,
+                    referralCode: ethers.constants.HashZero,
+                },
+            ])
+            const data2 = vault.interface.encodeFunctionData("withdraw", [
+                usdc.address,
+                parseUnits("1", await usdc.decimals()),
+            ])
+
+            await expect(delegatableVault.connect(fundOwner).aggregate([data1, data2])).to.be.revertedWith("DV_FNIW")
+        })
+    })
+
     it("force error, deposit not allow except fundOwner", async () => {
         await expect(delegatableVault.connect(fundManager).deposit(usdc.address, depositAmount)).to.be.reverted
     })
