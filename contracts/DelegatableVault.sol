@@ -109,16 +109,4 @@ contract DelegatableVault is SafeOwnable, Multicall2, DelegatableVaultStorageV1 
     {
         return IClearingHouse(_clearingHouse).closePosition(params);
     }
-
-    function cancelExcessOrders(
-        address maker,
-        address baseToken,
-        bytes32[] calldata orderIds
-    ) external onlyFundOwnerOrFundManager {
-        IClearingHouse(_clearingHouse).cancelExcessOrders(maker, baseToken, orderIds);
-    }
-
-    function cancelAllExcessOrders(address maker, address baseToken) external onlyFundOwnerOrFundManager {
-        IClearingHouse(_clearingHouse).cancelAllExcessOrders(maker, baseToken);
-    }
 }
