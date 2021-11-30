@@ -128,7 +128,7 @@ const config: HardhatUserConfig = {
         apiKey: ETHERSCAN_API_KEY,
     },
     tenderly: {
-        project: "curie-v1-0-x",
+        project: "curie-periphery-1-x-staging",
         username: "perpprotocol",
     },
 }

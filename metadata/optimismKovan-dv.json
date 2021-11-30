@@ -1,9 +1,9 @@
 {
     "chainId": 69,
     "contracts": {
-        "DelegatableVault001": {
-            "address": "0x4eeE2394337F267b07B3c42fAd7617f01DC44478",
-            "createdBlockNumber": 161103,
+        "DelegatableVaultMaker": {
+            "address": "0xA45D46d5E0330120f0BDe75651d6455d7139755D",
+            "createdBlockNumber": 168485,
             "name": "contracts/DelegatableVault.sol:DelegatableVault"
         }
     },

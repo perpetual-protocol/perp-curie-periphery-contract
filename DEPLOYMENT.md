@@ -45,12 +45,12 @@ hardhat deploy --network optimismKovan --tags DelegatableVault001
 ```bash
 export ETHERSCAN_API_KEY="YOUR_ETHERSCAN_API_KEY"
 
-npm run etherscan:arbitrumRinkeby
+npm run etherscan:optimismKovan
 ```
 
 6. Verify contracts on Tenderly
 ```bash
-npm run tenderly:arbitrumRinkeby
+npm run tenderly:optimismKovan
 ```
 
 7. Verify what's included in the packed npm package
@@ -62,8 +62,9 @@ npm pack
 8. Publish npm package
 
 ```bash
+# push tag to trigger "Publish NPM package" workflow
 git tag vX.X.X
-npm publish --access public
+git push origin --tags
 
 # create GitHub release
 gh release create vX.X.X -t "vX.X.X" -F CHANGELOG.md
