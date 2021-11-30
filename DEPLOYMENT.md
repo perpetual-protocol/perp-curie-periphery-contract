@@ -45,12 +45,12 @@ hardhat deploy --network optimismKovan --tags DelegatableVault001
 ```bash
 export ETHERSCAN_API_KEY="YOUR_ETHERSCAN_API_KEY"
 
-npm run etherscan:arbitrumRinkeby
+npm run etherscan:optimismKovan
 ```
 
 6. Verify contracts on Tenderly
 ```bash
-npm run tenderly:arbitrumRinkeby
+npm run tenderly:optimismKovan
 ```
 
 7. Verify what's included in the packed npm package

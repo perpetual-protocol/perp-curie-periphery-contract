@@ -5,6 +5,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.0-staging] - 2021-11-30
+
+- Deploy a new `DelegatableVaultMaker` contract on **Optimism Kovan**.
+- Deploy a new `PerpPortal` contract on **Optimism Kovan**.
+
+## [1.0.2] - 2021-11-27
+
+- Deploy a new `Quoter` contract on **Optimism** based on `@perp/curie-contract#1.0.2`.
+- Deploy a new `Multicall2` contract on **Optimism**.
+
+## [1.0.2-staging] - 2021-11-27
+
+- Deploy a new `Quoter` contract on **Optimism Kovan** based on `@perp/curie-contract#1.0.2-staging`.
+- Deploy a new `Multicall2` contract on **Optimism Kovan**.
+
 ## [1.0.1] - 2021-11-25
 
 - Deploy a new `Quoter` contract on **Optimism** based on `@perp/curie-contract#1.0.1`.
