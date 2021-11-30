@@ -10,8 +10,7 @@ import "hardhat-dependency-compiler"
 import "hardhat-deploy"
 import "hardhat-deploy-ethers"
 import "hardhat-gas-reporter"
-import { HardhatUserConfig, task } from "hardhat/config"
-import { verifyAndPushContractOnEtherscan, verifyAndPushContractOnTenderly } from "./scripts/verify"
+import { HardhatUserConfig } from "hardhat/config"
 
 dotenv.config()
 
@@ -32,14 +31,6 @@ const OPTIMISM_KOVAN_WEB3_ENDPOINT = process.env.OPTIMISM_KOVAN_WEB3_ENDPOINT ||
 const OPTIMISM_DEPLOYER_MNEMONIC = process.env.OPTIMISM_DEPLOYER_MNEMONIC || ""
 const OPTIMISM_WEB3_ENDPOINT = process.env.OPTIMISM_WEB3_ENDPOINT || ""
 const ETHERSCAN_API_KEY = process.env.ETHERSCAN_API_KEY || ""
-
-task("verifyContract", "Contract verification and push").setAction(async ({}, hre) => {
-    console.log("Start to verify contract and push on Etherscan...")
-    await verifyAndPushContractOnEtherscan(hre)
-
-    console.log("Start to verify contract and push on Tenderly...")
-    await verifyAndPushContractOnTenderly(hre)
-})
 
 const config: HardhatUserConfig = {
     solidity: {
@@ -87,8 +78,12 @@ const config: HardhatUserConfig = {
             chainId: ChainId.OPTIMISM_CHAIN_ID,
         },
     },
-    etherscan: {
-        apiKey: ETHERSCAN_API_KEY,
+    namedAccounts: {
+        deployer: 0, // 0 means ethers.getSigners[0]
+        gnosisSafeAddress: {
+            // It's EOA for now to test easier.
+            [ChainId.OPTIMISM_KOVAN_CHAIN_ID]: "0x374152052700eDf29Fc2D4ed5eF93cA7d3fdF38e",
+        },
     },
     typechain: {
         outDir: "typechain",
@@ -115,9 +110,6 @@ const config: HardhatUserConfig = {
             },
         ],
     },
-    namedAccounts: {
-        deployer: 0, // 0 means ethers.getSigners[0]
-    },
     contractSizer: {
         alphaSort: true,
         runOnCompile: true,
@@ -131,6 +123,9 @@ const config: HardhatUserConfig = {
         jobs: 4,
         timeout: 120000,
         color: true,
+    },
+    etherscan: {
+        apiKey: ETHERSCAN_API_KEY,
     },
     tenderly: {
         project: "curie-v1-0-x",

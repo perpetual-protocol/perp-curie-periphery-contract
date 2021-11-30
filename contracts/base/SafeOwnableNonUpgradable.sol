@@ -3,7 +3,7 @@ pragma solidity 0.7.6;
 
 import { Context } from "@openzeppelin/contracts/utils/Context.sol";
 
-abstract contract SafeOwnable is Context {
+abstract contract SafeOwnableNonUpgradable is Context {
     address private _owner;
     address private _candidate;
 

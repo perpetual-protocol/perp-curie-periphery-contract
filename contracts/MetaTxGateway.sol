@@ -4,11 +4,11 @@ pragma solidity 0.7.6;
 import { Address } from "@openzeppelin/contracts/utils/Address.sol";
 import { SafeMath } from "@openzeppelin/contracts/math/SafeMath.sol";
 import { LowLevelErrorMessage } from "./LowLevelErrorMessage.sol";
-import { SafeOwnable } from "./base/SafeOwnable.sol";
+import { SafeOwnableNonUpgradable } from "./base/SafeOwnableNonUpgradable.sol";
 
 // this is functionally identical to
 // https://github.com/bcnmy/metatx-standard/blob/master/src/contracts/EIP712MetaTransaction.sol
-contract MetaTxGateway is SafeOwnable, LowLevelErrorMessage {
+contract MetaTxGateway is SafeOwnableNonUpgradable, LowLevelErrorMessage {
     using Address for address;
     using SafeMath for uint256;
 
