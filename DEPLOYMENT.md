@@ -62,8 +62,9 @@ npm pack
 8. Publish npm package
 
 ```bash
+# push tag to trigger "Publish NPM package" workflow
 git tag vX.X.X
-npm publish --access public
+git push origin --tags
 
 # create GitHub release
 gh release create vX.X.X -t "vX.X.X" -F CHANGELOG.md
