@@ -1,6 +1,6 @@
 import fs from "fs"
 import hre from "hardhat"
-import { resolve } from "path"
+import { join, resolve } from "path"
 
 const DV_DEPLOYMENT_KEY_PREFIX = "DelegatableVault"
 
@@ -12,7 +12,12 @@ interface ContractInfo {
 
 export function getContractsInfo(network: String): Array<ContractInfo> {
     const contractsInfo = []
-    const metadataFiles = [`./metadata/${network}.json`, `./metadata/${network}-dv.json`]
+    const dfJsonFiles = fs
+        .readdirSync(`./metadata/`, "utf8")
+        .filter(f => f.startsWith(`${network}-dv`))
+        .map(x => join("./metadata/", x))
+    const metadataFiles = [`./metadata/${network}.json`].concat(dfJsonFiles)
+
     for (const metadata of metadataFiles) {
         const jsonStr = fs.readFileSync(resolve(metadata), "utf8")
         const { contracts } = JSON.parse(jsonStr)
