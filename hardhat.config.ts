@@ -83,6 +83,7 @@ const config: HardhatUserConfig = {
         gnosisSafeAddress: {
             // It's EOA for now to test easier.
             [ChainId.OPTIMISM_KOVAN_CHAIN_ID]: "0x374152052700eDf29Fc2D4ed5eF93cA7d3fdF38e",
+            [ChainId.OPTIMISM_CHAIN_ID]: "0x801B15C92075D85204d1b23054407DA63cc3105B",
         },
     },
     typechain: {
