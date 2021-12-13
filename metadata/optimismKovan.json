@@ -7,8 +7,8 @@
             "name": "contracts/lens/Multicall2.sol:Multicall2"
         },
         "PerpPortal": {
-            "address": "0xBd0A137080d8b0307bC0d88b74ce48A339F35944",
-            "createdBlockNumber": 168596,
+            "address": "0xbca2103BB202FA9143D0FF45ffd8DaD5c0FE80eF",
+            "createdBlockNumber": 331620,
             "name": "contracts/lens/PerpPortal.sol:PerpPortal"
         },
         "Quoter": {

@@ -31,6 +31,7 @@ const OPTIMISM_KOVAN_WEB3_ENDPOINT = process.env.OPTIMISM_KOVAN_WEB3_ENDPOINT ||
 const OPTIMISM_DEPLOYER_MNEMONIC = process.env.OPTIMISM_DEPLOYER_MNEMONIC || ""
 const OPTIMISM_WEB3_ENDPOINT = process.env.OPTIMISM_WEB3_ENDPOINT || ""
 const ETHERSCAN_API_KEY = process.env.ETHERSCAN_API_KEY || ""
+const TENDERLY_PROJECT_NAME = process.env.TENDERLY_PROJECT_NAME || ""
 
 const config: HardhatUserConfig = {
     solidity: {
@@ -129,7 +130,7 @@ const config: HardhatUserConfig = {
         apiKey: ETHERSCAN_API_KEY,
     },
     tenderly: {
-        project: "curie-periphery-1-x-staging",
+        project: TENDERLY_PROJECT_NAME,
         username: "perpprotocol",
     },
 }
