@@ -7,6 +7,7 @@ import { SafeMathUpgradeable } from "@openzeppelin/contracts-upgradeable/math/Sa
 import { SafeOwnable } from "@perp/curie-contract/contracts/base/SafeOwnable.sol";
 import { IClearingHouse } from "@perp/curie-contract/contracts/interface/IClearingHouse.sol";
 import { IVault } from "@perp/curie-contract/contracts/interface/IVault.sol";
+import { IMerkleRedeem } from "@perp/curie-liquidity-mining/contracts/interface/IMerkleRedeem.sol";
 import { DelegatableVaultStorageV2 } from "./storage/DelegatableVaultStorage.sol";
 import { LowLevelErrorMessage } from "./LowLevelErrorMessage.sol";
 
@@ -97,6 +98,35 @@ contract DelegatableVault is SafeOwnable, LowLevelErrorMessage, DelegatableVault
         SafeERC20Upgradeable.safeTransfer(IERC20Upgradeable(token), msg.sender, amountX10_D);
     }
 
+    function claimWeek(
+        address rewardContract,
+        uint256 _week,
+        uint256 _claimedBalance,
+        bytes32[] calldata _merkleProof
+    ) external onlyFundOwner {
+        IERC20Upgradeable token = IERC20Upgradeable(IMerkleRedeem(rewardContract).getToken());
+
+        uint256 tokenBalanceBefore = token.balanceOf(address(this));
+
+        IMerkleRedeem(rewardContract).claimWeek(address(this), _week, _claimedBalance, _merkleProof);
+
+        uint256 tokenBalanceAfter = token.balanceOf(address(this));
+
+        _transferReward(token, msg.sender, tokenBalanceAfter.sub(tokenBalanceBefore));
+    }
+
+    function claimWeeks(address rewardContract, IMerkleRedeem.Claim[] calldata claims) external onlyFundOwner {
+        IERC20Upgradeable token = IERC20Upgradeable(IMerkleRedeem(rewardContract).getToken());
+
+        uint256 tokenBalanceBefore = token.balanceOf(address(this));
+
+        IMerkleRedeem(rewardContract).claimWeeks(address(this), claims);
+
+        uint256 tokenBalanceAfter = token.balanceOf(address(this));
+
+        _transferReward(token, msg.sender, tokenBalanceAfter.sub(tokenBalanceBefore));
+    }
+
     //
     // only fund owner and fund manager
     //
@@ -145,6 +175,16 @@ contract DelegatableVault is SafeOwnable, LowLevelErrorMessage, DelegatableVault
             (bool success, bytes memory ret) = _clearingHouse.call(calls[i]);
             require(success, _getRevertMessage(ret));
             returnData[i] = ret;
+        }
+    }
+
+    function _transferReward(
+        IERC20Upgradeable erc20,
+        address recipient,
+        uint256 amount
+    ) private {
+        if (amount > 0) {
+            SafeERC20Upgradeable.safeTransfer(erc20, recipient, amount);
         }
     }
 
