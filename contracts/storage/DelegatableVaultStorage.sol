@@ -12,3 +12,7 @@ abstract contract DelegatableVaultStorageV1 {
 
     mapping(bytes4 => bool) public whiteFunctionMap;
 }
+
+abstract contract DelegatableVaultStorageV2 is DelegatableVaultStorageV1 {
+    mapping(address => bool) public rewardContractAddressMap;
+}

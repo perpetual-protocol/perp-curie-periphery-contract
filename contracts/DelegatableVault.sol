@@ -7,7 +7,7 @@ import { SafeMathUpgradeable } from "@openzeppelin/contracts-upgradeable/math/Sa
 import { SafeOwnable } from "@perp/curie-contract/contracts/base/SafeOwnable.sol";
 import { IClearingHouse } from "@perp/curie-contract/contracts/interface/IClearingHouse.sol";
 import { IVault } from "@perp/curie-contract/contracts/interface/IVault.sol";
-import { DelegatableVaultStorageV1 } from "./storage/DelegatableVaultStorage.sol";
+import { DelegatableVaultStorageV2 } from "./storage/DelegatableVaultStorage.sol";
 import { LowLevelErrorMessage } from "./LowLevelErrorMessage.sol";
 
 import {
@@ -15,7 +15,7 @@ import {
     IERC20Upgradeable
 } from "@openzeppelin/contracts-upgradeable/token/ERC20/SafeERC20Upgradeable.sol";
 
-contract DelegatableVault is SafeOwnable, LowLevelErrorMessage, DelegatableVaultStorageV1 {
+contract DelegatableVault is SafeOwnable, LowLevelErrorMessage, DelegatableVaultStorageV2 {
     using AddressUpgradeable for address;
     using SafeMathUpgradeable for uint256;
 
@@ -75,6 +75,10 @@ contract DelegatableVault is SafeOwnable, LowLevelErrorMessage, DelegatableVault
 
     function setWhiteFunction(bytes4 functionSelector, bool enable) external onlyOwner {
         whiteFunctionMap[functionSelector] = enable;
+    }
+
+    function setRewardContractAddress(address rewardContractAddress, bool enable) external onlyOwner {
+        rewardContractAddressMap[rewardContractAddress] = enable;
     }
 
     //
