@@ -104,6 +104,9 @@ contract DelegatableVault is SafeOwnable, LowLevelErrorMessage, DelegatableVault
         uint256 _claimedBalance,
         bytes32[] calldata _merkleProof
     ) external onlyFundOwner {
+        // DV_CNIW: contract not in white list
+        require(rewardContractAddressMap[rewardContract], "DV_CNIW");
+
         IERC20Upgradeable token = IERC20Upgradeable(IMerkleRedeem(rewardContract).getToken());
 
         uint256 tokenBalanceBefore = token.balanceOf(address(this));
@@ -116,6 +119,9 @@ contract DelegatableVault is SafeOwnable, LowLevelErrorMessage, DelegatableVault
     }
 
     function claimWeeks(address rewardContract, IMerkleRedeem.Claim[] calldata claims) external onlyFundOwner {
+        // DV_CNIW: contract not in white list
+        require(rewardContractAddressMap[rewardContract], "DV_CNIW");
+
         IERC20Upgradeable token = IERC20Upgradeable(IMerkleRedeem(rewardContract).getToken());
 
         uint256 tokenBalanceBefore = token.balanceOf(address(this));
