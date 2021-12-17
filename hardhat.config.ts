@@ -102,9 +102,6 @@ const config: HardhatUserConfig = {
     external: {
         contracts: [
             {
-                artifacts: "node_modules/@openzeppelin/contracts/build",
-            },
-            {
                 artifacts: "node_modules/@perp/perp-oracle-contract/artifacts",
             },
             {
