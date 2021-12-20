@@ -10,7 +10,8 @@ import "hardhat-dependency-compiler"
 import "hardhat-deploy"
 import "hardhat-deploy-ethers"
 import "hardhat-gas-reporter"
-import { HardhatUserConfig } from "hardhat/config"
+import { HardhatUserConfig, task } from "hardhat/config"
+import { verifyOnEtherscan, verifyOnTenderly } from "./scripts/verify"
 
 dotenv.config()
 
@@ -32,6 +33,18 @@ const OPTIMISM_DEPLOYER_MNEMONIC = process.env.OPTIMISM_DEPLOYER_MNEMONIC || ""
 const OPTIMISM_WEB3_ENDPOINT = process.env.OPTIMISM_WEB3_ENDPOINT || ""
 const ETHERSCAN_API_KEY = process.env.ETHERSCAN_API_KEY || ""
 const TENDERLY_PROJECT_NAME = process.env.TENDERLY_PROJECT_NAME || ""
+
+task("etherscanVerify", "Verify on etherscan")
+    .addOptionalParam("contract", "Contract need to verify")
+    .setAction(async ({ contract }, hre) => {
+        await verifyOnEtherscan(hre, contract)
+    })
+
+task("tenderlyVerify", "Verify on tenderly")
+    .addOptionalParam("contract", "Contract need to verify")
+    .setAction(async ({ contract }, hre) => {
+        await verifyOnTenderly(hre, contract)
+    })
 
 const config: HardhatUserConfig = {
     solidity: {
