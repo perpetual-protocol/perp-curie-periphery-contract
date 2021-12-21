@@ -1,23 +1,22 @@
 {
-    "chainId": 69,
-    "contracts": {
-        "Multicall2": {
-            "address": "0x39004a0e1debF818993dE2F3aaAc108016617B82",
-            "createdBlockNumber": 151938,
-            "name": "contracts/lens/Multicall2.sol:Multicall2"
-        },
-        "PerpPortal": {
-            "address": "0xbca2103BB202FA9143D0FF45ffd8DaD5c0FE80eF",
-            "createdBlockNumber": 331620,
-            "name": "contracts/lens/PerpPortal.sol:PerpPortal"
-        },
-        "Quoter": {
-            "address": "0x266A409c0FdcC289CcF76c8077bf633Ce3cEeb04",
-            "createdBlockNumber": 151937,
-            "name": "contracts/lens/Quoter.sol:Quoter"
-        }
+  "chainId": 69,
+  "contracts": {
+    "Multicall2": {
+      "address": "0x39004a0e1debF818993dE2F3aaAc108016617B82",
+      "createdBlockNumber": 151938,
+      "name": "contracts/lens/Multicall2.sol:Multicall2"
     },
-    "externalContracts": {
+    "PerpPortal": {
+      "address": "0xbca2103BB202FA9143D0FF45ffd8DaD5c0FE80eF",
+      "createdBlockNumber": 331620,
+      "name": "contracts/lens/PerpPortal.sol:PerpPortal"
     },
-    "network": "optimismKovan"
+    "Quoter": {
+      "address": "0x266A409c0FdcC289CcF76c8077bf633Ce3cEeb04",
+      "createdBlockNumber": 151937,
+      "name": "contracts/lens/Quoter.sol:Quoter"
+    }
+  },
+  "externalContracts": {},
+  "network": "optimismKovan"
 }
