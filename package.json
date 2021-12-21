@@ -40,12 +40,12 @@
     "system-test:optimism": "hardhat deploy --network optimism --tags system-test",
     "system-test:optimismKovan": "hardhat deploy --network optimismKovan --tags system-test",
     "system-test:arbitrumRinkeby": "hardhat deploy --network arbitrumRinkeby --tags system-test",
-    "tenderly:optimism": "hardhat --network optimism run scripts/tenderly.ts",
-    "tenderly:optimismKovan": "hardhat --network optimismKovan run scripts/tenderly.ts",
-    "tenderly:arbitrumRinkeby": "hardhat --network arbitrumRinkeby run scripts/tenderly.ts",
-    "etherscan:optimism": "hardhat --network optimism run scripts/etherscan.ts",
-    "etherscan:optimismKovan": "hardhat --network optimismKovan run scripts/etherscan.ts",
-    "etherscan:arbitrumRinkeby": "hardhat --network arbitrumRinkeby run scripts/etherscan.ts",
+    "tenderly:rinkeby": "hardhat tenderlyVerify --network rinkeby",
+    "tenderly:optimismKovan": "hardhat tenderlyVerify --network optimismKovan",
+    "tenderly:optimism": "hardhat tenderlyVerify --network optimism",
+    "etherscan:optimismKovan": "hardhat etherscanVerify --network optimismKovan",
+    "etherscan:optimism": "hardhat etherscanVerify --network optimism",
+    "etherscan:arbitrumRinkeby": "hardhat etherscanVerify --network arbitrumRinkeby",
     "prepack": "ts-node --files scripts/prepack.ts"
   },
   "devDependencies": {
