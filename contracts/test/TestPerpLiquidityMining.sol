@@ -7,9 +7,9 @@ import { PerpLiquidityMining } from "@perp/curie-liquidity-mining/contracts/Perp
 contract TestPerpLiquidityMining is PerpLiquidityMining {
     function verifyClaim(
         address _liquidityProvider,
-        uint256 _week,
-        uint256 _claimedBalance,
-        bytes32[] memory _merkleProof
+        uint256 week,
+        uint256 claimedBalance,
+        bytes32[] memory merkleProof
     ) public view override returns (bool valid) {
         return true;
     }

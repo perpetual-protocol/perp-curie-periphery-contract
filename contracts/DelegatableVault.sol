@@ -99,34 +99,34 @@ contract DelegatableVault is SafeOwnable, LowLevelErrorMessage, DelegatableVault
     }
 
     function claimWeek(
-        address rewardContract,
-        uint256 _week,
-        uint256 _claimedBalance,
-        bytes32[] calldata _merkleProof
+        address rewardContractAddr,
+        uint256 week,
+        uint256 claimedBalance,
+        bytes32[] calldata merkleProof
     ) external onlyFundOwner {
         // DV_CNIW: contract not in white list
-        require(rewardContractAddressMap[rewardContract], "DV_CNIW");
+        require(rewardContractAddressMap[rewardContractAddr], "DV_CNIW");
 
-        IERC20Upgradeable token = IERC20Upgradeable(IMerkleRedeem(rewardContract).getToken());
+        IERC20Upgradeable token = IERC20Upgradeable(IMerkleRedeem(rewardContractAddr).getToken());
 
         uint256 tokenBalanceBefore = token.balanceOf(address(this));
 
-        IMerkleRedeem(rewardContract).claimWeek(address(this), _week, _claimedBalance, _merkleProof);
+        IMerkleRedeem(rewardContractAddr).claimWeek(address(this), week, claimedBalance, merkleProof);
 
         uint256 tokenBalanceAfter = token.balanceOf(address(this));
 
         _transferReward(token, msg.sender, tokenBalanceAfter.sub(tokenBalanceBefore));
     }
 
-    function claimWeeks(address rewardContract, IMerkleRedeem.Claim[] calldata claims) external onlyFundOwner {
+    function claimWeeks(address rewardContractAddr, IMerkleRedeem.Claim[] calldata claims) external onlyFundOwner {
         // DV_CNIW: contract not in white list
-        require(rewardContractAddressMap[rewardContract], "DV_CNIW");
+        require(rewardContractAddressMap[rewardContractAddr], "DV_CNIW");
 
-        IERC20Upgradeable token = IERC20Upgradeable(IMerkleRedeem(rewardContract).getToken());
+        IERC20Upgradeable token = IERC20Upgradeable(IMerkleRedeem(rewardContractAddr).getToken());
 
         uint256 tokenBalanceBefore = token.balanceOf(address(this));
 
-        IMerkleRedeem(rewardContract).claimWeeks(address(this), claims);
+        IMerkleRedeem(rewardContractAddr).claimWeeks(address(this), claims);
 
         uint256 tokenBalanceAfter = token.balanceOf(address(this));
 
