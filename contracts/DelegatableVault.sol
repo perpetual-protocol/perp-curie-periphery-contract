@@ -115,7 +115,10 @@ contract DelegatableVault is SafeOwnable, LowLevelErrorMessage, DelegatableVault
 
         uint256 tokenBalanceAfter = token.balanceOf(address(this));
 
-        _transferReward(token, msg.sender, tokenBalanceAfter.sub(tokenBalanceBefore));
+        uint256 amount = tokenBalanceAfter.sub(tokenBalanceBefore);
+        if (amount > 0) {
+            SafeERC20Upgradeable.safeTransfer(token, msg.sender, amount);
+        }
     }
 
     function claimWeeks(address rewardContractAddr, IMerkleRedeem.Claim[] calldata claims) external onlyFundOwner {
@@ -130,7 +133,10 @@ contract DelegatableVault is SafeOwnable, LowLevelErrorMessage, DelegatableVault
 
         uint256 tokenBalanceAfter = token.balanceOf(address(this));
 
-        _transferReward(token, msg.sender, tokenBalanceAfter.sub(tokenBalanceBefore));
+        uint256 amount = tokenBalanceAfter.sub(tokenBalanceBefore);
+        if (amount > 0) {
+            SafeERC20Upgradeable.safeTransfer(token, msg.sender, amount);
+        }
     }
 
     //
@@ -181,16 +187,6 @@ contract DelegatableVault is SafeOwnable, LowLevelErrorMessage, DelegatableVault
             (bool success, bytes memory ret) = _clearingHouse.call(calls[i]);
             require(success, _getRevertMessage(ret));
             returnData[i] = ret;
-        }
-    }
-
-    function _transferReward(
-        IERC20Upgradeable erc20,
-        address recipient,
-        uint256 amount
-    ) private {
-        if (amount > 0) {
-            SafeERC20Upgradeable.safeTransfer(erc20, recipient, amount);
         }
     }
 
