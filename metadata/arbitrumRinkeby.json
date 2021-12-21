@@ -1,15 +1,15 @@
 {
-    "contracts": {
-        "Multicall2": {
-            "address": "0x824e8Cbd4BDDa233E704EBB7D02C68469aCdAC94",
-            "createdBlockNumber": 6981312,
-            "name": "contracts/lens/Multicall2.sol:Multicall2"
-        },
-        "Quoter": {
-            "address": "0xF303217cC9ed09D13892e78aa72D3601A7c3Bb88",
-            "createdBlockNumber": 6981307,
-            "name": "contracts/lens/Quoter.sol:Quoter"
-        }
+  "contracts": {
+    "Multicall2": {
+      "address": "0x824e8Cbd4BDDa233E704EBB7D02C68469aCdAC94",
+      "createdBlockNumber": 6981312,
+      "name": "contracts/lens/Multicall2.sol:Multicall2"
     },
-    "network": "arbitrumRinkeby"
+    "Quoter": {
+      "address": "0xF303217cC9ed09D13892e78aa72D3601A7c3Bb88",
+      "createdBlockNumber": 6981307,
+      "name": "contracts/lens/Quoter.sol:Quoter"
+    }
+  },
+  "network": "arbitrumRinkeby"
 }
