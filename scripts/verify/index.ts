@@ -80,7 +80,7 @@ export function getContractInfoForPeriphery(network: String, contractName?: stri
 
 export async function verifyOnTenderly(hre: HardhatRuntimeEnvironment, contractName?: string): Promise<void> {
     const network = hre.network.name
-    const contractsInfo = getContractsInfo(network, contractName)
+    const contractsInfo = getContractInfoForPeriphery(network, contractName)
 
     for (const { name, address } of contractsInfo) {
         console.log(`verifying contract ${name} on ${address}`)
