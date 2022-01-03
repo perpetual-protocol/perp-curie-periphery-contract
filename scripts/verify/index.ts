@@ -11,12 +11,7 @@ interface ContractInfo {
 
 export function getContractsInfo(network: String, contractName?: string): Array<ContractInfo> {
     // contract has no proxy
-    const noProxyContract = [
-        "DefaultProxyAdmin",
-        "UniswapV3Factory",
-        "BTCUSDChainlinkPriceFeed",
-        "ETHUSDChainlinkPriceFeed",
-    ]
+    const noProxyContract = ["DefaultProxyAdmin", "Multicall2", "PerpPortal", "Quoter"]
 
     const contractsInfo = []
     const metadata = `./metadata/${network}.json`
@@ -85,7 +80,7 @@ export function getContractInfoForPeriphery(network: String, contractName?: stri
 
 export async function verifyOnTenderly(hre: HardhatRuntimeEnvironment, contractName?: string): Promise<void> {
     const network = hre.network.name
-    const contractsInfo = getContractsInfo(network, contractName)
+    const contractsInfo = getContractInfoForPeriphery(network, contractName)
 
     for (const { name, address } of contractsInfo) {
         console.log(`verifying contract ${name} on ${address}`)
