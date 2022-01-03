@@ -11,6 +11,8 @@ import "hardhat-deploy"
 import "hardhat-deploy-ethers"
 import "hardhat-gas-reporter"
 import { HardhatUserConfig, task } from "hardhat/config"
+import { ETHERSCAN_API_KEY } from "./constants"
+import { getMnemonic, getUrl, hardhatForkConfig, tenderlyConfig } from "./scripts/hardhatConfig"
 import { verifyOnEtherscan, verifyOnTenderly } from "./scripts/verify"
 
 dotenv.config()
@@ -23,16 +25,12 @@ enum ChainId {
     OPTIMISM_CHAIN_ID = 10,
 }
 
-const ARBITRUM_RINKEBY_DEPLOYER_MNEMONIC = process.env.ARBITRUM_RINKEBY_DEPLOYER_MNEMONIC || ""
-const ARBITRUM_RINKEBY_WEB3_ENDPOINT = process.env.ARBITRUM_RINKEBY_WEB3_ENDPOINT || ""
-const RINKEBY_DEPLOYER_MNEMONIC = process.env.RINKEBY_DEPLOYER_MNEMONIC || ""
-const RINKEBY_WEB3_ENDPOINT = process.env.RINKEBY_WEB3_ENDPOINT || ""
-const OPTIMISM_KOVAN_DEPLOYER_MNEMONIC = process.env.OPTIMISM_KOVAN_DEPLOYER_MNEMONIC || ""
-const OPTIMISM_KOVAN_WEB3_ENDPOINT = process.env.OPTIMISM_KOVAN_WEB3_ENDPOINT || ""
-const OPTIMISM_DEPLOYER_MNEMONIC = process.env.OPTIMISM_DEPLOYER_MNEMONIC || ""
-const OPTIMISM_WEB3_ENDPOINT = process.env.OPTIMISM_WEB3_ENDPOINT || ""
-const ETHERSCAN_API_KEY = process.env.ETHERSCAN_API_KEY || ""
-const TENDERLY_PROJECT_NAME = process.env.TENDERLY_PROJECT_NAME || ""
+enum CompanionNetwork {
+    optimism = "optimism",
+    optimismKovan = "optimismKovan",
+    rinkeby = "rinkeby",
+    arbitrumRinkeby = "arbitrumRinkeby",
+}
 
 task("etherscanVerify", "Verify on etherscan")
     .addOptionalParam("contract", "Contract need to verify")
@@ -43,6 +41,11 @@ task("etherscanVerify", "Verify on etherscan")
 task("tenderlyVerify", "Verify on tenderly")
     .addOptionalParam("contract", "Contract need to verify")
     .setAction(async ({ contract }, hre) => {
+        const network = hre.network.name
+        hre.config.tenderly = {
+            project: tenderlyConfig[network],
+            username: "perpprotocol",
+        }
         await verifyOnTenderly(hre, contract)
     })
 
@@ -63,31 +66,34 @@ const config: HardhatUserConfig = {
     networks: {
         hardhat: {
             allowUnlimitedContractSize: true,
+            saveDeployments: true,
+            ...hardhatForkConfig(),
         },
         arbitrumRinkeby: {
-            url: ARBITRUM_RINKEBY_WEB3_ENDPOINT,
+            url: getUrl(CompanionNetwork.arbitrumRinkeby),
             accounts: {
-                mnemonic: ARBITRUM_RINKEBY_DEPLOYER_MNEMONIC,
+                mnemonic: getMnemonic(CompanionNetwork.arbitrumRinkeby),
             },
             chainId: ChainId.ARBITRUM_RINKEBY_CHAIN_ID,
         },
         rinkeby: {
-            url: RINKEBY_WEB3_ENDPOINT,
+            url: getUrl(CompanionNetwork.rinkeby),
             accounts: {
-                mnemonic: RINKEBY_DEPLOYER_MNEMONIC,
+                mnemonic: getMnemonic(CompanionNetwork.rinkeby),
             },
+            chainId: ChainId.RINKEBY_CHAIN_ID,
         },
         optimismKovan: {
-            url: OPTIMISM_KOVAN_WEB3_ENDPOINT,
+            url: getUrl(CompanionNetwork.optimismKovan),
             accounts: {
-                mnemonic: OPTIMISM_KOVAN_DEPLOYER_MNEMONIC,
+                mnemonic: getMnemonic(CompanionNetwork.optimismKovan),
             },
             chainId: ChainId.OPTIMISM_KOVAN_CHAIN_ID,
         },
         optimism: {
-            url: OPTIMISM_WEB3_ENDPOINT,
+            url: getUrl(CompanionNetwork.optimism),
             accounts: {
-                mnemonic: OPTIMISM_DEPLOYER_MNEMONIC,
+                mnemonic: getMnemonic(CompanionNetwork.optimism),
             },
             chainId: ChainId.OPTIMISM_CHAIN_ID,
         },
@@ -147,10 +153,6 @@ const config: HardhatUserConfig = {
     },
     etherscan: {
         apiKey: ETHERSCAN_API_KEY,
-    },
-    tenderly: {
-        project: TENDERLY_PROJECT_NAME,
-        username: "perpprotocol",
     },
 }
 
