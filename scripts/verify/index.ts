@@ -11,12 +11,7 @@ interface ContractInfo {
 
 export function getContractsInfo(network: String, contractName?: string): Array<ContractInfo> {
     // contract has no proxy
-    const noProxyContract = [
-        "DefaultProxyAdmin",
-        "UniswapV3Factory",
-        "BTCUSDChainlinkPriceFeed",
-        "ETHUSDChainlinkPriceFeed",
-    ]
+    const noProxyContract = ["DefaultProxyAdmin", "Multicall2", "PerpPortal", "Quoter"]
 
     const contractsInfo = []
     const metadata = `./metadata/${network}.json`
