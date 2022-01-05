@@ -7,16 +7,17 @@
       "name": "contracts/lens/Multicall2.sol:Multicall2"
     },
     "PerpPortal": {
-      "address": "0xbca2103BB202FA9143D0FF45ffd8DaD5c0FE80eF",
-      "createdBlockNumber": 331620,
+      "address": "0xd51935dC3e2122A8C5903Ac658c33a8C265357fe",
+      "createdBlockNumber": 767668,
       "name": "contracts/lens/PerpPortal.sol:PerpPortal"
     },
     "Quoter": {
-      "address": "0x266A409c0FdcC289CcF76c8077bf633Ce3cEeb04",
-      "createdBlockNumber": 151937,
+      "address": "0x11ff95039A3171dc4c7A03168D576ffC466C6a67",
+      "createdBlockNumber": 767666,
       "name": "contracts/lens/Quoter.sol:Quoter"
     }
   },
-  "externalContracts": {},
+  "externalContracts": {
+  },
   "network": "optimismKovan"
 }
