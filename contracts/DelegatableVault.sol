@@ -8,7 +8,7 @@ import { SafeOwnable } from "@perp/curie-contract/contracts/base/SafeOwnable.sol
 import { IClearingHouse } from "@perp/curie-contract/contracts/interface/IClearingHouse.sol";
 import { IVault } from "@perp/curie-contract/contracts/interface/IVault.sol";
 import { IMerkleRedeem } from "@perp/curie-liquidity-mining/contracts/interface/IMerkleRedeem.sol";
-import { DelegatableVaultStorageV2 } from "./storage/DelegatableVaultStorage.sol";
+import { DelegatableVaultStorageV1 } from "./storage/DelegatableVaultStorage.sol";
 import { LowLevelErrorMessage } from "./LowLevelErrorMessage.sol";
 
 import {
@@ -16,7 +16,7 @@ import {
     IERC20Upgradeable
 } from "@openzeppelin/contracts-upgradeable/token/ERC20/SafeERC20Upgradeable.sol";
 
-contract DelegatableVault is SafeOwnable, LowLevelErrorMessage, DelegatableVaultStorageV2 {
+contract DelegatableVault is SafeOwnable, LowLevelErrorMessage, DelegatableVaultStorageV1 {
     using AddressUpgradeable for address;
     using SafeMathUpgradeable for uint256;
 
@@ -78,10 +78,6 @@ contract DelegatableVault is SafeOwnable, LowLevelErrorMessage, DelegatableVault
         whiteFunctionMap[functionSelector] = enable;
     }
 
-    function setRewardContractAddress(address rewardContractAddress, bool enable) external onlyOwner {
-        rewardContractAddressMap[rewardContractAddress] = enable;
-    }
-
     //
     // only fund owner
     //
@@ -98,45 +94,8 @@ contract DelegatableVault is SafeOwnable, LowLevelErrorMessage, DelegatableVault
         SafeERC20Upgradeable.safeTransfer(IERC20Upgradeable(token), msg.sender, amountX10_D);
     }
 
-    function claimWeek(
-        address rewardContractAddr,
-        uint256 week,
-        uint256 claimedBalance,
-        bytes32[] calldata merkleProof
-    ) external onlyFundOwner {
-        // DV_CNIW: contract not in white list
-        require(rewardContractAddressMap[rewardContractAddr], "DV_CNIW");
-
-        IERC20Upgradeable token = IERC20Upgradeable(IMerkleRedeem(rewardContractAddr).getToken());
-
-        uint256 tokenBalanceBefore = token.balanceOf(address(this));
-
-        IMerkleRedeem(rewardContractAddr).claimWeek(address(this), week, claimedBalance, merkleProof);
-
-        uint256 tokenBalanceAfter = token.balanceOf(address(this));
-
-        uint256 amount = tokenBalanceAfter.sub(tokenBalanceBefore);
-        if (amount > 0) {
-            SafeERC20Upgradeable.safeTransfer(token, msg.sender, amount);
-        }
-    }
-
-    function claimWeeks(address rewardContractAddr, IMerkleRedeem.Claim[] calldata claims) external onlyFundOwner {
-        // DV_CNIW: contract not in white list
-        require(rewardContractAddressMap[rewardContractAddr], "DV_CNIW");
-
-        IERC20Upgradeable token = IERC20Upgradeable(IMerkleRedeem(rewardContractAddr).getToken());
-
-        uint256 tokenBalanceBefore = token.balanceOf(address(this));
-
-        IMerkleRedeem(rewardContractAddr).claimWeeks(address(this), claims);
-
-        uint256 tokenBalanceAfter = token.balanceOf(address(this));
-
-        uint256 amount = tokenBalanceAfter.sub(tokenBalanceBefore);
-        if (amount > 0) {
-            SafeERC20Upgradeable.safeTransfer(token, msg.sender, amount);
-        }
+    function withdrawToken(address token, uint256 amountX10_D) external onlyFundOwner {
+        SafeERC20Upgradeable.safeTransfer(IERC20Upgradeable(token), msg.sender, amountX10_D);
     }
 
     //
