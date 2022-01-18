@@ -430,23 +430,13 @@ describe("DelegatableVault test", () => {
             await token.mint(delegatableVault.address, delegatableVaultTokenAmount)
         })
         it("can withdraw amount from delegatableVault", async () => {
-            await delegatableVault.connect(fundOwner).withdrawToken(token.address, delegatableVaultTokenAmount)
+            await delegatableVault.connect(fundOwner).withdrawToken(token.address)
 
             const fundOwnerTokenBalance = await token.balanceOf(fundOwner.address)
             const delegatableVaultTokenBalance = await token.balanceOf(delegatableVault.address)
 
             expect(fundOwnerTokenBalance).to.be.eq(delegatableVaultTokenAmount)
             expect(delegatableVaultTokenBalance).to.be.eq("0")
-        })
-        it("force error, withdraw from not owner", async () => {
-            await expect(delegatableVault.withdrawToken(token.address, delegatableVaultTokenAmount)).to.be.revertedWith(
-                "DV_OFO",
-            )
-        })
-        it("force error, withdraw exceed amount", async () => {
-            await expect(
-                delegatableVault.connect(fundOwner).withdrawToken(token.address, delegatableVaultTokenAmount.add(1)),
-            ).to.be.revertedWith("transfer amount exceeds balance")
         })
     })
 

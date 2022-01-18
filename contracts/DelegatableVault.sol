@@ -94,8 +94,9 @@ contract DelegatableVault is SafeOwnable, LowLevelErrorMessage, DelegatableVault
         SafeERC20Upgradeable.safeTransfer(IERC20Upgradeable(token), msg.sender, amountX10_D);
     }
 
-    function withdrawToken(address token, uint256 amountX10_D) external onlyFundOwner {
-        SafeERC20Upgradeable.safeTransfer(IERC20Upgradeable(token), msg.sender, amountX10_D);
+    function withdrawToken(address token) external {
+        uint256 amount = IERC20Upgradeable(token).balanceOf(address(this));
+        SafeERC20Upgradeable.safeTransfer(IERC20Upgradeable(token), _fundOwner, amount);
     }
 
     //
