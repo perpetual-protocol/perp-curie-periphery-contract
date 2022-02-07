@@ -41,6 +41,9 @@ contract Quoter is IUniswapV3SwapCallback {
         uint160 sqrtPriceX96;
     }
 
+    // it's for swap when exact out and price limit is zero
+    // have larger tolerance to avoid revert frequently
+    uint256 internal constant _DUST = 1000;
     address public marketRegistry;
 
     constructor(address marketRegistryArg) {
@@ -55,10 +58,10 @@ contract Quoter is IUniswapV3SwapCallback {
 
         // getMarketInfo will revert with MR_PNE if pool not exists
         IMarketRegistry.MarketInfo memory marketInfo = IMarketRegistry(marketRegistry).getMarketInfo(params.baseToken);
-        address pool = marketInfo.pool;
 
         uint24 uniswapFeeRatio = marketInfo.uniswapFeeRatio;
         uint24 exchangeFeeRatio = marketInfo.exchangeFeeRatio;
+
         // scale up before swap to achieve customized fee/ignore Uniswap fee
         (uint256 scaledAmount, ) =
             SwapMath.calcScaledAmountForSwaps(
@@ -72,7 +75,7 @@ contract Quoter is IUniswapV3SwapCallback {
         int256 specifiedAmount = params.isExactInput ? scaledAmount.toInt256() : -scaledAmount.toInt256();
 
         try
-            IUniswapV3Pool(pool).swap(
+            IUniswapV3Pool(marketInfo.pool).swap(
                 address(this),
                 params.isBaseToQuote,
                 specifiedAmount,
@@ -85,52 +88,64 @@ contract Quoter is IUniswapV3SwapCallback {
         {
 
         } catch (bytes memory reason) {
-            (uint256 base, uint256 quote, uint160 sqrtPriceX96) = _parseRevertReason(reason);
+            // stack too deep
+            {
+                (uint256 base, uint256 quote, uint160 sqrtPriceX96) = _parseRevertReason(reason);
 
-            uint256 fee;
-            int256 exchangedPositionSize;
-            int256 exchangedPositionNotional;
+                uint256 fee;
+                int256 exchangedPositionSize;
+                int256 exchangedPositionNotional;
 
-            if (params.isBaseToQuote) {
-                fee = FullMath.mulDivRoundingUp(quote, exchangeFeeRatio, 1e6);
-                // short: exchangedPositionSize <= 0 && exchangedPositionNotional >= 0
-                exchangedPositionSize = -(SwapMath.calcAmountScaledByFeeRatio(base, uniswapFeeRatio, false).toInt256());
-                // due to base to quote fee, exchangedPositionNotional contains the fee
-                // s.t. we can take the fee away from exchangedPositionNotional
-                exchangedPositionNotional = quote.toInt256();
-            } else {
-                // check the doc of custom fee for more details
-                // let x : uniswapFeeRatio, y : clearingHouseFeeRatio
-                // qr * y * (1 - x) / (1 - y)
-                fee = SwapMath
-                    .calcAmountWithFeeRatioReplaced(
-                    quote.mul(exchangeFeeRatio),
-                    uniswapFeeRatio,
-                    exchangeFeeRatio,
-                    false
-                )
-                    .div(1e6);
+                if (params.isBaseToQuote) {
+                    fee = FullMath.mulDivRoundingUp(quote, exchangeFeeRatio, 1e6);
+                    // short: exchangedPositionSize <= 0 && exchangedPositionNotional >= 0
+                    exchangedPositionSize = -(
+                        SwapMath.calcAmountScaledByFeeRatio(base, uniswapFeeRatio, false).toInt256()
+                    );
+                    // due to base to quote fee, exchangedPositionNotional contains the fee
+                    // s.t. we can take the fee away from exchangedPositionNotional
+                    exchangedPositionNotional = quote.toInt256();
+                } else {
+                    // check the doc of custom fee for more details
+                    // let x : uniswapFeeRatio, y : clearingHouseFeeRatio
+                    // qr * y * (1 - x) / (1 - y)
+                    fee = SwapMath
+                        .calcAmountWithFeeRatioReplaced(
+                        quote.mul(exchangeFeeRatio),
+                        uniswapFeeRatio,
+                        exchangeFeeRatio,
+                        false
+                    )
+                        .div(1e6);
 
-                // long: exchangedPositionSize >= 0 && exchangedPositionNotional <= 0
-                exchangedPositionSize = base.toInt256();
-                exchangedPositionNotional = -(
-                    SwapMath.calcAmountScaledByFeeRatio(quote, uniswapFeeRatio, false).toInt256()
+                    // long: exchangedPositionSize >= 0 && exchangedPositionNotional <= 0
+                    exchangedPositionSize = base.toInt256();
+                    exchangedPositionNotional = -(
+                        SwapMath.calcAmountScaledByFeeRatio(quote, uniswapFeeRatio, false).toInt256()
+                    );
+                }
+                response = SwapResponse(
+                    exchangedPositionSize.abs(), // deltaAvailableBase
+                    exchangedPositionNotional.sub(fee.toInt256()).abs(), // deltaAvailableQuote
+                    exchangedPositionSize,
+                    exchangedPositionNotional,
+                    sqrtPriceX96
                 );
             }
-            response = SwapResponse(
-                exchangedPositionSize.abs(), // deltaAvailableBase
-                exchangedPositionNotional.sub(fee.toInt256()).abs(), // deltaAvailableQuote
-                exchangedPositionSize,
-                exchangedPositionNotional,
-                sqrtPriceX96
-            );
 
             // if it's exact output with a price limit, ensure that the full output amount has been receive
             if (!params.isExactInput && params.sqrtPriceLimitX96 == 0) {
                 uint256 amountReceived =
                     params.isBaseToQuote ? response.deltaAvailableQuote : response.deltaAvailableBase;
                 // Q_UOA: unmatched output amount
-                require(amountReceived == params.amount, "Q_UOA");
+                require(
+                    (
+                        amountReceived > params.amount
+                            ? amountReceived.sub(params.amount)
+                            : params.amount.sub(amountReceived)
+                    ) < _DUST,
+                    "Q_UOA"
+                );
             }
         }
     }
