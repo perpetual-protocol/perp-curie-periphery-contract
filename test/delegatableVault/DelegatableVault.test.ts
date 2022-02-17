@@ -1,3 +1,4 @@
+import { BigNumber } from "@ethersproject/bignumber"
 import { expect } from "chai"
 import { parseEther, parseUnits } from "ethers/lib/utils"
 import { ethers, waffle } from "hardhat"
@@ -409,6 +410,33 @@ describe("DelegatableVault test", () => {
             ])
 
             await expect(delegatableVault.connect(fundOwner).aggregate([data1, data2])).to.be.revertedWith("DV_FNIW")
+        })
+    })
+
+    describe("withdraw token from delegatableVault", () => {
+        let token: TestERC20
+        let tokenDecimals: number
+        let delegatableVaultTokenAmount: BigNumber
+
+        beforeEach(async () => {
+            const tokenFactory = await ethers.getContractFactory("TestERC20")
+            token = (await tokenFactory.deploy()) as TestERC20
+            await token.__TestERC20_init("TestToken", "TOKEN", 18)
+
+            tokenDecimals = await token.decimals()
+            delegatableVaultTokenAmount = parseUnits("100000", tokenDecimals)
+
+            // mint token to delegatableVault
+            await token.mint(delegatableVault.address, delegatableVaultTokenAmount)
+        })
+        it("can withdraw amount from delegatableVault", async () => {
+            await delegatableVault.connect(fundOwner).withdrawToken(token.address)
+
+            const fundOwnerTokenBalance = await token.balanceOf(fundOwner.address)
+            const delegatableVaultTokenBalance = await token.balanceOf(delegatableVault.address)
+
+            expect(fundOwnerTokenBalance).to.be.eq(delegatableVaultTokenAmount)
+            expect(delegatableVaultTokenBalance).to.be.eq("0")
         })
     })
 
