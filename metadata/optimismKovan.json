@@ -12,8 +12,8 @@
       "name": "contracts/lens/PerpPortal.sol:PerpPortal"
     },
     "Quoter": {
-      "address": "0x11ff95039A3171dc4c7A03168D576ffC466C6a67",
-      "createdBlockNumber": 767666,
+      "address": "0x02d6ccFa774f3e6F28925eB8bC65A70fD4A30F57",
+      "createdBlockNumber": 1184999,
       "name": "contracts/lens/Quoter.sol:Quoter"
     }
   },
