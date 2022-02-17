@@ -12,11 +12,12 @@
       "name": "contracts/lens/PerpPortal.sol:PerpPortal"
     },
     "Quoter": {
-      "address": "0xf92C0Eb708b5182Ed2288f21D36338f83F72714f",
-      "createdBlockNumber": 514514,
+      "address": "0x125e0CFB77ca7b369eE773C507cf59C019e6C6ee",
+      "createdBlockNumber": 3634988,
       "name": "contracts/lens/Quoter.sol:Quoter"
     }
   },
-  "externalContracts": {},
+  "externalContracts": {
+  },
   "network": "optimism"
 }
