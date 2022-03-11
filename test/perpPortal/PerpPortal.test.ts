@@ -133,142 +133,211 @@ describe("PerpPortal test", () => {
         )) as PerpPortal
     })
 
-    it("liquidation price is correct when long with 5x leverage", async () => {
-        await clearingHouse.connect(bob).openPosition({
-            baseToken: baseToken.address,
-            isBaseToQuote: false,
-            isExactInput: true,
-            oppositeAmountBound: 0,
-            amount: parseEther("5000"),
-            sqrtPriceLimitX96: 0,
-            deadline: ethers.constants.MaxUint256,
-            referralCode: ethers.constants.HashZero,
+    describe("# getLiquidationPrice", async () => {
+        it("liquidation price is correct when long with 5x leverage", async () => {
+            await clearingHouse.connect(bob).openPosition({
+                baseToken: baseToken.address,
+                isBaseToQuote: false,
+                isExactInput: true,
+                oppositeAmountBound: 0,
+                amount: parseEther("5000"),
+                sqrtPriceLimitX96: 0,
+                deadline: ethers.constants.MaxUint256,
+                referralCode: ethers.constants.HashZero,
+            })
+
+            await syncIndexToMarketPrice(mockedBaseAggregator, pool)
+
+            const liquidationPrice = await perpPortal.getLiquidationPrice(bob.address, baseToken.address)
+
+            mockedBaseAggregator.smocked.latestRoundData.will.return.with(async () => {
+                return [0, liquidationPrice.div(1e12), 0, 0, 0]
+            })
+
+            const accountValue = await clearingHouse.getAccountValue(bob.address)
+            const mmRequirement = await accountBalance.getMarginRequirementForLiquidation(bob.address)
+
+            expect(accountValue.sub(mmRequirement).abs()).to.be.lt(parseEther("1"))
         })
 
-        await syncIndexToMarketPrice(mockedBaseAggregator, pool)
+        it("liquidation price is correct when short with 5x leverage", async () => {
+            await clearingHouse.connect(bob).openPosition({
+                baseToken: baseToken.address,
+                isBaseToQuote: true,
+                isExactInput: false,
+                oppositeAmountBound: 0,
+                amount: parseEther("5000"),
+                sqrtPriceLimitX96: 0,
+                deadline: ethers.constants.MaxUint256,
+                referralCode: ethers.constants.HashZero,
+            })
 
-        const liquidationPrice = await perpPortal.getLiquidationPrice(bob.address, baseToken.address)
+            await syncIndexToMarketPrice(mockedBaseAggregator, pool)
 
-        mockedBaseAggregator.smocked.latestRoundData.will.return.with(async () => {
-            return [0, liquidationPrice.div(1e12), 0, 0, 0]
+            const liquidationPrice = await perpPortal.getLiquidationPrice(bob.address, baseToken.address)
+
+            mockedBaseAggregator.smocked.latestRoundData.will.return.with(async () => {
+                return [0, liquidationPrice.div(1e12), 0, 0, 0]
+            })
+
+            const accountValue = await clearingHouse.getAccountValue(bob.address)
+            const mmRequirement = await accountBalance.getMarginRequirementForLiquidation(bob.address)
+
+            expect(accountValue.sub(mmRequirement).abs()).to.be.lt(parseEther("1"))
         })
 
-        const accountValue = await clearingHouse.getAccountValue(bob.address)
-        const mmRequirement = await accountBalance.getMarginRequirementForLiquidation(bob.address)
+        it("liquidation price is correct when long with 0.5x leverage", async () => {
+            await clearingHouse.connect(bob).openPosition({
+                baseToken: baseToken.address,
+                isBaseToQuote: false,
+                isExactInput: true,
+                oppositeAmountBound: 0,
+                amount: parseEther("500"),
+                sqrtPriceLimitX96: 0,
+                deadline: ethers.constants.MaxUint256,
+                referralCode: ethers.constants.HashZero,
+            })
 
-        expect(accountValue.sub(mmRequirement).abs()).to.be.lt(parseEther("1"))
+            await syncIndexToMarketPrice(mockedBaseAggregator, pool)
+
+            const liquidationPrice = await perpPortal.getLiquidationPrice(bob.address, baseToken.address)
+            expect(liquidationPrice).to.be.eq(parseEther("0"))
+        })
+
+        it("liquidation price is correct when short with 0.5x leverage", async () => {
+            await clearingHouse.connect(bob).openPosition({
+                baseToken: baseToken.address,
+                isBaseToQuote: true,
+                isExactInput: false,
+                oppositeAmountBound: 0,
+                amount: parseEther("500"),
+                sqrtPriceLimitX96: 0,
+                deadline: ethers.constants.MaxUint256,
+                referralCode: ethers.constants.HashZero,
+            })
+
+            await syncIndexToMarketPrice(mockedBaseAggregator, pool)
+
+            const liquidationPrice = await perpPortal.getLiquidationPrice(bob.address, baseToken.address)
+
+            mockedBaseAggregator.smocked.latestRoundData.will.return.with(async () => {
+                return [0, liquidationPrice.div(1e12), 0, 0, 0]
+            })
+
+            const accountValue = await clearingHouse.getAccountValue(bob.address)
+            const mmRequirement = await accountBalance.getMarginRequirementForLiquidation(bob.address)
+
+            expect(accountValue.sub(mmRequirement).abs()).to.be.lt(parseEther("1"))
+        })
+
+        it("liquidation price is 0 when position size of specified token is 0", async () => {
+            // open position on baseToken2
+            await clearingHouse.connect(bob).openPosition({
+                baseToken: baseToken2.address,
+                isBaseToQuote: true,
+                isExactInput: false,
+                oppositeAmountBound: 0,
+                amount: parseEther("500"),
+                sqrtPriceLimitX96: 0,
+                deadline: ethers.constants.MaxUint256,
+                referralCode: ethers.constants.HashZero,
+            })
+
+            const liquidationPrice = await perpPortal.getLiquidationPrice(bob.address, baseToken.address)
+            expect(liquidationPrice).to.be.eq("0")
+        })
+
+        it("trader can be liquidate at current index price", async () => {
+            await clearingHouse.connect(bob).openPosition({
+                baseToken: baseToken.address,
+                isBaseToQuote: false,
+                isExactInput: true,
+                oppositeAmountBound: 0,
+                amount: parseEther("5000"),
+                sqrtPriceLimitX96: 0,
+                deadline: ethers.constants.MaxUint256,
+                referralCode: ethers.constants.HashZero,
+            })
+
+            // set index price to 50 so the trade can be liquidated right now
+            const indexPrice = parseUnits("50", 6)
+            mockedBaseAggregator.smocked.latestRoundData.will.return.with(async () => {
+                return [0, indexPrice, 0, 0, 0]
+            })
+
+            const liquidationPrice = await perpPortal.getLiquidationPrice(bob.address, baseToken.address)
+            expect(liquidationPrice).to.be.gt(parseEther("50"))
+
+            const accountValue = await clearingHouse.getAccountValue(bob.address)
+            const mmRequirement = await accountBalance.getMarginRequirementForLiquidation(bob.address)
+            expect(accountValue).to.be.lt(mmRequirement)
+        })
     })
 
-    it("liquidation price is correct when short with 5x leverage", async () => {
-        await clearingHouse.connect(bob).openPosition({
-            baseToken: baseToken.address,
-            isBaseToQuote: true,
-            isExactInput: false,
-            oppositeAmountBound: 0,
-            amount: parseEther("5000"),
-            sqrtPriceLimitX96: 0,
-            deadline: ethers.constants.MaxUint256,
-            referralCode: ethers.constants.HashZero,
+    describe("# getAccountLeverage", async () => {
+        it("account value < 0", async () => {
+            await clearingHouse.connect(bob).openPosition({
+                baseToken: baseToken.address,
+                isBaseToQuote: false,
+                isExactInput: true,
+                oppositeAmountBound: 0,
+                amount: parseEther("3000"),
+                sqrtPriceLimitX96: 0,
+                deadline: ethers.constants.MaxUint256,
+                referralCode: ethers.constants.HashZero,
+            })
+            mockedBaseAggregator.smocked.latestRoundData.will.return.with(async () => {
+                return [0, parseUnits("50", oracleDecimals), 0, 0, 0]
+            })
+            // account value: -1038.80514917
+            expect(await clearingHouse.getAccountValue(bob.address)).to.be.lt("0")
+            expect(await perpPortal.getAccountLeverage(bob.address)).to.be.eq("-1")
         })
 
-        await syncIndexToMarketPrice(mockedBaseAggregator, pool)
-
-        const liquidationPrice = await perpPortal.getLiquidationPrice(bob.address, baseToken.address)
-
-        mockedBaseAggregator.smocked.latestRoundData.will.return.with(async () => {
-            return [0, liquidationPrice.div(1e12), 0, 0, 0]
+        it("account value > total position value", async () => {
+            await clearingHouse.connect(bob).openPosition({
+                baseToken: baseToken.address,
+                isBaseToQuote: false,
+                isExactInput: true,
+                oppositeAmountBound: 0,
+                amount: parseEther("300"),
+                sqrtPriceLimitX96: 0,
+                deadline: ethers.constants.MaxUint256,
+                referralCode: ethers.constants.HashZero,
+            })
+            // account value: 996.38873205
+            // total position value: 296.38873205
+            expect(await clearingHouse.getAccountValue(bob.address)).to.be.gt("300")
+            // get account leverage: 296.38873205 / 996.38873205 = 0.29746295
+            expect(await perpPortal.getAccountLeverage(bob.address)).to.be.eq(parseEther("0.297462950472651860"))
         })
 
-        const accountValue = await clearingHouse.getAccountValue(bob.address)
-        const mmRequirement = await accountBalance.getMarginRequirementForLiquidation(bob.address)
+        it("0 < account value < total position value", async () => {
+            await clearingHouse.connect(bob).openPosition({
+                baseToken: baseToken.address,
+                isBaseToQuote: false,
+                isExactInput: true,
+                oppositeAmountBound: 0,
+                amount: parseEther("6000"),
+                sqrtPriceLimitX96: 0,
+                deadline: ethers.constants.MaxUint256,
+                referralCode: ethers.constants.HashZero,
+            })
 
-        expect(accountValue.sub(mmRequirement).abs()).to.be.lt(parseEther("1"))
-    })
+            // account value: 704.69430511
+            const bobAccountValue = await clearingHouse.getAccountValue(bob.address)
+            // total position value: 5704.69430511
+            const bobPositionValue = await accountBalance.getTotalAbsPositionValue(bob.address)
 
-    it("liquidation price is correct when long with 0.5x leverage", async () => {
-        await clearingHouse.connect(bob).openPosition({
-            baseToken: baseToken.address,
-            isBaseToQuote: false,
-            isExactInput: true,
-            oppositeAmountBound: 0,
-            amount: parseEther("500"),
-            sqrtPriceLimitX96: 0,
-            deadline: ethers.constants.MaxUint256,
-            referralCode: ethers.constants.HashZero,
+            expect(bobAccountValue).to.be.gt("0")
+            expect(bobAccountValue).to.be.lt(bobPositionValue)
+
+            // account leverage: 5704.69430511 / 704.69430511 = 8.09527516
+            expect(await perpPortal.getAccountLeverage(bob.address)).to.be.eq(parseEther("8.095275162167099216"))
         })
 
-        await syncIndexToMarketPrice(mockedBaseAggregator, pool)
-
-        const liquidationPrice = await perpPortal.getLiquidationPrice(bob.address, baseToken.address)
-        expect(liquidationPrice).to.be.eq(parseEther("0"))
-    })
-
-    it("liquidation price is correct when short with 0.5x leverage", async () => {
-        await clearingHouse.connect(bob).openPosition({
-            baseToken: baseToken.address,
-            isBaseToQuote: true,
-            isExactInput: false,
-            oppositeAmountBound: 0,
-            amount: parseEther("500"),
-            sqrtPriceLimitX96: 0,
-            deadline: ethers.constants.MaxUint256,
-            referralCode: ethers.constants.HashZero,
+        it("no position value", async () => {
+            expect(await perpPortal.getAccountLeverage(bob.address)).to.be.eq(0)
         })
-
-        await syncIndexToMarketPrice(mockedBaseAggregator, pool)
-
-        const liquidationPrice = await perpPortal.getLiquidationPrice(bob.address, baseToken.address)
-
-        mockedBaseAggregator.smocked.latestRoundData.will.return.with(async () => {
-            return [0, liquidationPrice.div(1e12), 0, 0, 0]
-        })
-
-        const accountValue = await clearingHouse.getAccountValue(bob.address)
-        const mmRequirement = await accountBalance.getMarginRequirementForLiquidation(bob.address)
-
-        expect(accountValue.sub(mmRequirement).abs()).to.be.lt(parseEther("1"))
-    })
-
-    it("liquidation price is 0 when position size of specified token is 0", async () => {
-        // open position on baseToken2
-        await clearingHouse.connect(bob).openPosition({
-            baseToken: baseToken2.address,
-            isBaseToQuote: true,
-            isExactInput: false,
-            oppositeAmountBound: 0,
-            amount: parseEther("500"),
-            sqrtPriceLimitX96: 0,
-            deadline: ethers.constants.MaxUint256,
-            referralCode: ethers.constants.HashZero,
-        })
-
-        const liquidationPrice = await perpPortal.getLiquidationPrice(bob.address, baseToken.address)
-        expect(liquidationPrice).to.be.eq("0")
-    })
-
-    it("trader can be liquidate at current index price", async () => {
-        await clearingHouse.connect(bob).openPosition({
-            baseToken: baseToken.address,
-            isBaseToQuote: false,
-            isExactInput: true,
-            oppositeAmountBound: 0,
-            amount: parseEther("5000"),
-            sqrtPriceLimitX96: 0,
-            deadline: ethers.constants.MaxUint256,
-            referralCode: ethers.constants.HashZero,
-        })
-
-        // set index price to 50 so the trade can be liquidated right now
-        const indexPrice = parseUnits("50", 6)
-        mockedBaseAggregator.smocked.latestRoundData.will.return.with(async () => {
-            return [0, indexPrice, 0, 0, 0]
-        })
-
-        const liquidationPrice = await perpPortal.getLiquidationPrice(bob.address, baseToken.address)
-        expect(liquidationPrice).to.be.gt(parseEther("50"))
-
-        const accountValue = await clearingHouse.getAccountValue(bob.address)
-        const mmRequirement = await accountBalance.getMarginRequirementForLiquidation(bob.address)
-        expect(accountValue).to.be.lt(mmRequirement)
     })
 })
