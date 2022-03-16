@@ -1,53 +1,12 @@
 import "@nomiclabs/hardhat-ethers"
-import "@nomiclabs/hardhat-etherscan"
 import "@nomiclabs/hardhat-waffle"
-import "@openzeppelin/hardhat-upgrades"
-import "@tenderly/hardhat-tenderly"
 import "@typechain/hardhat"
-import * as dotenv from "dotenv"
 import "hardhat-contract-sizer"
 import "hardhat-dependency-compiler"
 import "hardhat-deploy"
 import "hardhat-deploy-ethers"
 import "hardhat-gas-reporter"
-import { HardhatUserConfig, task } from "hardhat/config"
-import { ETHERSCAN_API_KEY } from "./constants"
-import { getMnemonic, getUrl, hardhatForkConfig, tenderlyConfig } from "./scripts/hardhatConfig"
-import { verifyOnEtherscan, verifyOnTenderly } from "./scripts/verify"
-
-dotenv.config()
-
-enum ChainId {
-    ARBITRUM_ONE_CHAIN_ID = 42161,
-    ARBITRUM_RINKEBY_CHAIN_ID = 421611,
-    RINKEBY_CHAIN_ID = 4,
-    OPTIMISM_KOVAN_CHAIN_ID = 69,
-    OPTIMISM_CHAIN_ID = 10,
-}
-
-enum CompanionNetwork {
-    optimism = "optimism",
-    optimismKovan = "optimismKovan",
-    rinkeby = "rinkeby",
-    arbitrumRinkeby = "arbitrumRinkeby",
-}
-
-task("etherscanVerify", "Verify on etherscan")
-    .addOptionalParam("contract", "Contract need to verify")
-    .setAction(async ({ contract }, hre) => {
-        await verifyOnEtherscan(hre, contract)
-    })
-
-task("tenderlyVerify", "Verify on tenderly")
-    .addOptionalParam("contract", "Contract need to verify")
-    .setAction(async ({ contract }, hre) => {
-        const network = hre.network.name
-        hre.config.tenderly = {
-            project: tenderlyConfig[network],
-            username: "perpprotocol",
-        }
-        await verifyOnTenderly(hre, contract)
-    })
+import { HardhatUserConfig } from "hardhat/config"
 
 const config: HardhatUserConfig = {
     solidity: {
@@ -66,44 +25,6 @@ const config: HardhatUserConfig = {
     networks: {
         hardhat: {
             allowUnlimitedContractSize: true,
-            saveDeployments: true,
-            ...hardhatForkConfig(),
-        },
-        arbitrumRinkeby: {
-            url: getUrl(CompanionNetwork.arbitrumRinkeby),
-            accounts: {
-                mnemonic: getMnemonic(CompanionNetwork.arbitrumRinkeby),
-            },
-            chainId: ChainId.ARBITRUM_RINKEBY_CHAIN_ID,
-        },
-        rinkeby: {
-            url: getUrl(CompanionNetwork.rinkeby),
-            accounts: {
-                mnemonic: getMnemonic(CompanionNetwork.rinkeby),
-            },
-            chainId: ChainId.RINKEBY_CHAIN_ID,
-        },
-        optimismKovan: {
-            url: getUrl(CompanionNetwork.optimismKovan),
-            accounts: {
-                mnemonic: getMnemonic(CompanionNetwork.optimismKovan),
-            },
-            chainId: ChainId.OPTIMISM_KOVAN_CHAIN_ID,
-        },
-        optimism: {
-            url: getUrl(CompanionNetwork.optimism),
-            accounts: {
-                mnemonic: getMnemonic(CompanionNetwork.optimism),
-            },
-            chainId: ChainId.OPTIMISM_CHAIN_ID,
-        },
-    },
-    namedAccounts: {
-        deployer: 0, // 0 means ethers.getSigners[0]
-        gnosisSafeAddress: {
-            // It's EOA for now to test easier.
-            [ChainId.OPTIMISM_KOVAN_CHAIN_ID]: "0x374152052700eDf29Fc2D4ed5eF93cA7d3fdF38e",
-            [ChainId.OPTIMISM_CHAIN_ID]: "0x801B15C92075D85204d1b23054407DA63cc3105B",
         },
     },
     typechain: {
@@ -150,9 +71,6 @@ const config: HardhatUserConfig = {
         jobs: 4,
         timeout: 120000,
         color: true,
-    },
-    etherscan: {
-        apiKey: ETHERSCAN_API_KEY,
     },
 }
 
