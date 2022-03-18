@@ -10,7 +10,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/perpetual-protocol/curie-periphery-contract.git"
+    "url": "https://github.com/perpetual-protocol/perp-curie-periphery-contract.git"
   },
   "homepage": "https://perp.com/",
   "keywords": [
