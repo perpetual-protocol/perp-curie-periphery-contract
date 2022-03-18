@@ -1,13 +1,13 @@
 # perp-curie-periphery-contract
 
-[![@perp/curie-periphery on npm](https://img.shields.io/npm/v/@perp/curie-periphery?style=flat-square)](https://www.npmjs.com/package/@perp/curie-periphery)
+[![@perp/curie-periphery-contract on npm](https://img.shields.io/npm/v/@perp/curie-periphery-contract?style=flat-square)](https://www.npmjs.com/package/@perp/curie-periphery-contract)
 [![@perp/curie-deployments on npm](https://img.shields.io/npm/v/@perp/curie-deployments?style=flat-square)](https://www.npmjs.com/package/@perp/curie-deployments)
 
 This repository contains the periphery smart contracts for [Perpetual Protocol Curie (v2)](https://perp.com/). For core contracts, see [perp-curie-contract](https://github.com/perpetual-protocol/perp-curie-contract).
 
 Contract source code and metadata are also published as npm package:
 
-- [@perp/curie-periphery](https://www.npmjs.com/package/@perp/curie-periphery) (source code)
+- [@perp/curie-periphery-contract](https://www.npmjs.com/package/@perp/curie-periphery-contract) (source code)
 - [@perp/curie-deployments](https://www.npmjs.com/package/@perp/curie-deployments) (artifacts and deployed addresses)
 
 ## Deployments
