@@ -32,10 +32,10 @@ jobs:
                   restore-keys: |
                       ${{ runner.os }}-node-
 
-            - name: Use Node.js 12.x
+            - name: Use Node.js 16.x
               uses: actions/setup-node@v1
               with:
-                  node-version: 12.x
+                  node-version: 16.x
                   registry-url: 'https://registry.npmjs.org'
 
             - name: Install contract dependencies
@@ -60,4 +60,4 @@ jobs:
                   DISCORD_WEBHOOK: ${{ secrets.DISCORD_RELEASE_WEBHOOK }}
               uses: Ilshidur/action-discord@master
               with:
-                  args: "Curie periphery contracts ${{github.ref}} released"
+                  args: "npm package @perp/curie-periphery-contract ${{github.ref}} released"

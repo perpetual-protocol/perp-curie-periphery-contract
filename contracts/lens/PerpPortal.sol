@@ -337,6 +337,23 @@ contract PerpPortal {
         return IVault(_vault).getTotalDebt();
     }
 
+    function getAccountLeverage(address trader) external view returns (int256) {
+        int256 accountValue = IClearingHouse(_clearingHouse).getAccountValue(trader);
+        uint256 totalPositionValue = IAccountBalance(_accountBalance).getTotalAbsPositionValue(trader);
+
+        // no collateral & no position
+        if (accountValue == 0 && totalPositionValue == 0) {
+            return 0;
+        }
+
+        // debt >= 0
+        if (accountValue <= 0) {
+            return -1;
+        }
+
+        return totalPositionValue.toInt256().mulDiv(1e18, accountValue.toUint256());
+    }
+
     // perpPortal view functions
 
     function getClearingHouse() external view returns (address) {
