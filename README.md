@@ -1,3 +1,6 @@
+![image](https://user-images.githubusercontent.com/105896/160323317-7ce46737-ef27-450b-97bd-509ebedae312.png)
+
+
 # perp-curie-periphery-contract
 
 [![@perp/curie-periphery-contract on npm](https://img.shields.io/npm/v/@perp/curie-periphery-contract?style=flat-square)](https://www.npmjs.com/package/@perp/curie-periphery-contract)
