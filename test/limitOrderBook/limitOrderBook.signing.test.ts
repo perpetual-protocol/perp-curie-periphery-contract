@@ -2,10 +2,10 @@ import { loadFixture } from "@ethereum-waffle/provider"
 import { parseEther } from "@ethersproject/units"
 import { expect } from "chai"
 import { ethers, waffle } from "hardhat"
-import { TestLimitOrderBook } from "../typechain-types"
-import { generateTypedHash } from "./shared/eip712Utils"
-import { createLimitOrderFixture, LimitOrderFixture } from "./shared/fixtures"
-import { getOrderTypes } from "./shared/orderUtils"
+import { TestLimitOrderBook } from "../../typechain"
+import { generateTypedHash } from "./eip712Utils"
+import { createLimitOrderFixture, LimitOrderFixture } from "./fixtures"
+import { getOrderTypes } from "./orderUtils"
 
 describe("LimitOrderBook signing", function () {
     const [admin, alice, bob] = waffle.provider.getWallets()
