@@ -1,4 +1,4 @@
-import { MockContract, smockit } from "@eth-optimism/smock"
+import { FakeContract } from "@defi-wonderland/smock"
 import { ethers } from "hardhat"
 import {
     AccountBalance,
@@ -9,18 +9,17 @@ import {
     InsuranceFund,
     MarketRegistry,
     OrderBook,
+    QuoteToken,
+    TestAccountBalance,
+    TestAggregatorV3,
     TestClearingHouse,
     TestERC20,
     TestExchange,
-    TestUniswapV3Broker,
     UniswapV3Factory,
     UniswapV3Pool,
     Vault,
-} from "../../typechain"
-import { ChainlinkPriceFeed } from "../../typechain/perp-oracle"
-import { QuoteToken } from "../../typechain/QuoteToken"
-import { TestAccountBalance } from "../../typechain/TestAccountBalance"
-import { createQuoteTokenFixture, token0Fixture, tokensFixture, uniswapV3FactoryFixture } from "../shared/fixtures"
+} from "../../typechain-types"
+import { token0Fixture, tokensFixture } from "../shared/fixtures"
 
 export interface ClearingHouseFixture {
     clearingHouse: TestClearingHouse | ClearingHouse
@@ -37,14 +36,10 @@ export interface ClearingHouseFixture {
     USDC: TestERC20
     quoteToken: QuoteToken
     baseToken: BaseToken
-    mockedBaseAggregator: MockContract
+    mockedBaseAggregator: FakeContract<TestAggregatorV3>
     baseToken2: BaseToken
-    mockedBaseAggregator2: MockContract
+    mockedBaseAggregator2: FakeContract<TestAggregatorV3>
     pool2: UniswapV3Pool
-}
-
-interface UniswapV3BrokerFixture {
-    uniswapV3Broker: TestUniswapV3Broker
 }
 
 export enum BaseQuoteOrdering {
@@ -63,7 +58,7 @@ export function createClearingHouseFixture(
         const USDC = (await tokenFactory.deploy()) as TestERC20
         await USDC.__TestERC20_init("TestUSDC", "USDC", 6)
 
-        let baseToken: BaseToken, quoteToken: QuoteToken, mockedBaseAggregator: MockContract
+        let baseToken: BaseToken, quoteToken: QuoteToken, mockedBaseAggregator: FakeContract<TestAggregatorV3>
         const { token0, mockedAggregator0, token1 } = await tokensFixture()
 
         // we assume (base, quote) == (token0, token1)
@@ -209,140 +204,5 @@ export function createClearingHouseFixture(
             mockedBaseAggregator2,
             pool2,
         }
-    }
-}
-
-export async function uniswapV3BrokerFixture(): Promise<UniswapV3BrokerFixture> {
-    const factory = await uniswapV3FactoryFixture()
-    const uniswapV3BrokerFactory = await ethers.getContractFactory("TestUniswapV3Broker")
-    const uniswapV3Broker = (await uniswapV3BrokerFactory.deploy()) as TestUniswapV3Broker
-    await uniswapV3Broker.initialize(factory.address)
-    return { uniswapV3Broker }
-}
-
-interface MockedClearingHouseFixture {
-    clearingHouse: ClearingHouse
-    clearingHouseConfig: ClearingHouseConfig
-    exchange: Exchange
-    mockedUniV3Factory: MockContract
-    mockedVault: MockContract
-    mockedQuoteToken: MockContract
-    mockedUSDC: MockContract
-    mockedBaseToken: MockContract
-    mockedExchange: MockContract
-    mockedInsuranceFund: MockContract
-    mockedAccountBalance: MockContract
-    mockedMarketRegistry: MockContract
-}
-
-export const ADDR_GREATER_THAN = true
-export const ADDR_LESS_THAN = false
-export async function mockedBaseTokenTo(longerThan: boolean, targetAddr: string): Promise<MockContract> {
-    // deployer ensure base token is always smaller than quote in order to achieve base=token0 and quote=token1
-    let mockedToken: MockContract
-    while (
-        !mockedToken ||
-        (longerThan
-            ? mockedToken.address.toLowerCase() <= targetAddr.toLowerCase()
-            : mockedToken.address.toLowerCase() >= targetAddr.toLowerCase())
-    ) {
-        const aggregatorFactory = await ethers.getContractFactory("TestAggregatorV3")
-        const aggregator = await aggregatorFactory.deploy()
-        const mockedAggregator = await smockit(aggregator)
-
-        const chainlinkPriceFeedFactory = await ethers.getContractFactory("ChainlinkPriceFeed")
-        const chainlinkPriceFeed = (await chainlinkPriceFeedFactory.deploy(
-            mockedAggregator.address,
-        )) as ChainlinkPriceFeed
-
-        const baseTokenFactory = await ethers.getContractFactory("BaseToken")
-        const token = (await baseTokenFactory.deploy()) as BaseToken
-        await token.initialize("Test", "Test", chainlinkPriceFeed.address)
-        mockedToken = await smockit(token)
-        mockedToken.smocked.decimals.will.return.with(async () => {
-            return 18
-        })
-    }
-    return mockedToken
-}
-
-export async function mockedClearingHouseFixture(): Promise<MockedClearingHouseFixture> {
-    const token1 = await createQuoteTokenFixture("RandomVirtualToken", "RVT")()
-
-    // deploy test tokens
-    const tokenFactory = await ethers.getContractFactory("TestERC20")
-    const USDC = (await tokenFactory.deploy()) as TestERC20
-    await USDC.__TestERC20_init("TestUSDC", "USDC", 6)
-
-    const insuranceFundFactory = await ethers.getContractFactory("InsuranceFund")
-    const insuranceFund = (await insuranceFundFactory.deploy()) as InsuranceFund
-    const mockedInsuranceFund = await smockit(insuranceFund)
-
-    const vaultFactory = await ethers.getContractFactory("Vault")
-    const vault = (await vaultFactory.deploy()) as Vault
-    const mockedVault = await smockit(vault)
-
-    const mockedUSDC = await smockit(USDC)
-    const mockedQuoteToken = await smockit(token1)
-    mockedQuoteToken.smocked.decimals.will.return.with(async () => {
-        return 18
-    })
-
-    // deploy UniV3 factory
-    const factoryFactory = await ethers.getContractFactory("UniswapV3Factory")
-    const uniV3Factory = (await factoryFactory.deploy()) as UniswapV3Factory
-    const mockedUniV3Factory = await smockit(uniV3Factory)
-
-    const clearingHouseConfigFactory = await ethers.getContractFactory("ClearingHouseConfig")
-    const clearingHouseConfig = (await clearingHouseConfigFactory.deploy()) as ClearingHouseConfig
-
-    const marketRegistryFactory = await ethers.getContractFactory("MarketRegistry")
-    const marketRegistry = (await marketRegistryFactory.deploy()) as MarketRegistry
-    await marketRegistry.initialize(mockedUniV3Factory.address, mockedQuoteToken.address)
-    const mockedMarketRegistry = await smockit(marketRegistry)
-    const orderBookFactory = await ethers.getContractFactory("OrderBook")
-    const orderBook = (await orderBookFactory.deploy()) as OrderBook
-    await orderBook.initialize(marketRegistry.address)
-    const mockedOrderBook = await smockit(orderBook)
-
-    const exchangeFactory = await ethers.getContractFactory("Exchange")
-    const exchange = (await exchangeFactory.deploy()) as Exchange
-    await exchange.initialize(mockedMarketRegistry.address, mockedOrderBook.address, clearingHouseConfig.address)
-    const mockedExchange = await smockit(exchange)
-
-    const accountBalanceFactory = await ethers.getContractFactory("AccountBalance")
-    const accountBalance = (await accountBalanceFactory.deploy()) as AccountBalance
-    const mockedAccountBalance = await smockit(accountBalance)
-
-    // deployer ensure base token is always smaller than quote in order to achieve base=token0 and quote=token1
-    const mockedBaseToken = await mockedBaseTokenTo(ADDR_LESS_THAN, mockedQuoteToken.address)
-
-    mockedExchange.smocked.getOrderBook.will.return.with(mockedOrderBook.address)
-
-    // deploy clearingHouse
-    const clearingHouseFactory = await ethers.getContractFactory("ClearingHouse")
-    const clearingHouse = (await clearingHouseFactory.deploy()) as ClearingHouse
-    await clearingHouse.initialize(
-        clearingHouseConfig.address,
-        mockedVault.address,
-        mockedQuoteToken.address,
-        mockedUniV3Factory.address,
-        mockedExchange.address,
-        mockedAccountBalance.address,
-        insuranceFund.address,
-    )
-    return {
-        clearingHouse,
-        clearingHouseConfig,
-        exchange,
-        mockedExchange,
-        mockedUniV3Factory,
-        mockedVault,
-        mockedQuoteToken,
-        mockedUSDC,
-        mockedBaseToken,
-        mockedInsuranceFund,
-        mockedAccountBalance,
-        mockedMarketRegistry,
     }
 }

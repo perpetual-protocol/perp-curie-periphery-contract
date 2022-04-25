@@ -1,8 +1,8 @@
-import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/dist/src/signers"
+import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers"
 import { expect } from "chai"
 import { loadFixture } from "ethereum-waffle"
 import { ethers } from "hardhat"
-import { MetaTxGateway, TestMetaTxRecipient } from "../../typechain"
+import { MetaTxGateway, TestMetaTxRecipient } from "../../typechain-types"
 import { EIP712Domain, signEIP712MetaTx } from "../helper/eip712"
 import { createMetaTxGatewayFixture } from "./fixtures"
 

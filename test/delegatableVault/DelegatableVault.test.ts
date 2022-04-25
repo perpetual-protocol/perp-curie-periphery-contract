@@ -2,7 +2,6 @@ import { BigNumber } from "@ethersproject/bignumber"
 import { expect } from "chai"
 import { parseEther, parseUnits } from "ethers/lib/utils"
 import { ethers, waffle } from "hardhat"
-import { beforeEach } from "mocha"
 import {
     AccountBalance,
     BaseToken,
@@ -14,7 +13,7 @@ import {
     TestERC20,
     UniswapV3Pool,
     Vault,
-} from "../../typechain"
+} from "../../typechain-types"
 import { createClearingHouseFixture } from "../clearingHouse/fixtures"
 import { deposit } from "../helper/token"
 import { encodePriceSqrt } from "../shared/utilities"

@@ -1,5 +1,5 @@
 import { ethers } from "hardhat"
-import { MetaTxGateway, TestMetaTxRecipient } from "../../typechain"
+import { MetaTxGateway, TestMetaTxRecipient } from "../../typechain-types"
 
 interface MetaTxGatewayFixture {
     metaTxGateway: MetaTxGateway

@@ -1,6 +1,6 @@
 import { Wallet } from "ethers"
 import { parseUnits } from "ethers/lib/utils"
-import { TestERC20, Vault } from "../../typechain"
+import { TestERC20, Vault } from "../../typechain-types"
 
 export async function deposit(sender: Wallet, vault: Vault, amount: number, token: TestERC20): Promise<void> {
     const decimals = await token.decimals()
