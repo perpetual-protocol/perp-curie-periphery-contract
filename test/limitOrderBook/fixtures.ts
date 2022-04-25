@@ -1,5 +1,5 @@
 import { ethers } from "hardhat"
-import { TestLimitOrderBook } from "../../typechain"
+import { TestLimitOrderBook } from "../../typechain-types"
 
 export interface LimitOrderFixture {
     EIP712Name: string
