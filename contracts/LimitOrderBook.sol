@@ -3,13 +3,23 @@ pragma solidity 0.7.6;
 pragma abicoder v2;
 
 import { BlockContext } from "./base/BlockContext.sol";
+import { AddressUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol";
 import { ECDSAUpgradeable } from "@openzeppelin/contracts-upgradeable/cryptography/ECDSAUpgradeable.sol";
 import { EIP712Upgradeable } from "@openzeppelin/contracts-upgradeable/drafts/EIP712Upgradeable.sol";
 import { ILimitOrderBook } from "./interface/ILimitOrderBook.sol";
 import { OwnerPausable } from "./base/OwnerPausable.sol";
 import { ReentrancyGuardUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
+import { IClearingHouse } from "@perp/curie-contract/contracts/interface/IClearingHouse.sol";
+import { IAccountBalance } from "@perp/curie-contract/contracts/interface/IAccountBalance.sol";
 
 contract LimitOrderBook is ILimitOrderBook, BlockContext, ReentrancyGuardUpgradeable, OwnerPausable, EIP712Upgradeable {
+    using AddressUpgradeable for address;
+
+    enum OrderStatus {
+        Filled,
+        Cancelled
+    }
+
     // solhint-disable-next-line func-name-mixedcase
     bytes32 public LIMIT_ORDER_TYPEHASH =
         keccak256(
@@ -17,14 +27,27 @@ contract LimitOrderBook is ILimitOrderBook, BlockContext, ReentrancyGuardUpgrade
             "LimitOrder(uint256 salt,address trader,address baseToken,bool isBaseToQuote,bool isExactInput,uint256 amount,uint256 oppositeAmountBound,uint256 deadline,bool reduceOnly)"
         );
 
+    mapping(bytes32 => OrderStatus) private _ordersStatus;
+
+    address private _clearingHouse;
+    address private _accountBalance;
+
     //
     // EXTERNAL NON-VIEW
     //
 
-    function initialize(string memory name, string memory version) external initializer {
+    function initialize(
+        string memory name,
+        string memory version,
+        address clearingHouseArg
+    ) external initializer {
         __ReentrancyGuard_init();
         __OwnerPausable_init();
         __EIP712_init(name, version); // ex: "PerpCurieLimitOrder" and "1"
+        // LOB_CHINC : ClearingHouse Is Not Contract
+        require(clearingHouseArg.isContract(), "LOB_CHINC");
+        _clearingHouse = clearingHouseArg;
+        _accountBalance = IClearingHouse(_clearingHouse).getAccountBalance();
     }
 
     /// @param signature a EIP712 signature, generated from `eth_signTypedData_v4`
@@ -32,26 +55,69 @@ contract LimitOrderBook is ILimitOrderBook, BlockContext, ReentrancyGuardUpgrade
         bytes32 orderHash = getOrderHash(order);
         address signer = verifySigner(order, signature);
 
-        // TODO
-        // requireSignatureIsValid();
-        // requireOrderCriteriaIsMatched();
-        // ClearingHouse.openPositionOnBehalf(order.trader, openPositionParams);
-        // updateOrderStatus();
+        // LOB_OIFA: Order is filled already
+        require(_ordersStatus[orderHash] != OrderStatus.Filled, "LOB_OIFA");
+        // LOB_OIC: Order is cancelled
+        require(_ordersStatus[orderHash] != OrderStatus.Cancelled, "LOB_OIC");
+
+        // TODO: will revisit `reduceOnly` option later
+        // check the direction of position and amount/oppositeAmountBound
+        if (order.reduceOnly) {
+            int256 positionSize = IAccountBalance(_accountBalance).getTakerPositionSize(order.trader, order.baseToken);
+
+            if (positionSize > 0) {
+                // LOB_PINR: Position Is Not Reducible
+                require(order.isBaseToQuote, "LOB_PINR");
+            } else if (positionSize < 0) {
+                // LOB_PINR: Position Is Not Reducible
+                require(!order.isBaseToQuote, "LOB_PINR");
+            } else {
+                // LOB_XXX: Trader Doesn't have position yet
+                require(false, "LOB_TDHPY");
+            }
+        }
+
+        IClearingHouse(_clearingHouse).openPositionFor(
+            order.trader,
+            IClearingHouse.OpenPositionParams({
+                baseToken: order.baseToken,
+                isBaseToQuote: order.isBaseToQuote,
+                isExactInput: order.isExactInput,
+                amount: order.amount,
+                oppositeAmountBound: order.oppositeAmountBound,
+                deadline: order.deadline,
+                sqrtPriceLimitX96: 0,
+                referralCode: ""
+            })
+        );
+
+        _ordersStatus[orderHash] = OrderStatus.Filled;
+        // TODO: this require another vault contract to disburse
         // distributeKeeperFee();
-        // emit OrderFilled();
+        emit LimitOrderFilled(
+            order.trader,
+            order.baseToken,
+            orderHash,
+            _msgSender(), // keeper
+            0 // keeperFee, TODO: revisit this after finish distributeKeeperFee
+        );
+    }
+
+    function cancelLimitOrder(LimitOrder memory order) external {
+        // LOB_OSMBS: Order's Signer Must Be Sender
+        require(_msgSender() == order.trader, "LOB_OSMBS");
+        bytes32 orderHash = getOrderHash(order);
+        _ordersStatus[orderHash] = OrderStatus.Cancelled;
+        emit LimitOrderCancelled(order.trader, order.baseToken, orderHash);
     }
 
     //
-    // EXTERNAL VIEW
+    // PUBLIC VIEW
     //
 
     function getOrderHash(LimitOrder memory order) public view returns (bytes32) {
         return _hashTypedDataV4(keccak256(abi.encode(LIMIT_ORDER_TYPEHASH, order)));
     }
-
-    //
-    // INTERNAL VIEW
-    //
 
     function verifySigner(LimitOrder memory order, bytes memory signature) public view returns (address) {
         bytes32 orderHash = getOrderHash(order);

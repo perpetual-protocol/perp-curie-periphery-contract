@@ -23,16 +23,13 @@ interface ILimitOrderBook {
         bool reduceOnly;
     }
 
-    event OrderFilled(
+    event LimitOrderFilled(
         address indexed trader,
         address indexed baseToken,
         bytes32 orderHash,
-        int256 exchangedPositionSize,
-        int256 exchangedPositionNotional,
-        int256 remaining,
         address keeper,
         uint256 keeperFee
     );
 
-    event OrderCanceled(address indexed trader, address indexed baseToken, bytes32 orderHash);
+    event LimitOrderCancelled(address indexed trader, address indexed baseToken, bytes32 orderHash);
 }
