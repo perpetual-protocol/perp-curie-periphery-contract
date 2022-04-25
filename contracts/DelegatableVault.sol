@@ -10,11 +10,8 @@ import { IVault } from "@perp/curie-contract/contracts/interface/IVault.sol";
 import { IMerkleRedeem } from "@perp/curie-liquidity-mining/contracts/interface/IMerkleRedeem.sol";
 import { DelegatableVaultStorageV1 } from "./storage/DelegatableVaultStorage.sol";
 import { LowLevelErrorMessage } from "./LowLevelErrorMessage.sol";
-
-import {
-    SafeERC20Upgradeable,
-    IERC20Upgradeable
-} from "@openzeppelin/contracts-upgradeable/token/ERC20/SafeERC20Upgradeable.sol";
+// solhint-disable-next-line max-line-length
+import { SafeERC20Upgradeable, IERC20Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC20/SafeERC20Upgradeable.sol";
 
 contract DelegatableVault is SafeOwnable, LowLevelErrorMessage, DelegatableVaultStorageV1 {
     using AddressUpgradeable for address;

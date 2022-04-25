@@ -69,8 +69,9 @@ contract PerpPortal {
 
         if (positionSize == 0) return 0;
 
-        uint256 indexPrice =
-            IIndexPrice(baseToken).getIndexPrice(IClearingHouseConfig(_clearingHouseConfig).getTwapInterval());
+        uint256 indexPrice = IIndexPrice(baseToken).getIndexPrice(
+            IClearingHouseConfig(_clearingHouseConfig).getTwapInterval()
+        );
         uint256 totalPositionValue = IAccountBalance(_accountBalance).getTotalAbsPositionValue(trader);
         uint24 mmRatio = IClearingHouseConfig(_clearingHouseConfig).getMmRatio();
 
