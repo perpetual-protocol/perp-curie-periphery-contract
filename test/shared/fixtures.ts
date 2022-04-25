@@ -1,14 +1,21 @@
-import { MockContract, smockit } from "@eth-optimism/smock"
+import { FakeContract, smock } from "@defi-wonderland/smock"
 import { ethers } from "hardhat"
-import { BaseToken, QuoteToken, UniswapV3Factory, UniswapV3Pool, VirtualToken } from "../../typechain"
-import { ChainlinkPriceFeed } from "../../typechain/perp-oracle"
+import {
+    BaseToken,
+    ChainlinkPriceFeed,
+    QuoteToken,
+    TestAggregatorV3,
+    UniswapV3Factory,
+    UniswapV3Pool,
+    VirtualToken,
+} from "../../typechain-types"
 import { isAscendingTokenOrder } from "./utilities"
 
 interface TokensFixture {
     token0: BaseToken
     token1: QuoteToken
-    mockedAggregator0: MockContract
-    mockedAggregator1: MockContract
+    mockedAggregator0: FakeContract<TestAggregatorV3>
+    mockedAggregator1: FakeContract<TestAggregatorV3>
 }
 
 interface PoolFixture {
@@ -20,7 +27,7 @@ interface PoolFixture {
 
 interface BaseTokenFixture {
     baseToken: BaseToken
-    mockedAggregator: MockContract
+    mockedAggregator: FakeContract<TestAggregatorV3>
 }
 
 export function createQuoteTokenFixture(name: string, symbol: string): () => Promise<QuoteToken> {
@@ -34,11 +41,8 @@ export function createQuoteTokenFixture(name: string, symbol: string): () => Pro
 
 export function createBaseTokenFixture(name: string, symbol: string): () => Promise<BaseTokenFixture> {
     return async (): Promise<BaseTokenFixture> => {
-        const aggregatorFactory = await ethers.getContractFactory("TestAggregatorV3")
-        const aggregator = await aggregatorFactory.deploy()
-        const mockedAggregator = await smockit(aggregator)
-
-        mockedAggregator.smocked.decimals.will.return.with(async () => {
+        const mockedAggregator = await smock.fake<TestAggregatorV3>("TestAggregatorV3")
+        mockedAggregator.decimals.returns(() => {
             return 6
         })
 
@@ -73,8 +77,8 @@ export async function tokensFixture(): Promise<TokensFixture> {
 
     let token0: BaseToken
     let token1: QuoteToken
-    let mockedAggregator0: MockContract
-    let mockedAggregator1: MockContract
+    let mockedAggregator0: FakeContract<TestAggregatorV3>
+    let mockedAggregator1: FakeContract<TestAggregatorV3>
     if (isAscendingTokenOrder(randomToken0.address, randomToken1.address)) {
         token0 = randomToken0
         mockedAggregator0 = randomMockedAggregator0

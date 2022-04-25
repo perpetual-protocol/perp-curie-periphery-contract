@@ -117,8 +117,12 @@ contract MetaTxGateway is SafeOwnableNonUpgradable, LowLevelErrorMessage {
     ) external returns (bytes memory) {
         require(isInWhitelists(to), "!whitelisted");
 
-        MetaTransaction memory metaTx =
-            MetaTransaction({ nonce: _nonces[from], from: from, to: to, functionSignature: functionSignature });
+        MetaTransaction memory metaTx = MetaTransaction({
+            nonce: _nonces[from],
+            from: from,
+            to: to,
+            functionSignature: functionSignature
+        });
 
         require(
             _verify(from, _domainSeparatorL1, metaTx, sigR, sigS, sigV) ||
@@ -190,8 +194,12 @@ contract MetaTxGateway is SafeOwnableNonUpgradable, LowLevelErrorMessage {
         bytes32 sigS,
         uint8 sigV
     ) internal pure returns (bool) {
-        address signer =
-            ecrecover(_toTypedMessageHash(domainSeparator, _hashMetaTransaction(metaTx)), sigV, sigR, sigS);
+        address signer = ecrecover(
+            _toTypedMessageHash(domainSeparator, _hashMetaTransaction(metaTx)),
+            sigV,
+            sigR,
+            sigS
+        );
         require(signer != address(0), "invalid signature");
         return signer == user;
     }

@@ -1,6 +1,6 @@
 import bn from "bignumber.js"
 import { BigNumber, BigNumberish } from "ethers"
-import { VirtualToken } from "../../typechain"
+import { VirtualToken } from "../../typechain-types"
 
 bn.config({ EXPONENTIAL_AT: 999999, DECIMAL_PLACES: 40 })
 

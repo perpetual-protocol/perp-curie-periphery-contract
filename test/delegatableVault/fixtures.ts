@@ -1,5 +1,5 @@
 import { ethers } from "hardhat"
-import { DelegatableVault } from "../../typechain"
+import { DelegatableVault } from "../../typechain-types"
 import { ClearingHouseFixture } from "../clearingHouse/fixtures"
 
 export interface DelegatableVaultFixture {

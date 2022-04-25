@@ -12,7 +12,7 @@ import {
     TestERC20,
     UniswapV3Pool,
     Vault,
-} from "../../typechain"
+} from "../../typechain-types"
 import { createClearingHouseFixture } from "../clearingHouse/fixtures"
 import { deposit } from "../helper/token"
 import { encodePriceSqrt } from "../shared/utilities"

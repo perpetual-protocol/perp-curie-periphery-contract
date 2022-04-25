@@ -63,14 +63,13 @@ contract Quoter is IUniswapV3SwapCallback {
         uint24 exchangeFeeRatio = marketInfo.exchangeFeeRatio;
 
         // scale up before swap to achieve customized fee/ignore Uniswap fee
-        (uint256 scaledAmount, ) =
-            SwapMath.calcScaledAmountForSwaps(
-                params.isBaseToQuote,
-                params.isExactInput,
-                params.amount,
-                exchangeFeeRatio,
-                uniswapFeeRatio
-            );
+        (uint256 scaledAmount, ) = SwapMath.calcScaledAmountForSwaps(
+            params.isBaseToQuote,
+            params.isExactInput,
+            params.amount,
+            exchangeFeeRatio,
+            uniswapFeeRatio
+        );
         // UniswapV3Pool uses the sign to determine isExactInput or not
         int256 specifiedAmount = params.isExactInput ? scaledAmount.toInt256() : -scaledAmount.toInt256();
 
@@ -111,11 +110,11 @@ contract Quoter is IUniswapV3SwapCallback {
                     // qr * y * (1 - x) / (1 - y)
                     fee = SwapMath
                         .calcAmountWithFeeRatioReplaced(
-                        quote.mul(exchangeFeeRatio),
-                        uniswapFeeRatio,
-                        exchangeFeeRatio,
-                        false
-                    )
+                            quote.mul(exchangeFeeRatio),
+                            uniswapFeeRatio,
+                            exchangeFeeRatio,
+                            false
+                        )
                         .div(1e6);
 
                     // long: exchangedPositionSize >= 0 && exchangedPositionNotional <= 0
@@ -135,8 +134,9 @@ contract Quoter is IUniswapV3SwapCallback {
 
             // if it's exact output with a price limit, ensure that the full output amount has been receive
             if (!params.isExactInput && params.sqrtPriceLimitX96 == 0) {
-                uint256 amountReceived =
-                    params.isBaseToQuote ? response.deltaAvailableQuote : response.deltaAvailableBase;
+                uint256 amountReceived = params.isBaseToQuote
+                    ? response.deltaAvailableQuote
+                    : response.deltaAvailableBase;
                 // Q_UOA: unmatched output amount
                 require(
                     (
