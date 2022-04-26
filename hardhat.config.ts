@@ -41,6 +41,7 @@ const config: HardhatUserConfig = {
             "@perp/curie-contract/contracts/OrderBook.sol",
             "@perp/curie-contract/contracts/QuoteToken.sol",
             "@perp/curie-contract/contracts/Vault.sol",
+            "@perp/curie-contract/contracts/DelegateApproval.sol",
         ],
     },
     contractSizer: {

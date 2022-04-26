@@ -21,6 +21,7 @@ contract LimitOrderBook is ILimitOrderBook, BlockContext, ReentrancyGuardUpgrade
     using SignedSafeMathUpgradeable for int256;
 
     enum OrderStatus {
+        Unfilled, // this is the default value
         Filled,
         Cancelled
     }
