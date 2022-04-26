@@ -1,4 +1,7 @@
 import { BigNumberish } from "@ethersproject/bignumber"
+import { Wallet } from "ethers"
+import { waffle } from "hardhat"
+import { LimitOrderFixture } from "./fixtures"
 
 export interface LimitOrder {
     trader: string
@@ -32,4 +35,22 @@ export function getOrderTypes() {
             { name: "reduceOnly", type: "bool" },
         ],
     }
+}
+
+export async function getSignature(fixture: LimitOrderFixture, limitOrder: LimitOrder, signer: Wallet) {
+    const domain = {
+        name: fixture.EIP712Name,
+        version: fixture.EIP712Version,
+        chainId: (await waffle.provider.getNetwork()).chainId,
+        verifyingContract: fixture.limitOrderBook.address,
+    }
+
+    const types = getOrderTypes()
+    const typesWithoutDomain = {
+        LimitOrder: types.LimitOrder,
+    }
+
+    // sign limit order
+    const signature = await signer._signTypedData(domain, typesWithoutDomain, limitOrder)
+    return signature
 }

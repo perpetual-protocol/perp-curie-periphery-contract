@@ -25,7 +25,7 @@ import { getMaxTickRange, priceToTick } from "../helper/number"
 import { mintAndDeposit } from "../helper/token"
 import { encodePriceSqrt, syncIndexToMarketPrice } from "../shared/utilities"
 import { createLimitOrderFixture, LimitOrderFixture } from "./fixtures"
-import { getOrderTypes } from "./orderUtils"
+import { getSignature } from "./orderUtils"
 
 describe.only("LimitOrderBook fillOrder", function () {
     const [admin, trader, keeper, maker] = waffle.provider.getWallets()
@@ -131,20 +131,8 @@ describe.only("LimitOrderBook fillOrder", function () {
             reduceOnly: false,
         }
 
-        const domain = {
-            name: fixture.EIP712Name,
-            version: fixture.EIP712Version,
-            chainId: (await waffle.provider.getNetwork()).chainId,
-            verifyingContract: limitOrderBook.address,
-        }
-
-        const types = getOrderTypes()
-        const typesWithoutDomain = {
-            LimitOrder: types.LimitOrder,
-        }
-
         // sign limit order
-        const signature = await trader._signTypedData(domain, typesWithoutDomain, limitOrder)
+        const signature = await getSignature(fixture, limitOrder, trader)
 
         await expect(await limitOrderBook.connect(keeper).fillLimitOrder(limitOrder, signature)).to.emit(
             clearingHouse,
