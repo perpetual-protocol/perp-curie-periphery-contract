@@ -6,6 +6,7 @@ import { BlockContext } from "./base/BlockContext.sol";
 import { AddressUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol";
 import { ECDSAUpgradeable } from "@openzeppelin/contracts-upgradeable/cryptography/ECDSAUpgradeable.sol";
 import { EIP712Upgradeable } from "@openzeppelin/contracts-upgradeable/drafts/EIP712Upgradeable.sol";
+import { PerpMath } from "@perp/curie-contract/contracts/lib/PerpMath.sol";
 import { ILimitOrderBook } from "./interface/ILimitOrderBook.sol";
 import { OwnerPausable } from "./base/OwnerPausable.sol";
 import { ReentrancyGuardUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
@@ -14,6 +15,8 @@ import { IAccountBalance } from "@perp/curie-contract/contracts/interface/IAccou
 
 contract LimitOrderBook is ILimitOrderBook, BlockContext, ReentrancyGuardUpgradeable, OwnerPausable, EIP712Upgradeable {
     using AddressUpgradeable for address;
+    using PerpMath for int256;
+    using PerpMath for uint256;
 
     enum OrderStatus {
         Filled,
@@ -60,22 +63,10 @@ contract LimitOrderBook is ILimitOrderBook, BlockContext, ReentrancyGuardUpgrade
         // LOB_OIC: Order is cancelled
         require(_ordersStatus[orderHash] != OrderStatus.Cancelled, "LOB_OIC");
 
-        // TODO: will revisit `reduceOnly` option later
-        // check the direction of position and amount/oppositeAmountBound
-        if (order.reduceOnly) {
-            int256 positionSize = IAccountBalance(_accountBalance).getTakerPositionSize(order.trader, order.baseToken);
-
-            if (positionSize > 0) {
-                // LOB_PINR: Position Is Not Reducible
-                require(order.isBaseToQuote, "LOB_PINR");
-            } else if (positionSize < 0) {
-                // LOB_PINR: Position Is Not Reducible
-                require(!order.isBaseToQuote, "LOB_PINR");
-            } else {
-                // LOB_XXX: Trader Doesn't have position yet
-                require(false, "LOB_TDHPY");
-            }
-        }
+        int256 oldTakerPositionSize = IAccountBalance(_accountBalance).getTakerPositionSize(
+            order.trader,
+            order.baseToken
+        );
 
         IClearingHouse(_clearingHouse).openPositionFor(
             order.trader,
@@ -90,6 +81,20 @@ contract LimitOrderBook is ILimitOrderBook, BlockContext, ReentrancyGuardUpgrade
                 referralCode: ""
             })
         );
+
+        int256 newTakerPositionSize = IAccountBalance(_accountBalance).getTakerPositionSize(
+            order.trader,
+            order.baseToken
+        );
+
+        if (order.reduceOnly) {
+            // LOB_TINR : this it not reduceOnly
+            require(
+                oldTakerPositionSize.mul(newTakerPositionSize) > 0 &&
+                    oldTakerPositionSize.abs() > newTakerPositionSize.abs(),
+                "LOB_TINR"
+            );
+        }
 
         _ordersStatus[orderHash] = OrderStatus.Filled;
         // TODO: this require another vault contract to disburse
