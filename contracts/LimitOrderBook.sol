@@ -6,6 +6,7 @@ import { BlockContext } from "./base/BlockContext.sol";
 import { AddressUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol";
 import { ECDSAUpgradeable } from "@openzeppelin/contracts-upgradeable/cryptography/ECDSAUpgradeable.sol";
 import { EIP712Upgradeable } from "@openzeppelin/contracts-upgradeable/drafts/EIP712Upgradeable.sol";
+import { SignedSafeMathUpgradeable } from "@openzeppelin/contracts-upgradeable/math/SignedSafeMathUpgradeable.sol";
 import { PerpMath } from "@perp/curie-contract/contracts/lib/PerpMath.sol";
 import { ILimitOrderBook } from "./interface/ILimitOrderBook.sol";
 import { OwnerPausable } from "./base/OwnerPausable.sol";
@@ -17,6 +18,7 @@ contract LimitOrderBook is ILimitOrderBook, BlockContext, ReentrancyGuardUpgrade
     using AddressUpgradeable for address;
     using PerpMath for int256;
     using PerpMath for uint256;
+    using SignedSafeMathUpgradeable for int256;
 
     enum OrderStatus {
         Filled,
