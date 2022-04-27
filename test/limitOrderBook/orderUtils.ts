@@ -1,9 +1,11 @@
 import { BigNumberish } from "@ethersproject/bignumber"
 import { Wallet } from "ethers"
 import { waffle } from "hardhat"
+import { generateTypedHash } from "./eip712Utils"
 import { LimitOrderFixture } from "./fixtures"
 
 export interface LimitOrder {
+    salt: number
     trader: string
     baseToken: string
     isBaseToQuote: boolean
@@ -53,4 +55,24 @@ export async function getSignature(fixture: LimitOrderFixture, limitOrder: Limit
     // sign limit order
     const signature = await signer._signTypedData(domain, typesWithoutDomain, limitOrder)
     return signature
+}
+
+export async function getOrderHash(fixture: LimitOrderFixture, limitOrder: LimitOrder) {
+    const domain = {
+        name: fixture.EIP712Name,
+        version: fixture.EIP712Version,
+        chainId: (await waffle.provider.getNetwork()).chainId,
+        verifyingContract: fixture.limitOrderBook.address,
+    }
+
+    const types = getOrderTypes()
+
+    const orderHashOffChain = generateTypedHash({
+        domain,
+        types,
+        message: limitOrder as any,
+        primaryType: fixture.EIP712PrimaryType,
+    })
+
+    return orderHashOffChain
 }
