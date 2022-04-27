@@ -52,7 +52,7 @@ describe.only("LimitOrderBook fillOrder", function () {
     const fakeSignature = "0x0000000000000000000000000000000000000000000000000000000000000000"
 
     beforeEach(async () => {
-        fixture = await loadFixture(createLimitOrderFixture)
+        fixture = await loadFixture(createLimitOrderFixture())
         limitOrderBook = fixture.limitOrderBook
         clearingHouse = fixture.clearingHouse as TestClearingHouse
         delegateApproval = fixture.delegateApproval
@@ -143,4 +143,60 @@ describe.only("LimitOrderBook fillOrder", function () {
             parseEther("-300"),
         )
     })
+
+    it.skip("force error, when order is already filled", async () => {
+        // long 0.1 ETH at $3000 with $300
+        const limitOrder = {
+            salt: 1,
+            trader: trader.address,
+            baseToken: baseToken.address,
+            isBaseToQuote: false,
+            isExactInput: true,
+            amount: parseEther("300"),
+            oppositeAmountBound: parseEther("0.1"),
+            deadline: ethers.constants.MaxUint256,
+            reduceOnly: false,
+        }
+
+        // sign limit order
+        const signature = await getSignature(fixture, limitOrder, trader)
+
+        await expect(await limitOrderBook.connect(keeper).fillLimitOrder(limitOrder, signature)).to.emit(
+            clearingHouse,
+            "PositionChanged",
+        )
+        expect(await accountBalance.getTakerPositionSize(trader.address, baseToken.address)).to.gte(parseEther("0.1"))
+        expect(await accountBalance.getTakerOpenNotional(trader.address, baseToken.address)).to.be.eq(
+            parseEther("-300"),
+        )
+
+        await expect(await limitOrderBook.connect(keeper).fillLimitOrder(limitOrder, signature)).to.revertedWith(
+            "LOB_OIFA",
+        )
+    })
+
+    it("force error, when order is already cancelled", async () => {});
+
+    it("cancel order successfully", async () => {
+        // long 0.1 ETH at $3000 with $300
+        const limitOrder = {
+            salt: 1,
+            trader: trader.address,
+            baseToken: baseToken.address,
+            isBaseToQuote: false,
+            isExactInput: true,
+            amount: parseEther("300"),
+            oppositeAmountBound: parseEther("0.1"),
+            deadline: ethers.constants.MaxUint256,
+            reduceOnly: false,
+        }
+
+        await expect(await limitOrderBook.connect(trader).cancelLimitOrder(limitOrder)).to.emit(
+            limitOrderBook,
+            "LimitOrderCancelled",
+        )       
+    })
+
+    it("force error, cancel order successfully", async () => {})
+
 })

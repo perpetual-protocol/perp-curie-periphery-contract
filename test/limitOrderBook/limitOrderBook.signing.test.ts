@@ -13,7 +13,7 @@ describe("LimitOrderBook signing", function () {
     let limitOrderBook: TestLimitOrderBook
 
     beforeEach(async () => {
-        fixture = await loadFixture(createLimitOrderFixture)
+        fixture = await loadFixture(createLimitOrderFixture())
         limitOrderBook = fixture.limitOrderBook
     })
 
