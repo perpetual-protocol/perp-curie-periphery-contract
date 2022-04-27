@@ -4,21 +4,20 @@ import { parseEther } from "@ethersproject/units"
 import { expect } from "chai"
 import { ethers, waffle } from "hardhat"
 import {
+    BaseToken,
     ClearingHouseConfig,
     DelegateApproval,
     Exchange,
+    LimitOrderBook,
     MarketRegistry,
     OrderBook,
+    QuoteToken,
     TestAccountBalance,
+    TestAggregatorV3,
     TestClearingHouse,
     TestERC20,
-    TestLimitOrderBook,
-    BaseToken,
-    QuoteToken,
     UniswapV3Pool,
     Vault,
-    TestAggregatorV3,
-    LimitOrderBook,
 } from "../../typechain-types"
 import { initAndAddPool } from "../helper/marketHelper"
 import { getMaxTickRange, priceToTick } from "../helper/number"
@@ -113,7 +112,7 @@ describe.only("LimitOrderBook fillOrder", function () {
             {
                 operator: limitOrderBook.address,
                 action: fixture.clearingHouseOpenPositionAction,
-            }
+            },
         ])
     })
 
@@ -144,7 +143,7 @@ describe.only("LimitOrderBook fillOrder", function () {
         )
     })
 
-    it.skip("force error, when order is already filled", async () => {
+    it("force error, when order is already filled", async () => {
         // long 0.1 ETH at $3000 with $300
         const limitOrder = {
             salt: 1,
@@ -170,12 +169,33 @@ describe.only("LimitOrderBook fillOrder", function () {
             parseEther("-300"),
         )
 
-        await expect(await limitOrderBook.connect(keeper).fillLimitOrder(limitOrder, signature)).to.revertedWith(
-            "LOB_OIFA",
-        )
+        await expect(limitOrderBook.connect(keeper).fillLimitOrder(limitOrder, signature)).to.revertedWith("LOB_OIFA")
     })
 
-    it("force error, when order is already cancelled", async () => {});
+    it("force error, when order is already cancelled", async () => {
+        // long 0.1 ETH at $3000 with $300
+        const limitOrder = {
+            salt: 1,
+            trader: trader.address,
+            baseToken: baseToken.address,
+            isBaseToQuote: false,
+            isExactInput: true,
+            amount: parseEther("300"),
+            oppositeAmountBound: parseEther("0.1"),
+            deadline: ethers.constants.MaxUint256,
+            reduceOnly: false,
+        }
+
+        // sign limit order
+        const signature = await getSignature(fixture, limitOrder, trader)
+
+        await expect(await limitOrderBook.connect(trader).cancelLimitOrder(limitOrder)).to.emit(
+            limitOrderBook,
+            "LimitOrderCancelled",
+        )
+
+        await expect(limitOrderBook.connect(keeper).fillLimitOrder(limitOrder, signature)).to.revertedWith("LOB_OIC")
+    })
 
     it("cancel order successfully", async () => {
         // long 0.1 ETH at $3000 with $300
@@ -194,9 +214,23 @@ describe.only("LimitOrderBook fillOrder", function () {
         await expect(await limitOrderBook.connect(trader).cancelLimitOrder(limitOrder)).to.emit(
             limitOrderBook,
             "LimitOrderCancelled",
-        )       
+        )
     })
 
-    it("force error, cancel order successfully", async () => {})
+    it("force error, cancel order with different trader", async () => {
+        // long 0.1 ETH at $3000 with $300
+        const limitOrder = {
+            salt: 1,
+            trader: keeper.address,
+            baseToken: baseToken.address,
+            isBaseToQuote: false,
+            isExactInput: true,
+            amount: parseEther("300"),
+            oppositeAmountBound: parseEther("0.1"),
+            deadline: ethers.constants.MaxUint256,
+            reduceOnly: false,
+        }
 
+        await expect(limitOrderBook.connect(trader).cancelLimitOrder(limitOrder)).to.be.revertedWith("LOB_OSMBS")
+    })
 })
