@@ -23,7 +23,7 @@ import { initAndAddPool } from "../helper/marketHelper"
 import { getMaxTickRange, priceToTick } from "../helper/number"
 import { mintAndDeposit, withdraw } from "../helper/token"
 import { forwardTimestamp } from "../shared/time"
-import { encodePriceSqrt, syncIndexToMarketPrice } from "../shared/utilities"
+import { encodePriceSqrt, formatSqrtPriceX96ToPrice, syncIndexToMarketPrice } from "../shared/utilities"
 import { createLimitOrderFixture, LimitOrderFixture } from "./fixtures"
 import { getOrderHash, getSignature } from "./orderUtils"
 
@@ -435,8 +435,57 @@ describe.only("LimitOrderBook fillOrder", function () {
 
     // TODO: integration test, at first fillOrder cannot be successful because of the price is not good enough
     // after a few trades, fillOrder could succeed.
-    it("keeper keep trying to fill limit orders in a row", async () => {
-   
+    it.only("keeper keep trying to fill limit orders in a row", async () => {
+        // long 0.1 ETH at $3000 with $300
+        const limitOrder = {
+            salt: 1,
+            trader: trader.address,
+            baseToken: baseToken.address,
+            isBaseToQuote: false,
+            isExactInput: true,
+            amount: parseEther("300").toString(),
+            oppositeAmountBound: parseEther("0.1").toString(),
+            deadline: ethers.constants.MaxUint256.toString(),
+            reduceOnly: false,
+        }
+
+        const signature = await getSignature(fixture, limitOrder, trader)
+        const orderHash = await getOrderHash(fixture, limitOrder)
+
+        const alicePosition = {
+            baseToken: baseToken.address,
+            isBaseToQuote: false,
+            isExactInput: true,
+            amount: parseEther("600000"),
+            sqrtPriceLimitX96: 0,
+            oppositeAmountBound: parseEther("195"),
+            deadline: ethers.constants.MaxUint256,
+            referralCode: ethers.constants.HashZero,
+        }
+        // alice open long position to make market price higher, 2960 -> 3023.113298
+        await mintAndDeposit(fixture, alice, 1000000)
+        await clearingHouse.connect(alice).openPosition(alicePosition)
+
+        // cannot fill this limit order because price is not right
+        await expect(limitOrderBook.connect(keeper).fillLimitOrder(limitOrder, signature)).to.be.revertedWith("CH_TLRL")
+
+        // alice close her position to make market price lower
+        await clearingHouse.connect(alice).closePosition({
+            baseToken: baseToken.address,
+            sqrtPriceLimitX96: 0,
+            oppositeAmountBound: 0,
+            deadline: ethers.constants.MaxUint256,
+            referralCode: ethers.constants.HashZero,
+        })
+
+        await expect(await limitOrderBook.connect(keeper).fillLimitOrder(limitOrder, signature))
+            .to.emit(limitOrderBook, "LimitOrderFilled")
+            .withArgs(trader.address, baseToken.address, orderHash, keeper.address, 0)
+
+        expect(await accountBalance.getTakerPositionSize(trader.address, baseToken.address)).to.gte(parseEther("0.1"))
+        expect(await accountBalance.getTakerOpenNotional(trader.address, baseToken.address)).to.be.gte(
+            parseEther("-300"),
+        )
     })
 
     // TODO: test isBaseToQuote, isExactInput params
