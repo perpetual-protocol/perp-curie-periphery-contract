@@ -2,14 +2,14 @@
 pragma solidity 0.7.6;
 pragma abicoder v2;
 
-import { BlockContext } from "./base/BlockContext.sol";
+import { BlockContext } from "../base/BlockContext.sol";
 import { AddressUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol";
 import { ECDSAUpgradeable } from "@openzeppelin/contracts-upgradeable/cryptography/ECDSAUpgradeable.sol";
 import { EIP712Upgradeable } from "@openzeppelin/contracts-upgradeable/drafts/EIP712Upgradeable.sol";
 import { SignedSafeMathUpgradeable } from "@openzeppelin/contracts-upgradeable/math/SignedSafeMathUpgradeable.sol";
 import { PerpMath } from "@perp/curie-contract/contracts/lib/PerpMath.sol";
-import { ILimitOrderBook } from "./interface/ILimitOrderBook.sol";
-import { OwnerPausable } from "./base/OwnerPausable.sol";
+import { ILimitOrderBook } from "../interface/ILimitOrderBook.sol";
+import { OwnerPausable } from "../base/OwnerPausable.sol";
 import { ReentrancyGuardUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
 import { IClearingHouse } from "@perp/curie-contract/contracts/interface/IClearingHouse.sol";
 import { IAccountBalance } from "@perp/curie-contract/contracts/interface/IAccountBalance.sol";
@@ -59,7 +59,7 @@ contract LimitOrderBook is ILimitOrderBook, BlockContext, ReentrancyGuardUpgrade
     /// @param signature a EIP712 signature, generated from `eth_signTypedData_v4`
     function fillLimitOrder(LimitOrder memory order, bytes memory signature) external {
         bytes32 orderHash = getOrderHash(order);
-        address signer = verifySigner(order, signature);
+        verifySigner(order, signature);
 
         // LOB_OIFA: Order is filled already
         require(_ordersStatus[orderHash] != OrderStatus.Filled, "LOB_OIFA");

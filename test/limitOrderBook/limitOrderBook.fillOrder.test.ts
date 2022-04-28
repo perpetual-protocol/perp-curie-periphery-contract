@@ -23,7 +23,7 @@ import { initAndAddPool } from "../helper/marketHelper"
 import { getMaxTickRange, priceToTick } from "../helper/number"
 import { mintAndDeposit, withdraw } from "../helper/token"
 import { forwardTimestamp } from "../shared/time"
-import { encodePriceSqrt, formatSqrtPriceX96ToPrice, syncIndexToMarketPrice } from "../shared/utilities"
+import { encodePriceSqrt, syncIndexToMarketPrice } from "../shared/utilities"
 import { createLimitOrderFixture, LimitOrderFixture } from "./fixtures"
 import { getOrderHash, getSignature } from "./orderUtils"
 

@@ -2,7 +2,7 @@
 pragma solidity 0.7.6;
 pragma abicoder v2;
 
-import "../LimitOrderBook.sol";
+import "../limitOrder/LimitOrderBook.sol";
 
 contract TestLimitOrderBook is LimitOrderBook {
     uint256 private _testBlockTimestamp;
