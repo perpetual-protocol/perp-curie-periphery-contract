@@ -33,6 +33,7 @@ contract LimitOrderBook is ILimitOrderBook, BlockContext, ReentrancyGuardUpgrade
             "LimitOrder(uint256 salt,address trader,address baseToken,bool isBaseToQuote,bool isExactInput,uint256 amount,uint256 oppositeAmountBound,uint256 deadline,bool reduceOnly)"
         );
 
+    // TODO: refactor the following state variable into LimitOrderStorage
     mapping(bytes32 => OrderStatus) private _ordersStatus;
 
     address private _clearingHouse;
@@ -57,7 +58,7 @@ contract LimitOrderBook is ILimitOrderBook, BlockContext, ReentrancyGuardUpgrade
     }
 
     /// @param signature a EIP712 signature, generated from `eth_signTypedData_v4`
-    function fillLimitOrder(LimitOrder memory order, bytes memory signature) external {
+    function fillLimitOrder(LimitOrder memory order, bytes memory signature) external nonReentrant {
         bytes32 orderHash = getOrderHash(order);
         verifySigner(order, signature);
 

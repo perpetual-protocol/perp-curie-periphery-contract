@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 pragma solidity 0.7.6;
+pragma abicoder v2;
 
 interface ILimitOrderBook {
     /// @param salt An unique number for creating orders with the same parameters
@@ -30,6 +31,14 @@ interface ILimitOrderBook {
         address keeper,
         uint256 keeperFee
     );
+
+    function fillLimitOrder(LimitOrder memory order, bytes memory signature) external;
+
+    function cancelLimitOrder(LimitOrder memory order) external;
+
+    function getOrderHash(LimitOrder memory order) public view returns (bytes32);
+
+    function verifySigner(LimitOrder memory order, bytes memory signature) public view returns (address);
 
     event LimitOrderCancelled(address indexed trader, address indexed baseToken, bytes32 orderHash);
 }
