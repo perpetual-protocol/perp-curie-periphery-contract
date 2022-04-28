@@ -16,3 +16,10 @@ export async function mintAndDeposit(fixture: ClearingHouseFixture, wallet: Wall
     await usdc.mint(wallet.address, parseUnits(amount.toString(), decimals))
     await deposit(wallet, fixture.vault, amount, usdc)
 }
+
+export async function withdraw(sender: Wallet, vault: Vault, amount: number, token: TestERC20): Promise<void> {
+    const decimals = await token.decimals()
+    const parsedAmount = parseUnits(amount.toString(), decimals)
+    await token.connect(sender).approve(vault.address, parsedAmount)
+    await vault.connect(sender).withdraw(token.address, parsedAmount)
+}

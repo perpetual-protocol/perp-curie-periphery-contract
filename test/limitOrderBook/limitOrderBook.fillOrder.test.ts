@@ -21,13 +21,14 @@ import {
 } from "../../typechain-types"
 import { initAndAddPool } from "../helper/marketHelper"
 import { getMaxTickRange, priceToTick } from "../helper/number"
-import { mintAndDeposit } from "../helper/token"
+import { mintAndDeposit, withdraw } from "../helper/token"
+import { forwardTimestamp } from "../shared/time"
 import { encodePriceSqrt, syncIndexToMarketPrice } from "../shared/utilities"
 import { createLimitOrderFixture, LimitOrderFixture } from "./fixtures"
 import { getOrderHash, getSignature } from "./orderUtils"
 
 describe.only("LimitOrderBook fillOrder", function () {
-    const [admin, trader, keeper, maker] = waffle.provider.getWallets()
+    const [admin, trader, keeper, maker, alice] = waffle.provider.getWallets()
     let fixture: LimitOrderFixture
     let limitOrderBook: LimitOrderBook
     let clearingHouse: TestClearingHouse
@@ -325,32 +326,119 @@ describe.only("LimitOrderBook fillOrder", function () {
         await expect(limitOrderBook.connect(trader).cancelLimitOrder(limitOrder)).to.be.revertedWith("LOB_OSMBS")
     })
 
-
     // TODO: test deadline, check ClearingHouse.addLiquidity L104
     // need to define the upperbound of deadline with BE and FE
-    it("", async () => {
+    describe("expiration", () => {
+        it("limit order is not expired yet", async () => {
+            const now = (await waffle.provider.getBlock("latest")).timestamp
+            // long 0.1 ETH at $3000 with $300
+            const limitOrder = {
+                salt: 1,
+                trader: trader.address,
+                baseToken: baseToken.address,
+                isBaseToQuote: false,
+                isExactInput: true,
+                amount: parseEther("300").toString(),
+                oppositeAmountBound: parseEther("0.1").toString(),
+                deadline: now + 1000,
+                reduceOnly: false,
+            }
 
+            const signature = await getSignature(fixture, limitOrder, trader)
+            const orderHash = await getOrderHash(fixture, limitOrder)
+
+            await expect(await limitOrderBook.connect(keeper).fillLimitOrder(limitOrder, signature))
+                .to.emit(limitOrderBook, "LimitOrderFilled")
+                .withArgs(trader.address, baseToken.address, orderHash, keeper.address, 0)
+
+            expect(await accountBalance.getTakerPositionSize(trader.address, baseToken.address)).to.gte(
+                parseEther("0.1"),
+            )
+            expect(await accountBalance.getTakerOpenNotional(trader.address, baseToken.address)).to.be.gte(
+                parseEther("-300"),
+            )
+        })
+
+        it("force error, limit order is already expired", async () => {
+            const now = (await waffle.provider.getBlock("latest")).timestamp
+            await clearingHouse.setBlockTimestamp(now)
+            // long 0.1 ETH at $3000 with $300
+            const limitOrder = {
+                salt: 1,
+                trader: trader.address,
+                baseToken: baseToken.address,
+                isBaseToQuote: false,
+                isExactInput: true,
+                amount: parseEther("300"),
+                oppositeAmountBound: parseEther("0.1"),
+                deadline: now + 1,
+                reduceOnly: false,
+            }
+            await forwardTimestamp(clearingHouse, 10)
+            const signature = await getSignature(fixture, limitOrder, trader)
+            await expect(limitOrderBook.connect(keeper).fillLimitOrder(limitOrder, signature)).to.be.revertedWith(
+                "CH_TE",
+            )
+        })
     })
 
-    // TODO: test not enough balance of user, when fill limit order
-    it("", async () => {
+    it("force error, user's balance is not enough when fill limit order ", async () => {
+        // long 0.1 ETH at $3000 with $300
+        const limitOrder = {
+            salt: 1,
+            trader: trader.address,
+            baseToken: baseToken.address,
+            isBaseToQuote: false,
+            isExactInput: true,
+            amount: parseEther("300").toString(),
+            oppositeAmountBound: parseEther("0.1").toString(),
+            deadline: ethers.constants.MaxUint256,
+            reduceOnly: false,
+        }
 
+        const signature = await getSignature(fixture, limitOrder, trader)
+
+        await withdraw(trader, vault, 1000, fixture.USDC)
+
+        await expect(await limitOrderBook.connect(keeper).fillLimitOrder(limitOrder, signature)).to.be.revertedWith(
+            "CH_NEFCI",
+        )
     })
 
-    // TODO: test when user revoke his/her approval before fill limit order
-    it("", async () => {
+    it("force error, fill order failed after user revoke his/her approval", async () => {
+        // long 0.1 ETH at $3000 with $300
+        const limitOrder = {
+            salt: 1,
+            trader: trader.address,
+            baseToken: baseToken.address,
+            isBaseToQuote: false,
+            isExactInput: true,
+            amount: parseEther("300").toString(),
+            oppositeAmountBound: parseEther("0.1").toString(),
+            deadline: ethers.constants.MaxUint256,
+            reduceOnly: false,
+        }
 
+        const signature = await getSignature(fixture, limitOrder, trader)
+
+        await delegateApproval.connect(trader).revoke([
+            {
+                delegate: limitOrderBook.address,
+                action: fixture.clearingHouseOpenPositionAction,
+            },
+        ])
+
+        await expect(limitOrderBook.connect(keeper).fillLimitOrder(limitOrder, signature)).to.be.revertedWith(
+            "CH_OHNAOPT",
+        )
     })
 
     // TODO: integration test, at first fillOrder cannot be successful because of the price is not good enough
     // after a few trades, fillOrder could succeed.
-    it("", async () => {
-
+    it("keeper keep trying to fill limit orders in a row", async () => {
+   
     })
-
 
     // TODO: test isBaseToQuote, isExactInput params
-    it("", async () => {
-
-    })
+    it("", async () => {})
 })
