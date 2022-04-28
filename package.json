@@ -46,7 +46,7 @@
     "@nomiclabs/hardhat-waffle": "2.0.3",
     "@openzeppelin/contracts-upgradeable": "3.4.2",
     "@openzeppelin/contracts": "3.4.0",
-    "@perp/curie-contract": "git+ssh://git@github.com:perpetual-protocol/perp-lushan.git#4f08bf82583257bce8ae78f7217611988047043c",
+    "@perp/curie-contract": "git+ssh://git@github.com:perpetual-protocol/perp-lushan.git#222c6417710d952a88e8f4c654b200a4034945c2",
     "@perp/curie-liquidity-mining": "0.3.2",
     "@perp/perp-oracle-contract": "0.1.2",
     "@typechain/ethers-v5": "10.0.0",

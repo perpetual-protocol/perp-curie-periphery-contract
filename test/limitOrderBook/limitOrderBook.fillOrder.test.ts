@@ -26,7 +26,7 @@ import { encodePriceSqrt, syncIndexToMarketPrice } from "../shared/utilities"
 import { createLimitOrderFixture, LimitOrderFixture } from "./fixtures"
 import { getOrderHash, getSignature } from "./orderUtils"
 
-describe("LimitOrderBook fillOrder", function () {
+describe.only("LimitOrderBook fillOrder", function () {
     const [admin, trader, keeper, maker] = waffle.provider.getWallets()
     let fixture: LimitOrderFixture
     let limitOrderBook: LimitOrderBook
@@ -110,7 +110,7 @@ describe("LimitOrderBook fillOrder", function () {
 
         await delegateApproval.connect(trader).approve([
             {
-                operator: limitOrderBook.address,
+                delegate: limitOrderBook.address,
                 action: fixture.clearingHouseOpenPositionAction,
             },
         ])
@@ -323,5 +323,34 @@ describe("LimitOrderBook fillOrder", function () {
         }
 
         await expect(limitOrderBook.connect(trader).cancelLimitOrder(limitOrder)).to.be.revertedWith("LOB_OSMBS")
+    })
+
+
+    // TODO: test deadline, check ClearingHouse.addLiquidity L104
+    // need to define the upperbound of deadline with BE and FE
+    it("", async () => {
+
+    })
+
+    // TODO: test not enough balance of user, when fill limit order
+    it("", async () => {
+
+    })
+
+    // TODO: test when user revoke his/her approval before fill limit order
+    it("", async () => {
+
+    })
+
+    // TODO: integration test, at first fillOrder cannot be successful because of the price is not good enough
+    // after a few trades, fillOrder could succeed.
+    it("", async () => {
+
+    })
+
+
+    // TODO: test isBaseToQuote, isExactInput params
+    it("", async () => {
+
     })
 })
