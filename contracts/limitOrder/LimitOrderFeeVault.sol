@@ -32,7 +32,6 @@ contract LimitOrderFeeVault is ILimitOrderFeeVault, BlockContext, ReentrancyGuar
 
     function initialize(
         address rewardTokenArg,
-        address limitOrderBookArg,
         uint256 feeAmountArg
     ) external initializer {
         __OwnerPausable_init();
@@ -41,10 +40,6 @@ contract LimitOrderFeeVault is ILimitOrderFeeVault, BlockContext, ReentrancyGuar
         // LOFV_RTINC: RewardToken Is Not a Contract
         require(rewardTokenArg.isContract(), "LOFV_RTINC");
         rewardToken = rewardTokenArg;
-
-        // LOFV_LOBINC: LimitOrderBook Is Not a Contract
-        require(limitOrderBookArg.isContract(), "LOFV_LOBINC");
-        limitOrderBook = limitOrderBookArg;
 
         // LOFV_FAMBGT0: FeeAmount Must Be Greater Than 0
         require(feeAmountArg > 0, "LOFV_FAMBGT0");

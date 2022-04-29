@@ -9,6 +9,7 @@ import {
     DelegateApproval,
     Exchange,
     LimitOrderBook,
+    LimitOrderFeeVault,
     MarketRegistry,
     OrderBook,
     QuoteToken,
@@ -27,7 +28,7 @@ import { encodePriceSqrt, syncIndexToMarketPrice } from "../shared/utilities"
 import { createLimitOrderFixture, LimitOrderFixture } from "./fixtures"
 import { getOrderHash, getSignature } from "./orderUtils"
 
-describe("LimitOrderBook fillOrder & cancelOrder", function () {
+describe.only("LimitOrderBook fillOrder & cancelOrder", function () {
     const [admin, trader, keeper, maker, alice] = waffle.provider.getWallets()
     let fixture: LimitOrderFixture
     let limitOrderBook: LimitOrderBook
@@ -48,6 +49,8 @@ describe("LimitOrderBook fillOrder & cancelOrder", function () {
     let mockedBaseAggregator: FakeContract<TestAggregatorV3>
     let mockedBaseAggregator2: FakeContract<TestAggregatorV3>
     let collateralDecimals: number
+    let rewardToken: TestERC20
+    let limitOrderFeeVault: LimitOrderFeeVault
 
     const fakeSignature = "0x0000000000000000000000000000000000000000000000000000000000000000"
 
@@ -72,6 +75,8 @@ describe("LimitOrderBook fillOrder & cancelOrder", function () {
         pool = fixture.pool
         pool2 = fixture.pool2
         collateralDecimals = await collateral.decimals()
+        limitOrderFeeVault = fixture.limitOrderFeeVault
+        rewardToken = fixture.rewardToken
 
         const pool1LowerTick: number = priceToTick(2000, await pool.tickSpacing())
         const pool1UpperTick: number = priceToTick(4000, await pool.tickSpacing())
@@ -134,9 +139,12 @@ describe("LimitOrderBook fillOrder & cancelOrder", function () {
         // sign limit order
         const signature = await getSignature(fixture, limitOrder, trader)
         const orderHash = await getOrderHash(fixture, limitOrder)
-        await expect(await limitOrderBook.connect(keeper).fillLimitOrder(limitOrder, signature))
+        const tx = await limitOrderBook.connect(keeper).fillLimitOrder(limitOrder, signature)
+        await expect(tx)
             .to.emit(limitOrderBook, "LimitOrderFilled")
             .withArgs(trader.address, baseToken.address, orderHash, keeper.address, 0)
+
+        await expect(tx).to.emit(limitOrderFeeVault, "Disbursed").withArgs(keeper.address, fixture.rewardAmount)
 
         expect(await accountBalance.getTakerPositionSize(trader.address, baseToken.address)).to.gte(parseEther("0.1"))
         expect(await accountBalance.getTakerOpenNotional(trader.address, baseToken.address)).to.be.eq(
@@ -231,9 +239,12 @@ describe("LimitOrderBook fillOrder & cancelOrder", function () {
             const signature = await getSignature(fixture, limitOrder, trader)
             const orderHash = await getOrderHash(fixture, limitOrder)
 
-            await expect(await limitOrderBook.connect(keeper).fillLimitOrder(limitOrder, signature))
+            const tx = await limitOrderBook.connect(keeper).fillLimitOrder(limitOrder, signature)
+            await expect(tx)
                 .to.emit(limitOrderBook, "LimitOrderFilled")
                 .withArgs(trader.address, baseToken.address, orderHash, keeper.address, 0)
+
+            await expect(tx).to.emit(limitOrderFeeVault, "Disbursed").withArgs(keeper.address, fixture.rewardAmount)
 
             expect(await accountBalance.getTakerPositionSize(trader.address, baseToken.address)).to.gte(
                 parseEther("0.05"),
@@ -347,9 +358,12 @@ describe("LimitOrderBook fillOrder & cancelOrder", function () {
             const signature = await getSignature(fixture, limitOrder, trader)
             const orderHash = await getOrderHash(fixture, limitOrder)
 
-            await expect(await limitOrderBook.connect(keeper).fillLimitOrder(limitOrder, signature))
+            const tx = await limitOrderBook.connect(keeper).fillLimitOrder(limitOrder, signature)
+            await expect(tx)
                 .to.emit(limitOrderBook, "LimitOrderFilled")
                 .withArgs(trader.address, baseToken.address, orderHash, keeper.address, 0)
+
+            await expect(tx).to.emit(limitOrderFeeVault, "Disbursed").withArgs(keeper.address, fixture.rewardAmount)
 
             expect(await accountBalance.getTakerPositionSize(trader.address, baseToken.address)).to.gte(
                 parseEther("0.1"),
@@ -478,9 +492,12 @@ describe("LimitOrderBook fillOrder & cancelOrder", function () {
             referralCode: ethers.constants.HashZero,
         })
 
-        await expect(await limitOrderBook.connect(keeper).fillLimitOrder(limitOrder, signature))
+        const tx = await limitOrderBook.connect(keeper).fillLimitOrder(limitOrder, signature)
+        await expect(tx)
             .to.emit(limitOrderBook, "LimitOrderFilled")
             .withArgs(trader.address, baseToken.address, orderHash, keeper.address, 0)
+
+        await expect(tx).to.emit(limitOrderFeeVault, "Disbursed").withArgs(keeper.address, fixture.rewardAmount)
 
         expect(await accountBalance.getTakerPositionSize(trader.address, baseToken.address)).to.gte(parseEther("0.1"))
         expect(await accountBalance.getTakerOpenNotional(trader.address, baseToken.address)).to.be.gte(

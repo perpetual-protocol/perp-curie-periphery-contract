@@ -9,6 +9,7 @@ import { EIP712Upgradeable } from "@openzeppelin/contracts-upgradeable/drafts/EI
 import { SignedSafeMathUpgradeable } from "@openzeppelin/contracts-upgradeable/math/SignedSafeMathUpgradeable.sol";
 import { PerpMath } from "@perp/curie-contract/contracts/lib/PerpMath.sol";
 import { ILimitOrderBook } from "../interface/ILimitOrderBook.sol";
+import { ILimitOrderFeeVault } from "../interface/ILimitOrderFeeVault.sol";
 import { OwnerPausable } from "../base/OwnerPausable.sol";
 import { ReentrancyGuardUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
 import { IClearingHouse } from "@perp/curie-contract/contracts/interface/IClearingHouse.sol";
@@ -38,6 +39,7 @@ contract LimitOrderBook is ILimitOrderBook, BlockContext, ReentrancyGuardUpgrade
 
     address public clearingHouse;
     address public accountBalance;
+    address public limitOrderFeeVault;
 
     //
     // EXTERNAL NON-VIEW
@@ -46,7 +48,8 @@ contract LimitOrderBook is ILimitOrderBook, BlockContext, ReentrancyGuardUpgrade
     function initialize(
         string memory name,
         string memory version,
-        address clearingHouseArg
+        address clearingHouseArg,
+        address limitOrderFeeVaultArg
     ) external initializer {
         __ReentrancyGuard_init();
         __OwnerPausable_init();
@@ -54,6 +57,10 @@ contract LimitOrderBook is ILimitOrderBook, BlockContext, ReentrancyGuardUpgrade
         // LOB_CHINC : ClearingHouse Is Not Contract
         require(clearingHouseArg.isContract(), "LOB_CHINC");
         clearingHouse = clearingHouseArg;
+
+        // LOB_LINC : LimitOrderFeeVault Is Not Contract
+        require(limitOrderFeeVaultArg.isContract(), "LOB_LINC");
+        limitOrderFeeVault = limitOrderFeeVaultArg;
         accountBalance = IClearingHouse(clearingHouse).getAccountBalance();
     }
 
@@ -72,7 +79,7 @@ contract LimitOrderBook is ILimitOrderBook, BlockContext, ReentrancyGuardUpgrade
             order.baseToken
         );
 
-        IClearingHouse(clearingHouse).openPositionFor(
+        (uint256 base, uint256 quote) =IClearingHouse(clearingHouse).openPositionFor(
             order.trader,
             IClearingHouse.OpenPositionParams({
                 baseToken: order.baseToken,
@@ -100,14 +107,17 @@ contract LimitOrderBook is ILimitOrderBook, BlockContext, ReentrancyGuardUpgrade
             );
         }
 
+        address keeper = _msgSender();
+
         _ordersStatus[orderHash] = OrderStatus.Filled;
-        // TODO: this require another vault contract to disburse
-        // distributeKeeperFee();
+
+        ILimitOrderFeeVault(limitOrderFeeVault).disburse(keeper, quote);
+
         emit LimitOrderFilled(
             order.trader,
             order.baseToken,
             orderHash,
-            _msgSender(), // keeper
+            keeper, // keeper
             0 // keeperFee, TODO: revisit this after finish distributeKeeperFee
         );
     }
