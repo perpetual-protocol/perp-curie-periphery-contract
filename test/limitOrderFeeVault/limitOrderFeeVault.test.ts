@@ -25,6 +25,7 @@ import { initAndAddPool } from "../helper/marketHelper"
 import { getMaxTickRange, priceToTick } from "../helper/number"
 import { mintAndDeposit } from "../helper/token"
 import { createLimitOrderFixture, LimitOrderFixture } from "../limitOrderBook/fixtures"
+import { getSignature } from "../limitOrderBook/orderUtils"
 import { encodePriceSqrt, syncIndexToMarketPrice } from "../shared/utilities"
 
 describe.only("LimitOrderFeeVault", function () {
@@ -141,7 +142,12 @@ describe.only("LimitOrderFeeVault", function () {
     it("setLimitOrderBook", async () => {
         const limitOrderBook2Factory = await ethers.getContractFactory("TestLimitOrderBook")
         const limitOrderBook2 = (await limitOrderBook2Factory.deploy()) as TestLimitOrderBook
-        await limitOrderBook2.initialize(fixture.EIP712Name, fixture.EIP712Version, clearingHouse.address, limitOrderFeeVault.address)
+        await limitOrderBook2.initialize(
+            fixture.EIP712Name,
+            fixture.EIP712Version,
+            clearingHouse.address,
+            limitOrderFeeVault.address,
+        )
 
         await expect(limitOrderFeeVault.setLimitOrderBook(limitOrderBook2.address))
             .to.emit(limitOrderFeeVault, "LimitOrderBookChanged")
@@ -155,7 +161,7 @@ describe.only("LimitOrderFeeVault", function () {
     })
 
     it("setFeeAmount", async () => {
-        const newFeeAmount = parseUnits('2', 18)
+        const newFeeAmount = parseUnits("2", 18)
 
         await expect(limitOrderFeeVault.setFeeAmount(newFeeAmount))
             .to.emit(limitOrderFeeVault, "FeeAmountChanged")
@@ -168,13 +174,61 @@ describe.only("LimitOrderFeeVault", function () {
         await expect(limitOrderFeeVault.connect(alice).setFeeAmount(newFeeAmount)).to.be.revertedWith("SO_CNO")
     })
 
-    it("disburse successfully", async () => {})
+    it("disburse successfully", async () => {
+        const limitOrder = {
+            salt: 1,
+            trader: trader.address,
+            baseToken: baseToken.address,
+            isBaseToQuote: false,
+            isExactInput: true,
+            amount: parseEther("300").toString(),
+            oppositeAmountBound: parseEther("0.1").toString(),
+            deadline: ethers.constants.MaxUint256.toString(),
+            reduceOnly: false,
+        }
 
-    it("force error, disburse without the enough balance", async () => {})
+        // sign limit order
+        const signature = await getSignature(fixture, limitOrder, trader)
+        const oldKeeperBalance = await rewardToken.balanceOf(keeper.address)
+        const feeAmount = await limitOrderFeeVault.feeAmount()
+        const tx = await limitOrderBook.connect(keeper).fillLimitOrder(limitOrder, signature)
 
-    it("force error, disburse by the wrong person", async () => {})
+        await expect(tx).to.emit(limitOrderFeeVault, "Disbursed").withArgs(keeper.address, fixture.rewardAmount)
+        const newKeeperBalance = await rewardToken.balanceOf(keeper.address)
 
-    it("withdraw successfully", async () => {})
+        expect(newKeeperBalance.sub(oldKeeperBalance)).to.be.eq(feeAmount)
+    })
+
+    it("force error, disburse without the enough balance", async () => {
+        const limitOrder = {
+            salt: 1,
+            trader: trader.address,
+            baseToken: baseToken.address,
+            isBaseToQuote: false,
+            isExactInput: true,
+            amount: parseEther("300").toString(),
+            oppositeAmountBound: parseEther("0.1").toString(),
+            deadline: ethers.constants.MaxUint256.toString(),
+            reduceOnly: false,
+        }
+
+        // sign limit order
+        const signature = await getSignature(fixture, limitOrder, trader)
+        await limitOrderFeeVault.setFeeAmount(parseUnits("100000", 18))
+        await expect(limitOrderBook.connect(keeper).fillLimitOrder(limitOrder, signature)).to.be.revertedWith(
+            "LOFV_NEBTD",
+        )
+    })
+
+    it.only("force error, disburse by the wrong person", async () => {
+        await expect(
+            limitOrderFeeVault.connect(alice).disburse(keeper.address, parseUnits("100", 18)),
+        ).to.be.revertedWith("LOFV_SMBLOB")
+    })
+
+    it("withdraw successfully", async () => {
+        
+    })
 
     it("force error, withdraw without the enough balance", async () => {})
 

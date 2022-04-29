@@ -44,7 +44,7 @@ export function createLimitOrderFixture(): () => Promise<LimitOrderFixture> {
         await limitOrderBook.initialize(EIP712Name, EIP712Version, clearingHouse.address, limitOrderFeeVault.address)
 
         const tokenDecimals = await rewardToken.decimals()
-        const mintedTokenAmount = parseUnits("100000", tokenDecimals)
+        const mintedTokenAmount = parseUnits("1000", tokenDecimals)
 
         // mint token to limitOrderFeeVault
         await rewardToken.mint(limitOrderFeeVault.address, mintedTokenAmount)
