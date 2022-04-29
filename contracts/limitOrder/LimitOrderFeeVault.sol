@@ -30,10 +30,7 @@ contract LimitOrderFeeVault is ILimitOrderFeeVault, BlockContext, ReentrancyGuar
         _;
     }
 
-    function initialize(
-        address rewardTokenArg,
-        uint256 feeAmountArg
-    ) external initializer {
+    function initialize(address rewardTokenArg, uint256 feeAmountArg) external initializer {
         __OwnerPausable_init();
         __ReentrancyGuard_init();
 
@@ -50,13 +47,23 @@ contract LimitOrderFeeVault is ILimitOrderFeeVault, BlockContext, ReentrancyGuar
         // LOFV_RTINC: RewardToken Is Not a Contract
         require(rewardTokenArg.isContract(), "LOFV_RTINC");
         rewardToken = rewardTokenArg;
+        emit RewardTokenChanged(rewardTokenArg);
     }
 
     function setLimitOrderBook(address limitOrderBookArg) external onlyOwner {
         // LOFV_LOBINC: LimitOrderBook Is Not a Contract
         require(limitOrderBookArg.isContract(), "LOFV_LOBINC");
         limitOrderBook = limitOrderBookArg;
+        emit LimitOrderBookChanged(limitOrderBookArg);
     }
+
+    function setFeeAmount(uint256 feeAmountArg) external onlyOwner {
+        // LOFV_FAMBGT0: FeeAmount Must Be Greater Than 0
+        require(feeAmountArg > 0, "LOFV_FAMBGT0");
+        feeAmount = feeAmountArg;
+        emit FeeAmountChanged(feeAmountArg);
+    }
+
 
     function disburse(address keeper, uint256 orderValue)
         external
