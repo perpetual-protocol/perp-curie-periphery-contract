@@ -27,7 +27,7 @@ import { encodePriceSqrt, syncIndexToMarketPrice } from "../shared/utilities"
 import { createLimitOrderFixture, LimitOrderFixture } from "./fixtures"
 import { getOrderHash, getSignature } from "./orderUtils"
 
-describe.only("LimitOrderBook fillOrder & cancelOrder", function () {
+describe("LimitOrderBook fillOrder & cancelOrder", function () {
     const [admin, trader, keeper, maker, alice] = waffle.provider.getWallets()
     let fixture: LimitOrderFixture
     let limitOrderBook: LimitOrderBook
@@ -435,7 +435,7 @@ describe.only("LimitOrderBook fillOrder & cancelOrder", function () {
 
     // TODO: integration test, at first fillOrder cannot be successful because of the price is not good enough
     // after a few trades, fillOrder could succeed.
-    it.only("keeper keep trying to fill limit orders in a row", async () => {
+    it("keeper keep trying to fill limit orders in a row", async () => {
         // long 0.1 ETH at $3000 with $300
         const limitOrder = {
             salt: 1,

@@ -12,12 +12,10 @@ jobs:
               with:
                 persist-credentials: false
 
-            # fix SSH error: git@github.com: Permission denied (publickey).
-            # copy from https://github.com/actions/setup-node/issues/214#issuecomment-810829250
-            - name: Reconfigure git to use HTTP authentication
-              run: >
-                git config --global url."https://github.com/".insteadOf
-                ssh://git@github.com/
+            - uses: webfactory/ssh-agent@v0.5.4
+              with:
+            # https://github.com/marketplace/actions/webfactory-ssh-agent#using-multiple-keys
+                ssh-private-key: ${{ secrets.PERP_LUSHAN_DEPLOY_PRIVATE_KEY }}
 
             - name: Get npm cache directory
               id: npm-cache
