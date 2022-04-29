@@ -124,11 +124,11 @@ contract LimitOrderBook is ILimitOrderBook, BlockContext, ReentrancyGuardUpgrade
     // PUBLIC VIEW
     //
 
-    function getOrderHash(LimitOrder memory order) public view override returns (bytes32) {
+    function getOrderHash(LimitOrder memory order) public view returns (bytes32) {
         return _hashTypedDataV4(keccak256(abi.encode(LIMIT_ORDER_TYPEHASH, order)));
     }
 
-    function verifySigner(LimitOrder memory order, bytes memory signature) public view override returns (address) {
+    function verifySigner(LimitOrder memory order, bytes memory signature) public view returns (address) {
         bytes32 orderHash = getOrderHash(order);
         address signer = ECDSAUpgradeable.recover(orderHash, signature);
 
