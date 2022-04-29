@@ -27,7 +27,7 @@ contract LimitOrderBook is ILimitOrderBook, BlockContext, ReentrancyGuardUpgrade
     }
 
     // solhint-disable-next-line func-name-mixedcase
-    bytes32 public LIMIT_ORDER_TYPEHASH =
+    bytes32 public constant LIMIT_ORDER_TYPEHASH =
         keccak256(
             // solhint-disable-next-line max-line-length
             "LimitOrder(uint256 salt,address trader,address baseToken,bool isBaseToQuote,bool isExactInput,uint256 amount,uint256 oppositeAmountBound,uint256 deadline,bool reduceOnly)"
