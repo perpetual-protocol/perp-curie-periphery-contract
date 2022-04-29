@@ -28,7 +28,7 @@ import { createLimitOrderFixture, LimitOrderFixture } from "../limitOrderBook/fi
 import { getSignature } from "../limitOrderBook/orderUtils"
 import { encodePriceSqrt, syncIndexToMarketPrice } from "../shared/utilities"
 
-describe.only("LimitOrderFeeVault", function () {
+describe("LimitOrderFeeVault", function () {
     const [admin, trader, keeper, maker, alice] = waffle.provider.getWallets()
     let fixture: LimitOrderFixture
     let limitOrderBook: LimitOrderBook
@@ -220,19 +220,45 @@ describe.only("LimitOrderFeeVault", function () {
         )
     })
 
-    it.only("force error, disburse by the wrong person", async () => {
+    it("force error, disburse by the wrong person", async () => {
         await expect(
             limitOrderFeeVault.connect(alice).disburse(keeper.address, parseUnits("100", 18)),
         ).to.be.revertedWith("LOFV_SMBLOB")
     })
 
     it("withdraw successfully", async () => {
-        
+        const vaultBalance = await rewardToken.balanceOf(limitOrderFeeVault.address)
+        const tx = await limitOrderFeeVault.connect(admin).withdraw(rewardToken.address, vaultBalance)
+
+        await expect(tx)
+            .to.emit(limitOrderFeeVault, "Withdrawn")
+            .withArgs(admin.address, rewardToken.address, vaultBalance)
+        const newVaultBalance = await rewardToken.balanceOf(limitOrderFeeVault.address)
+
+        expect(newVaultBalance).to.be.eq(0)
     })
 
-    it("force error, withdraw without the enough balance", async () => {})
+    it("force error, withdraw without the enough balance", async () => {
+        const vaultBalance = await rewardToken.balanceOf(limitOrderFeeVault.address)
 
-    it("force error, withdraw without the correct reward token", async () => {})
+        await expect(
+            limitOrderFeeVault.connect(admin).withdraw(rewardToken.address, vaultBalance.add(1)),
+        ).to.be.revertedWith("LOFV_NEBTW")
+    })
 
-    it("force error, withdraw by the wrong person", async () => {})
+    it("force error, withdraw without the correct reward token", async () => {
+        const vaultBalance = await rewardToken.balanceOf(limitOrderFeeVault.address)
+
+        await expect(
+            limitOrderFeeVault.connect(admin).withdraw(emptyAddress, vaultBalance.add(1)),
+        ).to.be.revertedWith("LOFV_WTMBRT")
+    })
+
+    it("force error, withdraw by the wrong person", async () => {
+        const vaultBalance = await rewardToken.balanceOf(limitOrderFeeVault.address)
+
+        await expect(
+            limitOrderFeeVault.connect(alice).withdraw(emptyAddress, vaultBalance.add(1)),
+        ).to.be.revertedWith("SO_CNO")
+    })
 })

@@ -84,6 +84,7 @@ contract LimitOrderFeeVault is ILimitOrderFeeVault, BlockContext, ReentrancyGuar
         return feeAmount;
     }
 
+    // TODO: should we support multiple token to withdraw? or only support rewardToken?
     function withdraw(address token, uint256 amount) external override onlyOwner nonReentrant {
         // LOFV_WTMBRT: Withdrawn Token Must Be RewardToken
         require(token == rewardToken, "LOFV_WTMBRT");
