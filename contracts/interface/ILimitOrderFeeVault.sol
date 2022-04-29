@@ -5,4 +5,8 @@ interface ILimitOrderFeeVault {
     function disburse(address keeper, uint256 orderValue) external returns (uint256);
 
     function withdraw(address token, uint256 amount) external;
+
+    event Disbursed(address keeper, uint256 amount);
+
+    event Withdrawn(address token, uint256 amount);
 }
