@@ -14,6 +14,7 @@ import {
     Vault,
 } from "../../typechain-types"
 import { createClearingHouseFixture } from "../clearingHouse/fixtures"
+import { getMaxTickRange } from "../helper/number"
 import { deposit } from "../helper/token"
 import { encodePriceSqrt } from "../shared/utilities"
 
@@ -48,6 +49,8 @@ describe("Quoter.swap", () => {
         collateralDecimals = await collateral.decimals()
         await pool.initialize(encodePriceSqrt(151.3733069, 1))
         await marketRegistry.addPool(baseToken.address, "10000")
+
+        await exchange.setMaxTickCrossedWithinBlock(baseToken.address, getMaxTickRange())
 
         const quoterFactory = await ethers.getContractFactory("Quoter")
         quoter = (await quoterFactory.deploy(marketRegistry.address)) as Quoter

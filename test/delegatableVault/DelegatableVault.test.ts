@@ -6,6 +6,7 @@ import {
     AccountBalance,
     BaseToken,
     DelegatableVault,
+    Exchange,
     MarketRegistry,
     OrderBook,
     QuoteToken,
@@ -36,6 +37,7 @@ describe("DelegatableVault test", () => {
     let orderBook: OrderBook
     let delegatableVault: DelegatableVault
     let fixture: DelegatableVaultFixture
+    let exchange: Exchange
     let depositAmount
     let usdcDecimals
 
@@ -50,6 +52,7 @@ describe("DelegatableVault test", () => {
         quoteToken = _clearingHouseFixture.quoteToken
         pool = _clearingHouseFixture.pool
         orderBook = _clearingHouseFixture.orderBook
+        exchange = _clearingHouseFixture.exchange
 
         fixture = await loadFixture(
             createDelegatableVaultFixture(_clearingHouseFixture, fundOwner.address, fundManager.address),
@@ -63,6 +66,8 @@ describe("DelegatableVault test", () => {
         // add pool after it's initialized
         await marketRegistry.addPool(baseToken.address, 10000)
         await marketRegistry.setFeeRatio(baseToken.address, 10000)
+
+        await exchange.setMaxTickCrossedWithinBlock(baseToken.address, "1000")
 
         usdcDecimals = await usdc.decimals()
 

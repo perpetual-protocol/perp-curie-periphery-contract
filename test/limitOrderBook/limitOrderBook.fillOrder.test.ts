@@ -400,7 +400,7 @@ describe("LimitOrderBook fillOrder & cancelOrder", function () {
 
         await withdraw(trader, vault, 1000, fixture.USDC)
 
-        await expect(await limitOrderBook.connect(keeper).fillLimitOrder(limitOrder, signature)).to.be.revertedWith(
+        await expect(limitOrderBook.connect(keeper).fillLimitOrder(limitOrder, signature)).to.be.revertedWith(
             "CH_NEFCI",
         )
     })
