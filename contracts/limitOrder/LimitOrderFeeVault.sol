@@ -9,6 +9,7 @@ import { PerpMath } from "@perp/curie-contract/contracts/lib/PerpMath.sol";
 import { ILimitOrderFeeVault } from "../interface/ILimitOrderFeeVault.sol";
 import { OwnerPausable } from "../base/OwnerPausable.sol";
 import { ReentrancyGuardUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
+// solhint-disable-next-line max-line-length
 import { SafeERC20Upgradeable, IERC20Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC20/SafeERC20Upgradeable.sol";
 
 contract LimitOrderFeeVault is ILimitOrderFeeVault, BlockContext, ReentrancyGuardUpgradeable, OwnerPausable {

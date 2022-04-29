@@ -36,8 +36,8 @@ contract LimitOrderBook is ILimitOrderBook, BlockContext, ReentrancyGuardUpgrade
     // TODO: refactor the following state variable into LimitOrderStorage
     mapping(bytes32 => OrderStatus) private _ordersStatus;
 
-    address private _clearingHouse;
-    address private _accountBalance;
+    address public clearingHouse;
+    address public accountBalance;
 
     //
     // EXTERNAL NON-VIEW
@@ -53,8 +53,8 @@ contract LimitOrderBook is ILimitOrderBook, BlockContext, ReentrancyGuardUpgrade
         __EIP712_init(name, version); // ex: "PerpCurieLimitOrder" and "1"
         // LOB_CHINC : ClearingHouse Is Not Contract
         require(clearingHouseArg.isContract(), "LOB_CHINC");
-        _clearingHouse = clearingHouseArg;
-        _accountBalance = IClearingHouse(_clearingHouse).getAccountBalance();
+        clearingHouse = clearingHouseArg;
+        accountBalance = IClearingHouse(clearingHouse).getAccountBalance();
     }
 
     /// @param signature a EIP712 signature, generated from `eth_signTypedData_v4`
@@ -67,12 +67,12 @@ contract LimitOrderBook is ILimitOrderBook, BlockContext, ReentrancyGuardUpgrade
         // LOB_OIC: Order is cancelled
         require(_ordersStatus[orderHash] != OrderStatus.Cancelled, "LOB_OIC");
 
-        int256 oldTakerPositionSize = IAccountBalance(_accountBalance).getTakerPositionSize(
+        int256 oldTakerPositionSize = IAccountBalance(accountBalance).getTakerPositionSize(
             order.trader,
             order.baseToken
         );
 
-        IClearingHouse(_clearingHouse).openPositionFor(
+        IClearingHouse(clearingHouse).openPositionFor(
             order.trader,
             IClearingHouse.OpenPositionParams({
                 baseToken: order.baseToken,
@@ -86,7 +86,7 @@ contract LimitOrderBook is ILimitOrderBook, BlockContext, ReentrancyGuardUpgrade
             })
         );
 
-        int256 newTakerPositionSize = IAccountBalance(_accountBalance).getTakerPositionSize(
+        int256 newTakerPositionSize = IAccountBalance(accountBalance).getTakerPositionSize(
             order.trader,
             order.baseToken
         );
@@ -124,11 +124,11 @@ contract LimitOrderBook is ILimitOrderBook, BlockContext, ReentrancyGuardUpgrade
     // PUBLIC VIEW
     //
 
-    function getOrderHash(LimitOrder memory order) public view override returns (bytes32) {
+    function getOrderHash(LimitOrder memory order) public view returns (bytes32) {
         return _hashTypedDataV4(keccak256(abi.encode(LIMIT_ORDER_TYPEHASH, order)));
     }
 
-    function verifySigner(LimitOrder memory order, bytes memory signature) public view override returns (address) {
+    function verifySigner(LimitOrder memory order, bytes memory signature) public view returns (address) {
         bytes32 orderHash = getOrderHash(order);
         address signer = ECDSAUpgradeable.recover(orderHash, signature);
 
