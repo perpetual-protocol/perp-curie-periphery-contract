@@ -18,59 +18,73 @@ contract LimitOrderFeeVault is ILimitOrderFeeVault, BlockContext, ReentrancyGuar
     using PerpMath for uint256;
     using SignedSafeMathUpgradeable for int256;
 
-    // TODO: refactor these state variable into Storage
-    address internal _rewardToken;
-    address internal _limitOrderBook;
-
-    //
-    // CONSTANT
-    //
-
-    uint256 internal constant _FEE_AMOUNT = 1;
+    // TODO: put these state variables into StorageV1
+    // TODO: add setters
+    address public rewardToken;
+    address public limitOrderBook;
+    uint256 public feeAmount;
 
     modifier onlyLimitOrderBook() {
-        // LOFV_SMBLOB : sender must be LimitOrderBook
-        require(_msgSender() == _limitOrderBook, "LOFV_SMBLOB");
+        // LOFV_SMBLOB: Sender Must Be LimitOrderBook
+        require(_msgSender() == limitOrderBook, "LOFV_SMBLOB");
         _;
     }
 
-    function initialize(address rewardTokenArg) external initializer {
+    function initialize(
+        address rewardTokenArg,
+        address limitOrderBookArg,
+        uint256 feeAmountArg
+    ) external initializer {
         __OwnerPausable_init();
         __ReentrancyGuard_init();
 
-        // LOFV_RTINC: rewardToken is not a contract
+        // LOFV_RTINC: RewardToken Is Not a Contract
         require(rewardTokenArg.isContract(), "LOFV_RTINC");
-        _rewardToken = rewardTokenArg;
+        rewardToken = rewardTokenArg;
+
+        // LOFV_LOBINC: LimitOrderBook Is Not a Contract
+        require(limitOrderBookArg.isContract(), "LOFV_LOBINC");
+        limitOrderBook = limitOrderBookArg;
+
+        // LOFV_FAMBGT0: FeeAmount Must Be Greater Than 0
+        require(feeAmountArg > 0, "LOFV_FAMBGT0");
+        feeAmount = feeAmountArg;
     }
 
     function setRewardToken(address rewardTokenArg) external onlyOwner {
-        // LOFV_RTINC: rewardToken is not a contract
+        // LOFV_RTINC: RewardToken Is Not a Contract
         require(rewardTokenArg.isContract(), "LOFV_RTINC");
-        _rewardToken = rewardTokenArg;
+        rewardToken = rewardTokenArg;
     }
 
     function setLimitOrderBook(address limitOrderBookArg) external onlyOwner {
-        // LOFV_LOBINC: LimitOrderBook is not a contract
+        // LOFV_LOBINC: LimitOrderBook Is Not a Contract
         require(limitOrderBookArg.isContract(), "LOFV_LOBINC");
-        _limitOrderBook = limitOrderBookArg;
+        limitOrderBook = limitOrderBookArg;
     }
 
-    function disburse(address keeper, uint256 orderValue) external override onlyLimitOrderBook returns (uint256) {
+    function disburse(address keeper, uint256 orderValue)
+        external
+        override
+        onlyLimitOrderBook
+        nonReentrant
+        returns (uint256)
+    {
         // TODO: be aware of decimal issue when we use different reward token
 
         // LOFV_NEBTD: not enough balance to disburse
-        require(IERC20Upgradeable(_rewardToken).balanceOf(address(this)) >= _FEE_AMOUNT, "LOFV_NEBTD");
+        require(IERC20Upgradeable(rewardToken).balanceOf(address(this)) >= feeAmount, "LOFV_NEBTD");
 
-        SafeERC20Upgradeable.safeTransfer(IERC20Upgradeable(_rewardToken), keeper, _FEE_AMOUNT);
+        SafeERC20Upgradeable.safeTransfer(IERC20Upgradeable(rewardToken), keeper, feeAmount);
 
-        emit Disbursed(keeper, _FEE_AMOUNT);
+        emit Disbursed(keeper, feeAmount);
 
-        return _FEE_AMOUNT;
+        return feeAmount;
     }
 
-    function withdraw(address token, uint256 amount) external override onlyOwner {
-        // LOFV_WTMBRT: Withdrawn Token Must Be Reward Token
-        require(token == _rewardToken, "LOFV_WTMBRT");
+    function withdraw(address token, uint256 amount) external override onlyOwner nonReentrant {
+        // LOFV_WTMBRT: Withdrawn Token Must Be RewardToken
+        require(token == rewardToken, "LOFV_WTMBRT");
 
         address to = _msgSender();
 
