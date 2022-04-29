@@ -36,9 +36,9 @@ interface ILimitOrderBook {
 
     function cancelLimitOrder(LimitOrder memory order) external;
 
-    function getOrderHash(LimitOrder memory order) public view returns (bytes32);
+    function getOrderHash(LimitOrder memory order) external view returns (bytes32);
 
-    function verifySigner(LimitOrder memory order, bytes memory signature) public view returns (address);
+    function verifySigner(LimitOrder memory order, bytes memory signature) external view returns (address);
 
     event LimitOrderCancelled(address indexed trader, address indexed baseToken, bytes32 orderHash);
 }

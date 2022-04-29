@@ -58,7 +58,7 @@ contract LimitOrderBook is ILimitOrderBook, BlockContext, ReentrancyGuardUpgrade
     }
 
     /// @param signature a EIP712 signature, generated from `eth_signTypedData_v4`
-    function fillLimitOrder(LimitOrder memory order, bytes memory signature) external nonReentrant {
+    function fillLimitOrder(LimitOrder memory order, bytes memory signature) external override nonReentrant {
         bytes32 orderHash = getOrderHash(order);
         verifySigner(order, signature);
 
@@ -112,7 +112,7 @@ contract LimitOrderBook is ILimitOrderBook, BlockContext, ReentrancyGuardUpgrade
         );
     }
 
-    function cancelLimitOrder(LimitOrder memory order) external {
+    function cancelLimitOrder(LimitOrder memory order) external override {
         // LOB_OSMBS: Order's Signer Must Be Sender
         require(_msgSender() == order.trader, "LOB_OSMBS");
         bytes32 orderHash = getOrderHash(order);
@@ -124,11 +124,11 @@ contract LimitOrderBook is ILimitOrderBook, BlockContext, ReentrancyGuardUpgrade
     // PUBLIC VIEW
     //
 
-    function getOrderHash(LimitOrder memory order) public view returns (bytes32) {
+    function getOrderHash(LimitOrder memory order) public view override returns (bytes32) {
         return _hashTypedDataV4(keccak256(abi.encode(LIMIT_ORDER_TYPEHASH, order)));
     }
 
-    function verifySigner(LimitOrder memory order, bytes memory signature) public view returns (address) {
+    function verifySigner(LimitOrder memory order, bytes memory signature) public view override returns (address) {
         bytes32 orderHash = getOrderHash(order);
         address signer = ECDSAUpgradeable.recover(orderHash, signature);
 
