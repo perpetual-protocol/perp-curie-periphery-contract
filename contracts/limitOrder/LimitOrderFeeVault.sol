@@ -62,15 +62,23 @@ contract LimitOrderFeeVault is ILimitOrderFeeVault, BlockContext, ReentrancyGuar
         require(IERC20Upgradeable(_rewardToken).balanceOf(address(this)) >= _FEE_AMOUNT, "LOFV_NEBTD");
 
         SafeERC20Upgradeable.safeTransfer(IERC20Upgradeable(_rewardToken), keeper, _FEE_AMOUNT);
-        // TODO: emit event
+
+        emit Disbursed(keeper, _FEE_AMOUNT);
 
         return _FEE_AMOUNT;
     }
 
     function withdraw(address token, uint256 amount) external override onlyOwner {
+        // LOFV_WTMBRT: Withdrawn Token Must Be Reward Token
+        require(token == _rewardToken, "LOFV_WTMBRT");
+
+        address to = _msgSender();
+
         // LOFV_NEBTW: not enough balance to withdraw
         require(IERC20Upgradeable(token).balanceOf(address(this)) >= amount, "LOFV_NEBTW");
-        SafeERC20Upgradeable.safeTransfer(IERC20Upgradeable(token), _msgSender(), amount);
-        // TODO: emit event
+
+        SafeERC20Upgradeable.safeTransfer(IERC20Upgradeable(token), to, amount);
+
+        emit Withdrawn(to, token, amount);
     }
 }

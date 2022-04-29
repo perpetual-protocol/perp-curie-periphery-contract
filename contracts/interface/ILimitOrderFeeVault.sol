@@ -8,5 +8,5 @@ interface ILimitOrderFeeVault {
 
     event Disbursed(address keeper, uint256 amount);
 
-    event Withdrawn(address token, uint256 amount);
+    event Withdrawn(address to, address token, uint256 amount);
 }
