@@ -443,7 +443,7 @@ describe("LimitOrderBook fillOrder & cancelOrder", function () {
         ])
 
         await expect(limitOrderBook.connect(keeper).fillLimitOrder(limitOrder, signature)).to.be.revertedWith(
-            "CH_OHNAOPT",
+            "CH_SHNAOPT",
         )
     })
 
