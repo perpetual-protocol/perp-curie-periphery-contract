@@ -79,7 +79,7 @@ contract LimitOrderBook is ILimitOrderBook, BlockContext, ReentrancyGuardUpgrade
             order.baseToken
         );
 
-        (uint256 base, uint256 quote) =IClearingHouse(clearingHouse).openPositionFor(
+        (uint256 base, uint256 quote) = IClearingHouse(clearingHouse).openPositionFor(
             order.trader,
             IClearingHouse.OpenPositionParams({
                 baseToken: order.baseToken,

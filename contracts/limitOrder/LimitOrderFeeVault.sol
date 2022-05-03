@@ -64,7 +64,6 @@ contract LimitOrderFeeVault is ILimitOrderFeeVault, BlockContext, ReentrancyGuar
         emit FeeAmountChanged(feeAmountArg);
     }
 
-
     function disburse(address keeper, uint256 orderValue)
         external
         override
