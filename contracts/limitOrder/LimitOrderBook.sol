@@ -64,7 +64,7 @@ contract LimitOrderBook is ILimitOrderBook, BlockContext, ReentrancyGuardUpgrade
         accountBalance = IClearingHouse(clearingHouse).getAccountBalance();
     }
 
-    /// @param signature a EIP712 signature, generated from `eth_signTypedData_v4`
+    /// @inheritdoc ILimitOrderBook
     function fillLimitOrder(LimitOrder memory order, bytes memory signature) external override nonReentrant {
         bytes32 orderHash = getOrderHash(order);
         verifySigner(order, signature);
@@ -122,6 +122,7 @@ contract LimitOrderBook is ILimitOrderBook, BlockContext, ReentrancyGuardUpgrade
         );
     }
 
+    /// @inheritdoc ILimitOrderBook
     function cancelLimitOrder(LimitOrder memory order) external override {
         // LOB_OSMBS: Order's Signer Must Be Sender
         require(_msgSender() == order.trader, "LOB_OSMBS");

@@ -7,9 +7,13 @@ interface ILimitOrderBook {
     /// @param trader The address of trader who creates the order (must be signer)
     /// @param baseToken The address of baseToken (vETH, vBTC, ...)
     /// @param isBaseToQuote B2Q (short) if true, otherwise Q2B (long)
-    /// @param isExactInput
-    /// @param amount
+    /// @param isExactInput Exact input if true, otherwise exact output
+    /// @param amount The input amount if isExactInput is true, otherwise the output amount
     /// @param oppositeAmountBound
+    // B2Q + exact input, want more output quote as possible, so we set a lower bound of output quote
+    // B2Q + exact output, want less input base as possible, so we set a upper bound of input base
+    // Q2B + exact input, want more output base as possible, so we set a lower bound of output base
+    // Q2B + exact output, want less input quote as possible, so we set a upper bound of input quote
     /// @param deadline The block timestamp that the order will expire at (in seconds)
     /// @param reduceOnly The order will only reduce/close positions if true
     struct LimitOrder {
@@ -24,6 +28,12 @@ interface ILimitOrderBook {
         bool reduceOnly;
     }
 
+    /// @notice Emitted when the limit order is filled
+    /// @param trader The address of trader who created the limit order
+    /// @param baseToken The address of baseToken (vETH, vBTC, ...)
+    /// @param orderHash The hash of the filled limit order
+    /// @param keeper The address of keeper
+    /// @param keeperFee The fee reward to keeper
     event LimitOrderFilled(
         address indexed trader,
         address indexed baseToken,
@@ -32,9 +42,16 @@ interface ILimitOrderBook {
         uint256 keeperFee
     );
 
+    /// @notice Emitted when the limit order is cancelled
+    /// @param trader The address of trader who cancelled the limit order
+    /// @param baseToken The address of baseToken (vETH, vBTC, ...)
+    /// @param orderHash The hash of the filled limit order
+    event LimitOrderCancelled(address indexed trader, address indexed baseToken, bytes32 orderHash);
+
+    /// @param order LimitOrder struct
+    /// @param signature The EIP-712 signature of `order` generated from `eth_signTypedData_V4`
     function fillLimitOrder(LimitOrder memory order, bytes memory signature) external;
 
+    /// @param order LimitOrder struct
     function cancelLimitOrder(LimitOrder memory order) external;
-
-    event LimitOrderCancelled(address indexed trader, address indexed baseToken, bytes32 orderHash);
 }
