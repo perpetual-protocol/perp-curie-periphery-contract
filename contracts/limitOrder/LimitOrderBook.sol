@@ -21,12 +21,6 @@ contract LimitOrderBook is ILimitOrderBook, BlockContext, ReentrancyGuardUpgrade
     using PerpMath for uint256;
     using SignedSafeMathUpgradeable for int256;
 
-    enum OrderStatus {
-        Unfilled, // this is the default value
-        Filled,
-        Cancelled
-    }
-
     // solhint-disable-next-line func-name-mixedcase
     bytes32 public constant LIMIT_ORDER_TYPEHASH =
         keccak256(
@@ -36,7 +30,6 @@ contract LimitOrderBook is ILimitOrderBook, BlockContext, ReentrancyGuardUpgrade
 
     // TODO: refactor the following state variable into LimitOrderStorage
     mapping(bytes32 => OrderStatus) private _ordersStatus;
-
     address public clearingHouse;
     address public accountBalance;
     address public limitOrderFeeVault;
@@ -64,7 +57,7 @@ contract LimitOrderBook is ILimitOrderBook, BlockContext, ReentrancyGuardUpgrade
         accountBalance = IClearingHouse(clearingHouse).getAccountBalance();
     }
 
-    /// @param signature a EIP712 signature, generated from `eth_signTypedData_v4`
+    /// @inheritdoc ILimitOrderBook
     function fillLimitOrder(LimitOrder memory order, bytes memory signature) external override nonReentrant {
         bytes32 orderHash = getOrderHash(order);
         verifySigner(order, signature);
@@ -122,6 +115,7 @@ contract LimitOrderBook is ILimitOrderBook, BlockContext, ReentrancyGuardUpgrade
         );
     }
 
+    /// @inheritdoc ILimitOrderBook
     function cancelLimitOrder(LimitOrder memory order) external override {
         // LOB_OSMBS: Order's Signer Must Be Sender
         require(_msgSender() == order.trader, "LOB_OSMBS");
