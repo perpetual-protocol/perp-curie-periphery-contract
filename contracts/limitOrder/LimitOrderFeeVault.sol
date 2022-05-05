@@ -13,7 +13,13 @@ import { ReentrancyGuardUpgradeable } from "@openzeppelin/contracts-upgradeable/
 // solhint-disable-next-line max-line-length
 import { SafeERC20Upgradeable, IERC20Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC20/SafeERC20Upgradeable.sol";
 
-contract LimitOrderFeeVault is ILimitOrderFeeVault, BlockContext, ReentrancyGuardUpgradeable, OwnerPausable, LimitOrderFeeVaultStorageV1 {
+contract LimitOrderFeeVault is
+    ILimitOrderFeeVault,
+    BlockContext,
+    ReentrancyGuardUpgradeable,
+    OwnerPausable,
+    LimitOrderFeeVaultStorageV1
+{
     using AddressUpgradeable for address;
     using PerpMath for int256;
     using PerpMath for uint256;

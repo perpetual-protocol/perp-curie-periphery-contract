@@ -120,10 +120,9 @@ contract LimitOrderBook is
             );
         }
 
-        address keeper = _msgSender();
-
         _ordersStatus[orderHash] = ILimitOrderBook.OrderStatus.Filled;
 
+        address keeper = _msgSender();
         uint256 keeperFee = ILimitOrderFeeVault(limitOrderFeeVault).disburse(keeper, quote);
 
         emit LimitOrderFilled(order.trader, order.baseToken, orderHash, keeper, keeperFee);
@@ -133,8 +132,12 @@ contract LimitOrderBook is
     function cancelLimitOrder(LimitOrder memory order) external override {
         // LOB_OSMBS: Order's Signer Must Be Sender
         require(_msgSender() == order.trader, "LOB_OSMBS");
+
+        // we didn't require `signature` as input like fillLimitOrder(),
+        // so trader can actually cancel an order that is not existed
         bytes32 orderHash = getOrderHash(order);
         _ordersStatus[orderHash] = ILimitOrderBook.OrderStatus.Cancelled;
+
         emit LimitOrderCancelled(order.trader, order.baseToken, orderHash);
     }
 
