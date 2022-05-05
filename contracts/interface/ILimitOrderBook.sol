@@ -10,6 +10,14 @@ interface ILimitOrderBook {
         Cancelled
     }
 
+    /// @notice Emitted when clearingHouse is changed
+    /// @param clearingHouseArg The new address of clearingHouse
+    event ClearingHouseChanged(address indexed clearingHouseArg);
+
+    /// @notice Emitted when limitOrderFeeVault is changed
+    /// @param limitOrderFeeVaultArg The new address of limitOrderFeeVault
+    event LimitOrderFeeVaultChanged(address indexed limitOrderFeeVaultArg);
+
     /// @param salt An unique number for creating orders with the same parameters
     /// @param trader The address of trader who creates the order (must be signer)
     /// @param baseToken The address of baseToken (vETH, vBTC, ...)

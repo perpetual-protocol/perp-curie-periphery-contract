@@ -49,14 +49,32 @@ contract LimitOrderBook is
         __ReentrancyGuard_init();
         __OwnerPausable_init();
         __EIP712_init(name, version); // ex: "PerpCurieLimitOrder" and "1"
+
         // LOB_CHINC : ClearingHouse Is Not Contract
         require(clearingHouseArg.isContract(), "LOB_CHINC");
         clearingHouse = clearingHouseArg;
-
-        // LOB_LINC : LimitOrderFeeVault Is Not Contract
-        require(limitOrderFeeVaultArg.isContract(), "LOB_LINC");
-        limitOrderFeeVault = limitOrderFeeVaultArg;
         accountBalance = IClearingHouse(clearingHouse).getAccountBalance();
+
+        // LOB_LOFVINC : LimitOrderFeeVault Is Not Contract
+        require(limitOrderFeeVaultArg.isContract(), "LOB_LOFVINC");
+        limitOrderFeeVault = limitOrderFeeVaultArg;
+    }
+
+    function setClearingHouse(address clearingHouseArg) external onlyOwner {
+        // LOB_CHINC: ClearingHouse Is Not a Contract
+        require(clearingHouseArg.isContract(), "LOB_CHINC");
+        clearingHouse = clearingHouseArg;
+        accountBalance = IClearingHouse(clearingHouse).getAccountBalance();
+
+        emit ClearingHouseChanged(clearingHouseArg);
+    }
+
+    function setLimitOrderFeeVault(address limitOrderFeeVaultArg) external onlyOwner {
+        // LOB_LOFVINC: LimitOrderFeeVault Is Not a Contract
+        require(limitOrderFeeVaultArg.isContract(), "LOB_LOFVINC");
+        limitOrderFeeVault = limitOrderFeeVaultArg;
+
+        emit LimitOrderFeeVaultChanged(limitOrderFeeVaultArg);
     }
 
     /// @inheritdoc ILimitOrderBook
