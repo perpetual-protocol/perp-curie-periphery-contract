@@ -21,12 +21,6 @@ contract LimitOrderBook is ILimitOrderBook, BlockContext, ReentrancyGuardUpgrade
     using PerpMath for uint256;
     using SignedSafeMathUpgradeable for int256;
 
-    enum OrderStatus {
-        Unfilled, // this is the default value
-        Filled,
-        Cancelled
-    }
-
     // solhint-disable-next-line func-name-mixedcase
     bytes32 public constant LIMIT_ORDER_TYPEHASH =
         keccak256(
@@ -36,7 +30,6 @@ contract LimitOrderBook is ILimitOrderBook, BlockContext, ReentrancyGuardUpgrade
 
     // TODO: refactor the following state variable into LimitOrderStorage
     mapping(bytes32 => OrderStatus) private _ordersStatus;
-
     address public clearingHouse;
     address public accountBalance;
     address public limitOrderFeeVault;

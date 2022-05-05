@@ -3,6 +3,13 @@ pragma solidity 0.7.6;
 pragma abicoder v2;
 
 interface ILimitOrderBook {
+    // Do NOT change the order of enum values because it will break backwards compatibility
+    enum OrderStatus {
+        Unfilled,
+        Filled,
+        Cancelled
+    }
+
     /// @param salt An unique number for creating orders with the same parameters
     /// @param trader The address of trader who creates the order (must be signer)
     /// @param baseToken The address of baseToken (vETH, vBTC, ...)
