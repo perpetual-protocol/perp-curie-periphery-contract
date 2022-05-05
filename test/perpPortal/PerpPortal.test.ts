@@ -314,7 +314,7 @@ describe("PerpPortal test", () => {
             // total position value: 296.38873205
             expect(await clearingHouse.getAccountValue(bob.address)).to.be.gt("300")
             // get account leverage: 296.38873205 / 996.38873205 = 0.29746295
-            expect(await perpPortal.getAccountLeverage(bob.address)).to.be.eq(parseEther("0.297462950472651860"))
+            expect(await perpPortal.getAccountLeverage(bob.address)).to.be.eq(parseEther("0.297462950190439130"))
         })
 
         it("0 < account value < total position value", async () => {
@@ -338,7 +338,7 @@ describe("PerpPortal test", () => {
             expect(bobAccountValue).to.be.lt(bobPositionValue)
 
             // account leverage: 5704.69430511 / 704.69430511 = 8.09527516
-            expect(await perpPortal.getAccountLeverage(bob.address)).to.be.eq(parseEther("8.095275162167099216"))
+            expect(await perpPortal.getAccountLeverage(bob.address)).to.be.eq(parseEther("8.095275151995577945"))
         })
 
         it("no position value", async () => {
