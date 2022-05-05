@@ -28,7 +28,7 @@ import { encodePriceSqrt, syncIndexToMarketPrice } from "../shared/utilities"
 import { createLimitOrderFixture, LimitOrderFixture } from "./fixtures"
 import { getOrderHash, getSignature } from "./orderUtils"
 
-describe("LimitOrderBook fillOrder & cancelOrder", function () {
+describe.only("LimitOrderBook fillOrder & cancelOrder", function () {
     const [admin, trader, keeper, maker, alice] = waffle.provider.getWallets()
     let fixture: LimitOrderFixture
     let limitOrderBook: LimitOrderBook
@@ -142,7 +142,7 @@ describe("LimitOrderBook fillOrder & cancelOrder", function () {
         const tx = await limitOrderBook.connect(keeper).fillLimitOrder(limitOrder, signature)
         await expect(tx)
             .to.emit(limitOrderBook, "LimitOrderFilled")
-            .withArgs(trader.address, baseToken.address, orderHash, keeper.address, 0)
+            .withArgs(trader.address, baseToken.address, orderHash, keeper.address, fixture.rewardAmount)
 
         await expect(tx).to.emit(limitOrderFeeVault, "Disbursed").withArgs(keeper.address, fixture.rewardAmount)
 
@@ -242,7 +242,7 @@ describe("LimitOrderBook fillOrder & cancelOrder", function () {
             const tx = await limitOrderBook.connect(keeper).fillLimitOrder(limitOrder, signature)
             await expect(tx)
                 .to.emit(limitOrderBook, "LimitOrderFilled")
-                .withArgs(trader.address, baseToken.address, orderHash, keeper.address, 0)
+                .withArgs(trader.address, baseToken.address, orderHash, keeper.address, fixture.rewardAmount)
 
             await expect(tx).to.emit(limitOrderFeeVault, "Disbursed").withArgs(keeper.address, fixture.rewardAmount)
 
@@ -361,7 +361,7 @@ describe("LimitOrderBook fillOrder & cancelOrder", function () {
             const tx = await limitOrderBook.connect(keeper).fillLimitOrder(limitOrder, signature)
             await expect(tx)
                 .to.emit(limitOrderBook, "LimitOrderFilled")
-                .withArgs(trader.address, baseToken.address, orderHash, keeper.address, 0)
+                .withArgs(trader.address, baseToken.address, orderHash, keeper.address, fixture.rewardAmount)
 
             await expect(tx).to.emit(limitOrderFeeVault, "Disbursed").withArgs(keeper.address, fixture.rewardAmount)
 
@@ -493,7 +493,7 @@ describe("LimitOrderBook fillOrder & cancelOrder", function () {
         const tx = await limitOrderBook.connect(keeper).fillLimitOrder(limitOrder, signature)
         await expect(tx)
             .to.emit(limitOrderBook, "LimitOrderFilled")
-            .withArgs(trader.address, baseToken.address, orderHash, keeper.address, 0)
+            .withArgs(trader.address, baseToken.address, orderHash, keeper.address, fixture.rewardAmount)
 
         await expect(tx).to.emit(limitOrderFeeVault, "Disbursed").withArgs(keeper.address, fixture.rewardAmount)
 
