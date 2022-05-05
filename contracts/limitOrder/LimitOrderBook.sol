@@ -10,12 +10,20 @@ import { SignedSafeMathUpgradeable } from "@openzeppelin/contracts-upgradeable/m
 import { PerpMath } from "@perp/curie-contract/contracts/lib/PerpMath.sol";
 import { ILimitOrderBook } from "../interface/ILimitOrderBook.sol";
 import { ILimitOrderFeeVault } from "../interface/ILimitOrderFeeVault.sol";
+import { LimitOrderBookStorageV1 } from "../storage/LimitOrderBookStorage.sol";
 import { OwnerPausable } from "../base/OwnerPausable.sol";
 import { ReentrancyGuardUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
 import { IClearingHouse } from "@perp/curie-contract/contracts/interface/IClearingHouse.sol";
 import { IAccountBalance } from "@perp/curie-contract/contracts/interface/IAccountBalance.sol";
 
-contract LimitOrderBook is ILimitOrderBook, BlockContext, ReentrancyGuardUpgradeable, OwnerPausable, EIP712Upgradeable {
+contract LimitOrderBook is
+    ILimitOrderBook,
+    BlockContext,
+    ReentrancyGuardUpgradeable,
+    OwnerPausable,
+    EIP712Upgradeable,
+    LimitOrderBookStorageV1
+{
     using AddressUpgradeable for address;
     using PerpMath for int256;
     using PerpMath for uint256;
@@ -27,12 +35,6 @@ contract LimitOrderBook is ILimitOrderBook, BlockContext, ReentrancyGuardUpgrade
             // solhint-disable-next-line max-line-length
             "LimitOrder(uint256 salt,address trader,address baseToken,bool isBaseToQuote,bool isExactInput,uint256 amount,uint256 oppositeAmountBound,uint256 deadline,bool reduceOnly)"
         );
-
-    // TODO: refactor the following state variable into LimitOrderStorage
-    mapping(bytes32 => OrderStatus) private _ordersStatus;
-    address public clearingHouse;
-    address public accountBalance;
-    address public limitOrderFeeVault;
 
     //
     // EXTERNAL NON-VIEW
@@ -63,9 +65,9 @@ contract LimitOrderBook is ILimitOrderBook, BlockContext, ReentrancyGuardUpgrade
         verifySigner(order, signature);
 
         // LOB_OIFA: Order is filled already
-        require(_ordersStatus[orderHash] != OrderStatus.Filled, "LOB_OIFA");
+        require(_ordersStatus[orderHash] != ILimitOrderBook.OrderStatus.Filled, "LOB_OIFA");
         // LOB_OIC: Order is cancelled
-        require(_ordersStatus[orderHash] != OrderStatus.Cancelled, "LOB_OIC");
+        require(_ordersStatus[orderHash] != ILimitOrderBook.OrderStatus.Cancelled, "LOB_OIC");
 
         int256 oldTakerPositionSize = IAccountBalance(accountBalance).getTakerPositionSize(
             order.trader,
@@ -102,7 +104,7 @@ contract LimitOrderBook is ILimitOrderBook, BlockContext, ReentrancyGuardUpgrade
 
         address keeper = _msgSender();
 
-        _ordersStatus[orderHash] = OrderStatus.Filled;
+        _ordersStatus[orderHash] = ILimitOrderBook.OrderStatus.Filled;
 
         ILimitOrderFeeVault(limitOrderFeeVault).disburse(keeper, quote);
 
@@ -120,7 +122,7 @@ contract LimitOrderBook is ILimitOrderBook, BlockContext, ReentrancyGuardUpgrade
         // LOB_OSMBS: Order's Signer Must Be Sender
         require(_msgSender() == order.trader, "LOB_OSMBS");
         bytes32 orderHash = getOrderHash(order);
-        _ordersStatus[orderHash] = OrderStatus.Cancelled;
+        _ordersStatus[orderHash] = ILimitOrderBook.OrderStatus.Cancelled;
         emit LimitOrderCancelled(order.trader, order.baseToken, orderHash);
     }
 

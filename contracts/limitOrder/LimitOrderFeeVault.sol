@@ -7,22 +7,17 @@ import { AddressUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/Ad
 import { SignedSafeMathUpgradeable } from "@openzeppelin/contracts-upgradeable/math/SignedSafeMathUpgradeable.sol";
 import { PerpMath } from "@perp/curie-contract/contracts/lib/PerpMath.sol";
 import { ILimitOrderFeeVault } from "../interface/ILimitOrderFeeVault.sol";
+import { LimitOrderFeeVaultStorageV1 } from "../storage/LimitOrderFeeVaultStorage.sol";
 import { OwnerPausable } from "../base/OwnerPausable.sol";
 import { ReentrancyGuardUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
 // solhint-disable-next-line max-line-length
 import { SafeERC20Upgradeable, IERC20Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC20/SafeERC20Upgradeable.sol";
 
-contract LimitOrderFeeVault is ILimitOrderFeeVault, BlockContext, ReentrancyGuardUpgradeable, OwnerPausable {
+contract LimitOrderFeeVault is ILimitOrderFeeVault, BlockContext, ReentrancyGuardUpgradeable, OwnerPausable, LimitOrderFeeVaultStorageV1 {
     using AddressUpgradeable for address;
     using PerpMath for int256;
     using PerpMath for uint256;
     using SignedSafeMathUpgradeable for int256;
-
-    // TODO: put these state variables into StorageV1
-    // TODO: add setters
-    address public rewardToken;
-    address public limitOrderBook;
-    uint256 public feeAmount;
 
     modifier onlyLimitOrderBook() {
         // LOFV_SMBLOB: Sender Must Be LimitOrderBook
