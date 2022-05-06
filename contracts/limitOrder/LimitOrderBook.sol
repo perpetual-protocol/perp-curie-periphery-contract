@@ -15,7 +15,6 @@ import { OwnerPausable } from "../base/OwnerPausable.sol";
 import { ReentrancyGuardUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
 import { IClearingHouse } from "@perp/curie-contract/contracts/interface/IClearingHouse.sol";
 import { IAccountBalance } from "@perp/curie-contract/contracts/interface/IAccountBalance.sol";
-import "hardhat/console.sol";
 
 contract LimitOrderBook is
     ILimitOrderBook,
@@ -158,8 +157,6 @@ contract LimitOrderBook is
     function verifySigner(LimitOrder memory order, bytes memory signature) public view returns (address) {
         bytes32 orderHash = getOrderHash(order);
         address signer = ECDSAUpgradeable.recover(orderHash, signature);
-        console.log(signer);
-        console.log(order.trader);
 
         // LOB_SNET: signer is not trader
         require(signer == order.trader, "LOB_SINT");
