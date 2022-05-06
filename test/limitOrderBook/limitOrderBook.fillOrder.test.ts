@@ -546,4 +546,29 @@ describe("LimitOrderBook fillOrder & cancelOrder", function () {
             parseEther("-300"),
         )
     })
+
+    it("force error, only support limit order type now", async () => {
+        // long 0.1 ETH at $3000 with $300
+        const limitOrder = {
+            orderType: fixture.orderTypeStopLimitOrder,
+            salt: 1,
+            trader: trader.address,
+            baseToken: baseToken.address,
+            isBaseToQuote: false,
+            isExactInput: true,
+            amount: parseEther("300"),
+            oppositeAmountBound: parseEther("0.1"),
+            deadline: ethers.constants.MaxUint256,
+            reduceOnly: false,
+            roundIdWhenCreated: parseEther("0").toString(),
+            triggerPrice: parseEther("0").toString(),
+        }
+
+        // sign limit order
+        const signature = await getSignature(fixture, limitOrder, trader)
+
+        await expect(
+            limitOrderBook.connect(keeper).fillLimitOrder(limitOrder, signature, parseEther("0")),
+        ).to.revertedWith("LOB_OSLO")
+    })
 })

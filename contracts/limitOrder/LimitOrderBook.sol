@@ -87,6 +87,8 @@ contract LimitOrderBook is
         bytes32 orderHash = getOrderHash(order);
         verifySigner(order, signature);
 
+        // LOB_OSLO: Only support limit order type now
+        require(order.orderType == ILimitOrderBook.OrderType.LimitOrder, "LOB_OSLO");
         // LOB_OIFA: Order is filled already
         require(_ordersStatus[orderHash] != ILimitOrderBook.OrderStatus.Filled, "LOB_OIFA");
         // LOB_OIC: Order is cancelled
