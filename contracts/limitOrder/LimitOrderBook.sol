@@ -15,6 +15,7 @@ import { OwnerPausable } from "../base/OwnerPausable.sol";
 import { ReentrancyGuardUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
 import { IClearingHouse } from "@perp/curie-contract/contracts/interface/IClearingHouse.sol";
 import { IAccountBalance } from "@perp/curie-contract/contracts/interface/IAccountBalance.sol";
+import "hardhat/console.sol";
 
 contract LimitOrderBook is
     ILimitOrderBook,
@@ -29,11 +30,12 @@ contract LimitOrderBook is
     using PerpMath for uint256;
     using SignedSafeMathUpgradeable for int256;
 
+    // NOTE: cannot use `OrderType orderType` here, instead use `uint256 orderType`
     // solhint-disable-next-line func-name-mixedcase
     bytes32 public constant LIMIT_ORDER_TYPEHASH =
         keccak256(
             // solhint-disable-next-line max-line-length
-            "LimitOrder(uint256 salt,address trader,address baseToken,bool isBaseToQuote,bool isExactInput,uint256 amount,uint256 oppositeAmountBound,uint256 deadline,bool reduceOnly)"
+            "LimitOrder(uint256 orderType,uint256 salt,address trader,address baseToken,bool isBaseToQuote,bool isExactInput,uint256 amount,uint256 oppositeAmountBound,uint256 deadline,bool reduceOnly,uint80 roundIdWhenCreated,uint256 triggerPrice)"
         );
 
     //
@@ -78,7 +80,11 @@ contract LimitOrderBook is
     }
 
     /// @inheritdoc ILimitOrderBook
-    function fillLimitOrder(LimitOrder memory order, bytes memory signature) external override nonReentrant {
+    function fillLimitOrder(
+        LimitOrder memory order,
+        bytes memory signature,
+        uint80 roundIdWhenTriggered
+    ) external override nonReentrant {
         bytes32 orderHash = getOrderHash(order);
         verifySigner(order, signature);
 
@@ -152,6 +158,8 @@ contract LimitOrderBook is
     function verifySigner(LimitOrder memory order, bytes memory signature) public view returns (address) {
         bytes32 orderHash = getOrderHash(order);
         address signer = ECDSAUpgradeable.recover(orderHash, signature);
+        console.log(signer);
+        console.log(order.trader);
 
         // LOB_SNET: signer is not trader
         require(signer == order.trader, "LOB_SINT");
