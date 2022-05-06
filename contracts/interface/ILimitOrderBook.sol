@@ -35,21 +35,11 @@ interface ILimitOrderBook {
         bool reduceOnly;
     }
 
-    struct StopLossLimitOrder {
-        uint256 salt;
-        address trader;
-        address baseToken;
-        bool isBaseToQuote;
-        bool isExactInput;
-        uint256 amount;
-        uint256 oppositeAmountBound;
-        uint256 deadline;
-        bool reduceOnly;
-        uint80 roundIdWhenCreated;
-        uint256 triggerPrice;
-    }
-
-    struct TakeProfitLimitOrder {
+    /// @param roundIdWhenCreated The latest oracle `roundId` when the order is created
+    /// @param triggerPrice
+    /// If Q2B (long), the order will be tradable when oracle price >= triggerPrice
+    /// If B2Q (short), the order will be tradable when oracle price <= triggerPrice
+    struct StopLimitOrder {
         uint256 salt;
         address trader;
         address baseToken;
@@ -95,13 +85,14 @@ interface ILimitOrderBook {
     /// @param signature The EIP-712 signature of `order` generated from `eth_signTypedData_V4`
     function fillLimitOrder(LimitOrder memory order, bytes memory signature) external;
 
-    /// @param order StopLossLimitOrder struct
+    /// @param order StopLimitOrder struct
     /// @param signature The EIP-712 signature of `order` generated from `eth_signTypedData_V4`
-    function fillStopLossLimitOrder(StopLossLimitOrder memory order, bytes memory signature) external;
-
-    /// @param order TakeProfitLimitOrder struct
-    /// @param signature The EIP-712 signature of `order` generated from `eth_signTypedData_V4`
-    function fillTakeProfitLimitOrder(TakeProfitLimitOrder memory order, bytes memory signature) external;
+    /// @param roundIdWhenTriggered The oracle `roundId` when triggerPrice is satisfied
+    function fillStopLimitOrder(
+        StopLimitOrder memory order,
+        bytes memory signature,
+        uint80 roundIdWhenTriggered
+    ) external;
 
     /// @param order LimitOrder struct
     function cancelLimitOrder(LimitOrder memory order) external;
