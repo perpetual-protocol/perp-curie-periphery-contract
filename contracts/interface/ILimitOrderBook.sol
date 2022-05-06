@@ -4,12 +4,19 @@ pragma abicoder v2;
 
 interface ILimitOrderBook {
     // Do NOT change the order of enum values because it will break backwards compatibility
+    enum OrderType {
+        LimitOrder,
+        StopLimitOrder
+    }
+
+    // Do NOT change the order of enum values because it will break backwards compatibility
     enum OrderStatus {
         Unfilled,
         Filled,
         Cancelled
     }
 
+    /// @param orderType The enum of order type (LimitOrder, StopLimitOrder, ...)
     /// @param salt An unique number for creating orders with the same parameters
     /// @param trader The address of trader who creates the order (must be signer)
     /// @param baseToken The address of baseToken (vETH, vBTC, ...)
@@ -23,7 +30,14 @@ interface ILimitOrderBook {
     // Q2B + exact output, want less input quote as possible, so we set a upper bound of input quote
     /// @param deadline The block timestamp that the order will expire at (in seconds)
     /// @param reduceOnly The order will only reduce/close positions if true
+    /// @param roundIdWhenCreated The oracle `roundId` when the stop limit order is created
+    // Only avaliable if orderType is StopLimitOrder, otherwise set to 0
+    /// @param triggerPrice The trigger price of the stop limit order
+    // Only avaliable if orderType is StopLimitOrder, otherwise set to 0
+    // If Q2B (long), the order will be tradable when oracle price >= triggerPrice
+    // If B2Q (short), the order will be tradable when oracle price <= triggerPrice
     struct LimitOrder {
+        OrderType orderType;
         uint256 salt;
         address trader;
         address baseToken;
@@ -33,6 +47,8 @@ interface ILimitOrderBook {
         uint256 oppositeAmountBound;
         uint256 deadline;
         bool reduceOnly;
+        uint80 roundIdWhenCreated;
+        uint256 triggerPrice;
     }
 
     /// @notice Emitted when clearingHouse is changed
@@ -65,7 +81,13 @@ interface ILimitOrderBook {
 
     /// @param order LimitOrder struct
     /// @param signature The EIP-712 signature of `order` generated from `eth_signTypedData_V4`
-    function fillLimitOrder(LimitOrder memory order, bytes memory signature) external;
+    /// @param roundIdWhenTriggered The oracle `roundId` when triggerPrice is satisfied
+    // Only avaliable if orderType is StopLimitOrder, otherwise set to 0
+    function fillLimitOrder(
+        LimitOrder memory order,
+        bytes memory signature,
+        uint80 roundIdWhenTriggered
+    ) external;
 
     /// @param order LimitOrder struct
     function cancelLimitOrder(LimitOrder memory order) external;
