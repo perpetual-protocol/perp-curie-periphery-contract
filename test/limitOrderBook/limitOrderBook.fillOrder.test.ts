@@ -23,11 +23,10 @@ import {
 import { initAndAddPool } from "../helper/marketHelper"
 import { getMaxTickRange, priceToTick } from "../helper/number"
 import { mintAndDeposit, withdraw } from "../helper/token"
+import { forwardTimestamp } from "../shared/time"
 import { encodePriceSqrt, syncIndexToMarketPrice } from "../shared/utilities"
 import { createLimitOrderFixture, LimitOrderFixture } from "./fixtures"
 import { getOrderHash, getSignature } from "./orderUtils"
-import { BigNumber } from "ethers"
-import {forwardTimestamp} from "../shared/time";
 
 describe("LimitOrderBook fillOrder & cancelOrder", function () {
     const [admin, trader, keeper, maker, alice] = waffle.provider.getWallets()
@@ -292,9 +291,9 @@ describe("LimitOrderBook fillOrder & cancelOrder", function () {
             // sign limit order
             const signature = await getSignature(fixture, limitOrder, trader)
 
-            await expect(limitOrderBook.connect(keeper).fillLimitOrder(limitOrder, signature, parseEther("0"))).to.be.revertedWith(
-                "LOB_TINR",
-            )
+            await expect(
+                limitOrderBook.connect(keeper).fillLimitOrder(limitOrder, signature, parseEther("0")),
+            ).to.be.revertedWith("LOB_NRO")
         })
 
         it("force error, when order does not satisfy reduceOnly, create a reverse position", async () => {
@@ -317,9 +316,9 @@ describe("LimitOrderBook fillOrder & cancelOrder", function () {
             // sign limit order
             const signature = await getSignature(fixture, limitOrder, trader)
 
-            await expect(limitOrderBook.connect(keeper).fillLimitOrder(limitOrder, signature, parseEther("0"))).to.be.revertedWith(
-                "LOB_TINR",
-            )
+            await expect(
+                limitOrderBook.connect(keeper).fillLimitOrder(limitOrder, signature, parseEther("0")),
+            ).to.be.revertedWith("LOB_NRO")
         })
     })
 
@@ -425,9 +424,9 @@ describe("LimitOrderBook fillOrder & cancelOrder", function () {
             }
             await forwardTimestamp(clearingHouse, 10)
             const signature = await getSignature(fixture, limitOrder, trader)
-            await expect(limitOrderBook.connect(keeper).fillLimitOrder(limitOrder, signature, parseEther("0"))).to.be.revertedWith(
-                "CH_TE",
-            )
+            await expect(
+                limitOrderBook.connect(keeper).fillLimitOrder(limitOrder, signature, parseEther("0")),
+            ).to.be.revertedWith("CH_TE")
         })
     })
 
@@ -483,9 +482,9 @@ describe("LimitOrderBook fillOrder & cancelOrder", function () {
             },
         ])
 
-        await expect(limitOrderBook.connect(keeper).fillLimitOrder(limitOrder, signature, parseEther("0"))).to.be.revertedWith(
-            "CH_SHNAOPT",
-        )
+        await expect(
+            limitOrderBook.connect(keeper).fillLimitOrder(limitOrder, signature, parseEther("0")),
+        ).to.be.revertedWith("CH_SHNAOPT")
     })
 
     it("keeper keep trying to fill limit orders in a row", async () => {
@@ -523,7 +522,9 @@ describe("LimitOrderBook fillOrder & cancelOrder", function () {
         await clearingHouse.connect(alice).openPosition(alicePosition)
 
         // cannot fill this limit order because price is not right
-        await expect(limitOrderBook.connect(keeper).fillLimitOrder(limitOrder, signature, parseEther("0"))).to.be.revertedWith("CH_TLRL")
+        await expect(
+            limitOrderBook.connect(keeper).fillLimitOrder(limitOrder, signature, parseEther("0")),
+        ).to.be.revertedWith("CH_TLRL")
 
         // alice close her position to make market price lower
         await clearingHouse.connect(alice).closePosition({

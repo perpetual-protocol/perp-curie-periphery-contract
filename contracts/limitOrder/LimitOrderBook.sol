@@ -29,7 +29,7 @@ contract LimitOrderBook is
     using PerpMath for uint256;
     using SignedSafeMathUpgradeable for int256;
 
-    // NOTE: cannot use `OrderType orderType` here, instead use `uint256 orderType`
+    // NOTE: cannot use `OrderType orderType` here, use `uint256 orderType` instead
     // solhint-disable-next-line func-name-mixedcase
     bytes32 public constant LIMIT_ORDER_TYPEHASH =
         keccak256(
@@ -87,8 +87,10 @@ contract LimitOrderBook is
         bytes32 orderHash = getOrderHash(order);
         verifySigner(order, signature);
 
-        // LOB_OSLO: Only support limit order type now
+        // TODO: support StopLimitOrder in the future
+        // LOB_OSLO: Only Support LimitOrder
         require(order.orderType == ILimitOrderBook.OrderType.LimitOrder, "LOB_OSLO");
+
         // LOB_OIFA: Order is filled already
         require(_ordersStatus[orderHash] != ILimitOrderBook.OrderStatus.Filled, "LOB_OIFA");
         // LOB_OIC: Order is cancelled
@@ -119,11 +121,11 @@ contract LimitOrderBook is
         );
 
         if (order.reduceOnly) {
-            // LOB_TINR : this it not reduceOnly
+            // LOB_NRO: Not ReduceOnly
             require(
                 oldTakerPositionSize.mul(newTakerPositionSize) > 0 &&
                     oldTakerPositionSize.abs() > newTakerPositionSize.abs(),
-                "LOB_TINR"
+                "LOB_NRO"
             );
         }
 
