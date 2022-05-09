@@ -37,7 +37,7 @@ export function createLimitOrderFixture(): () => Promise<LimitOrderFixture> {
         const limitOrderFeeVault = (await limitOrderFeeVaultFactory.deploy()) as LimitOrderFeeVault
         await limitOrderFeeVault.initialize(rewardToken.address, rewardAmount)
 
-        const EIP712Name = "Perpetual Protocol v2 Limit Order"
+        const EIP712Name = "PerpCurieLimitOrder"
         const EIP712Version = "1"
         const EIP712PrimaryType = "LimitOrder"
 
