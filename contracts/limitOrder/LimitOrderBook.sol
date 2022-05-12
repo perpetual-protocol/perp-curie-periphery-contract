@@ -162,7 +162,7 @@ contract LimitOrderBook is
         bytes32 orderHash = getOrderHash(order);
         address signer = ECDSAUpgradeable.recover(orderHash, signature);
 
-        // LOB_SNET: signer is not trader
+        // LOB_SINT: Signer Is Not Trader
         require(signer == order.trader, "LOB_SINT");
 
         return signer;
