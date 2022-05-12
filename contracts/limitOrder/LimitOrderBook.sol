@@ -91,10 +91,8 @@ contract LimitOrderBook is
         // LOB_OSLO: Only Support LimitOrder
         require(order.orderType == ILimitOrderBook.OrderType.LimitOrder, "LOB_OSLO");
 
-        // LOB_OIFA: Order is filled already
-        require(_ordersStatus[orderHash] != ILimitOrderBook.OrderStatus.Filled, "LOB_OIFA");
-        // LOB_OIC: Order is cancelled
-        require(_ordersStatus[orderHash] != ILimitOrderBook.OrderStatus.Cancelled, "LOB_OIC");
+        // LOB_OMBU: Order Must Be Unfilled
+        require(_ordersStatus[orderHash] == ILimitOrderBook.OrderStatus.Unfilled, "LOB_OMBU");
 
         int256 oldTakerPositionSize = IAccountBalance(accountBalance).getTakerPositionSize(
             order.trader,
