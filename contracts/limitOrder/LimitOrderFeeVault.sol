@@ -84,18 +84,14 @@ contract LimitOrderFeeVault is
         return feeAmount;
     }
 
-    // TODO: should we support multiple token to withdraw? or only support rewardToken?
-    function withdraw(address token, uint256 amount) external override onlyOwner nonReentrant {
-        // LOFV_WTMBRT: Withdrawn Token Must Be RewardToken
-        require(token == rewardToken, "LOFV_WTMBRT");
+    function withdraw(uint256 amount) external override onlyOwner nonReentrant {
+        address owner = _msgSender();
 
-        address to = _msgSender();
+        // LOFV_NEBTW: Not Enough Balance to Withdraw
+        require(IERC20Upgradeable(rewardToken).balanceOf(address(this)) >= amount, "LOFV_NEBTW");
 
-        // LOFV_NEBTW: not enough balance to withdraw
-        require(IERC20Upgradeable(token).balanceOf(address(this)) >= amount, "LOFV_NEBTW");
+        SafeERC20Upgradeable.safeTransfer(IERC20Upgradeable(rewardToken), owner, amount);
 
-        SafeERC20Upgradeable.safeTransfer(IERC20Upgradeable(token), to, amount);
-
-        emit Withdrawn(to, token, amount);
+        emit Withdrawn(owner, rewardToken, amount);
     }
 }

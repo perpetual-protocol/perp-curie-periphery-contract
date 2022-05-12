@@ -234,7 +234,7 @@ describe("LimitOrderFeeVault", function () {
 
     it("withdraw successfully", async () => {
         const vaultBalance = await rewardToken.balanceOf(limitOrderFeeVault.address)
-        const tx = await limitOrderFeeVault.connect(admin).withdraw(rewardToken.address, vaultBalance)
+        const tx = await limitOrderFeeVault.connect(admin).withdraw(vaultBalance)
 
         await expect(tx)
             .to.emit(limitOrderFeeVault, "Withdrawn")
@@ -247,24 +247,10 @@ describe("LimitOrderFeeVault", function () {
     it("force error, withdraw without the enough balance", async () => {
         const vaultBalance = await rewardToken.balanceOf(limitOrderFeeVault.address)
 
-        await expect(
-            limitOrderFeeVault.connect(admin).withdraw(rewardToken.address, vaultBalance.add(1)),
-        ).to.be.revertedWith("LOFV_NEBTW")
+        await expect(limitOrderFeeVault.connect(admin).withdraw(vaultBalance.add(1))).to.be.revertedWith("LOFV_NEBTW")
     })
 
-    it("force error, withdraw without the correct reward token", async () => {
-        const vaultBalance = await rewardToken.balanceOf(limitOrderFeeVault.address)
-
-        await expect(limitOrderFeeVault.connect(admin).withdraw(emptyAddress, vaultBalance.add(1))).to.be.revertedWith(
-            "LOFV_WTMBRT",
-        )
-    })
-
-    it("force error, withdraw by the wrong person", async () => {
-        const vaultBalance = await rewardToken.balanceOf(limitOrderFeeVault.address)
-
-        await expect(limitOrderFeeVault.connect(alice).withdraw(emptyAddress, vaultBalance.add(1))).to.be.revertedWith(
-            "SO_CNO",
-        )
+    it("force error, withdrawn by non-owner", async () => {
+        await expect(limitOrderFeeVault.connect(alice).withdraw(parseEther("1"))).to.be.revertedWith("SO_CNO")
     })
 })
