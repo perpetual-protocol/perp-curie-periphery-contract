@@ -54,7 +54,11 @@ contract LimitOrderBook is
         // LOB_CHINC : ClearingHouse Is Not Contract
         require(clearingHouseArg.isContract(), "LOB_CHINC");
         clearingHouse = clearingHouseArg;
-        accountBalance = IClearingHouse(clearingHouse).getAccountBalance();
+
+        // LOB_ABINC : AccountBalance Is Not Contract
+        address accountBalanceArg = IClearingHouse(clearingHouse).getAccountBalance();
+        require(accountBalanceArg.isContract(), "LOB_ABINC");
+        accountBalance = accountBalanceArg;
 
         // LOB_LOFVINC : LimitOrderFeeVault Is Not Contract
         require(limitOrderFeeVaultArg.isContract(), "LOB_LOFVINC");
