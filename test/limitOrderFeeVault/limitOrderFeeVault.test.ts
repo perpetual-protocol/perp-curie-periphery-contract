@@ -5,21 +5,15 @@ import { expect } from "chai"
 import { ethers, waffle } from "hardhat"
 import {
     BaseToken,
-    ClearingHouseConfig,
     DelegateApproval,
-    Exchange,
     LimitOrderBook,
     LimitOrderFeeVault,
-    MarketRegistry,
-    OrderBook,
     QuoteToken,
-    TestAccountBalance,
     TestAggregatorV3,
     TestClearingHouse,
     TestERC20,
     TestLimitOrderBook,
     UniswapV3Pool,
-    Vault,
 } from "../../typechain-types"
 import { initAndAddPool } from "../helper/marketHelper"
 import { getMaxTickRange, priceToTick } from "../helper/number"
@@ -31,58 +25,34 @@ import { encodePriceSqrt, syncIndexToMarketPrice } from "../shared/utilities"
 describe("LimitOrderFeeVault", function () {
     const [admin, trader, keeper, maker, alice] = waffle.provider.getWallets()
     let fixture: LimitOrderFixture
-    let limitOrderBook: LimitOrderBook
     let clearingHouse: TestClearingHouse
-    let delegateApproval: DelegateApproval
-    let marketRegistry: MarketRegistry
-    let clearingHouseConfig: ClearingHouseConfig
-    let exchange: Exchange
-    let orderBook: OrderBook
-    let accountBalance: TestAccountBalance
-    let vault: Vault
     let collateral: TestERC20
     let baseToken: BaseToken
-    let baseToken2: BaseToken
     let quoteToken: QuoteToken
     let pool: UniswapV3Pool
-    let pool2: UniswapV3Pool
     let mockedBaseAggregator: FakeContract<TestAggregatorV3>
-    let mockedBaseAggregator2: FakeContract<TestAggregatorV3>
-    let collateralDecimals: number
-    let rewardToken: TestERC20
+    let delegateApproval: DelegateApproval
+    let limitOrderBook: LimitOrderBook
     let limitOrderFeeVault: LimitOrderFeeVault
+    let rewardToken: TestERC20
 
-    const fakeSignature = "0x0000000000000000000000000000000000000000000000000000000000000000"
     const emptyAddress = "0x0000000000000000000000000000000000000000"
 
     beforeEach(async () => {
         fixture = await loadFixture(createLimitOrderFixture())
-        limitOrderBook = fixture.limitOrderBook
         clearingHouse = fixture.clearingHouse as TestClearingHouse
-        delegateApproval = fixture.delegateApproval
-
-        orderBook = fixture.orderBook
-        accountBalance = fixture.accountBalance as TestAccountBalance
-        clearingHouseConfig = fixture.clearingHouseConfig
-        vault = fixture.vault
-        exchange = fixture.exchange
-        marketRegistry = fixture.marketRegistry
         collateral = fixture.USDC
         baseToken = fixture.baseToken
-        baseToken2 = fixture.baseToken2
         quoteToken = fixture.quoteToken
         mockedBaseAggregator = fixture.mockedBaseAggregator
-        mockedBaseAggregator2 = fixture.mockedBaseAggregator2
         pool = fixture.pool
-        pool2 = fixture.pool2
-        collateralDecimals = await collateral.decimals()
+        delegateApproval = fixture.delegateApproval
+        limitOrderBook = fixture.limitOrderBook
         limitOrderFeeVault = fixture.limitOrderFeeVault
         rewardToken = fixture.rewardToken
 
         const pool1LowerTick: number = priceToTick(2000, await pool.tickSpacing())
         const pool1UpperTick: number = priceToTick(4000, await pool.tickSpacing())
-        delegateApproval = fixture.delegateApproval
-        limitOrderBook = fixture.limitOrderBook
 
         // ETH
         await initAndAddPool(
@@ -112,9 +82,10 @@ describe("LimitOrderFeeVault", function () {
             deadline: ethers.constants.MaxUint256,
         })
 
-        // prepare collateral for taker
+        // prepare collateral for trader
         await mintAndDeposit(fixture, trader, 1000)
 
+        // trader allows limitOrderBook to open position
         await delegateApproval.connect(trader).approve([
             {
                 delegate: limitOrderBook.address,
@@ -174,7 +145,7 @@ describe("LimitOrderFeeVault", function () {
         await expect(limitOrderFeeVault.connect(alice).setFeeAmount(newFeeAmount)).to.be.revertedWith("SO_CNO")
     })
 
-    it("disburse successfully", async () => {
+    it("disburse", async () => {
         const limitOrder = {
             orderType: fixture.orderTypeLimitOrder,
             salt: 1,
@@ -196,10 +167,9 @@ describe("LimitOrderFeeVault", function () {
         const oldKeeperBalance = await rewardToken.balanceOf(keeper.address)
         const feeAmount = await limitOrderFeeVault.feeAmount()
         const tx = await limitOrderBook.connect(keeper).fillLimitOrder(limitOrder, signature, parseEther("0"))
-
         await expect(tx).to.emit(limitOrderFeeVault, "Disbursed").withArgs(keeper.address, fixture.rewardAmount)
-        const newKeeperBalance = await rewardToken.balanceOf(keeper.address)
 
+        const newKeeperBalance = await rewardToken.balanceOf(keeper.address)
         expect(newKeeperBalance.sub(oldKeeperBalance)).to.be.eq(feeAmount)
     })
 
@@ -232,7 +202,7 @@ describe("LimitOrderFeeVault", function () {
         await expect(limitOrderFeeVault.connect(alice).disburse(keeper.address)).to.be.revertedWith("LOFV_SMBLOB")
     })
 
-    it("withdraw successfully", async () => {
+    it("withdraw", async () => {
         expect(await rewardToken.balanceOf(admin.address)).to.be.eq(0)
 
         const vaultBalance = await rewardToken.balanceOf(limitOrderFeeVault.address)

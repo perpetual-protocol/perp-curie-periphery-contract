@@ -4,16 +4,12 @@ import { parseEther } from "@ethersproject/units"
 import { expect } from "chai"
 import { ethers, waffle } from "hardhat"
 import {
+    AccountBalance,
     BaseToken,
-    ClearingHouseConfig,
     DelegateApproval,
-    Exchange,
     LimitOrderBook,
     LimitOrderFeeVault,
-    MarketRegistry,
-    OrderBook,
     QuoteToken,
-    TestAccountBalance,
     TestAggregatorV3,
     TestClearingHouse,
     TestERC20,
@@ -28,60 +24,39 @@ import { encodePriceSqrt, syncIndexToMarketPrice } from "../shared/utilities"
 import { createLimitOrderFixture, LimitOrderFixture } from "./fixtures"
 import { getOrderHash, getSignature } from "./orderUtils"
 
-describe("LimitOrderBook fillOrder & cancelOrder", function () {
+describe("LimitOrderBook fillLimitOrder", function () {
     const [admin, trader, keeper, maker, alice] = waffle.provider.getWallets()
     let fixture: LimitOrderFixture
-    let limitOrderBook: LimitOrderBook
     let clearingHouse: TestClearingHouse
-    let delegateApproval: DelegateApproval
-    let marketRegistry: MarketRegistry
-    let clearingHouseConfig: ClearingHouseConfig
-    let exchange: Exchange
-    let orderBook: OrderBook
-    let accountBalance: TestAccountBalance
+    let accountBalance: AccountBalance
     let vault: Vault
     let collateral: TestERC20
     let baseToken: BaseToken
-    let baseToken2: BaseToken
     let quoteToken: QuoteToken
     let pool: UniswapV3Pool
-    let pool2: UniswapV3Pool
     let mockedBaseAggregator: FakeContract<TestAggregatorV3>
-    let mockedBaseAggregator2: FakeContract<TestAggregatorV3>
-    let collateralDecimals: number
-    let rewardToken: TestERC20
+    let delegateApproval: DelegateApproval
+    let limitOrderBook: LimitOrderBook
     let limitOrderFeeVault: LimitOrderFeeVault
-
-    const fakeSignature = "0x0000000000000000000000000000000000000000000000000000000000000000"
+    let rewardToken: TestERC20
 
     beforeEach(async () => {
         fixture = await loadFixture(createLimitOrderFixture())
-        limitOrderBook = fixture.limitOrderBook
         clearingHouse = fixture.clearingHouse as TestClearingHouse
-        delegateApproval = fixture.delegateApproval
-
-        orderBook = fixture.orderBook
-        accountBalance = fixture.accountBalance as TestAccountBalance
-        clearingHouseConfig = fixture.clearingHouseConfig
+        accountBalance = fixture.accountBalance
         vault = fixture.vault
-        exchange = fixture.exchange
-        marketRegistry = fixture.marketRegistry
         collateral = fixture.USDC
         baseToken = fixture.baseToken
-        baseToken2 = fixture.baseToken2
         quoteToken = fixture.quoteToken
         mockedBaseAggregator = fixture.mockedBaseAggregator
-        mockedBaseAggregator2 = fixture.mockedBaseAggregator2
         pool = fixture.pool
-        pool2 = fixture.pool2
-        collateralDecimals = await collateral.decimals()
+        delegateApproval = fixture.delegateApproval
+        limitOrderBook = fixture.limitOrderBook
         limitOrderFeeVault = fixture.limitOrderFeeVault
         rewardToken = fixture.rewardToken
 
         const pool1LowerTick: number = priceToTick(2000, await pool.tickSpacing())
         const pool1UpperTick: number = priceToTick(4000, await pool.tickSpacing())
-        delegateApproval = fixture.delegateApproval
-        limitOrderBook = fixture.limitOrderBook
 
         // ETH
         await initAndAddPool(
@@ -111,9 +86,10 @@ describe("LimitOrderBook fillOrder & cancelOrder", function () {
             deadline: ethers.constants.MaxUint256,
         })
 
-        // prepare collateral for taker
+        // prepare collateral for trader
         await mintAndDeposit(fixture, trader, 1000)
 
+        // trader allows limitOrderBook to open position
         await delegateApproval.connect(trader).approve([
             {
                 delegate: limitOrderBook.address,
@@ -122,7 +98,7 @@ describe("LimitOrderBook fillOrder & cancelOrder", function () {
         ])
     })
 
-    it("fill limit order successfully", async () => {
+    it("fill limit order", async () => {
         // long 0.1 ETH at $3000 with $300
         const limitOrder = {
             orderType: fixture.orderTypeLimitOrder,
@@ -237,7 +213,7 @@ describe("LimitOrderBook fillOrder & cancelOrder", function () {
             })
         })
 
-        it("fill order successfully", async () => {
+        it("fill order", async () => {
             // short 0.05 ETH at $2800 with $150
             const limitOrder = {
                 orderType: fixture.orderTypeLimitOrder,
@@ -326,51 +302,6 @@ describe("LimitOrderBook fillOrder & cancelOrder", function () {
                 limitOrderBook.connect(keeper).fillLimitOrder(limitOrder, signature, parseEther("0")),
             ).to.be.revertedWith("LOB_NRO")
         })
-    })
-
-    it("cancel order successfully", async () => {
-        // long 0.1 ETH at $3000 with $300
-        const limitOrder = {
-            orderType: fixture.orderTypeLimitOrder,
-            salt: 1,
-            trader: trader.address,
-            baseToken: baseToken.address,
-            isBaseToQuote: false,
-            isExactInput: true,
-            amount: parseEther("300"),
-            oppositeAmountBound: parseEther("0.1"),
-            deadline: ethers.constants.MaxUint256,
-            referralCode: ethers.constants.HashZero,
-            reduceOnly: false,
-            roundIdWhenCreated: parseEther("0").toString(),
-            triggerPrice: parseEther("0").toString(),
-        }
-
-        await expect(await limitOrderBook.connect(trader).cancelLimitOrder(limitOrder)).to.emit(
-            limitOrderBook,
-            "LimitOrderCancelled",
-        )
-    })
-
-    it("force error, cancel order with different trader", async () => {
-        // long 0.1 ETH at $3000 with $300
-        const limitOrder = {
-            orderType: fixture.orderTypeLimitOrder,
-            salt: 1,
-            trader: keeper.address,
-            baseToken: baseToken.address,
-            isBaseToQuote: false,
-            isExactInput: true,
-            amount: parseEther("300"),
-            oppositeAmountBound: parseEther("0.1"),
-            deadline: ethers.constants.MaxUint256,
-            referralCode: ethers.constants.HashZero,
-            reduceOnly: false,
-            roundIdWhenCreated: parseEther("0").toString(),
-            triggerPrice: parseEther("0").toString(),
-        }
-
-        await expect(limitOrderBook.connect(trader).cancelLimitOrder(limitOrder)).to.be.revertedWith("LOB_OSMBS")
     })
 
     // TODO: test deadline, check ClearingHouse.addLiquidity L104
