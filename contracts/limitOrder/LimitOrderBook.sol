@@ -34,7 +34,7 @@ contract LimitOrderBook is
     bytes32 public constant LIMIT_ORDER_TYPEHASH =
         keccak256(
             // solhint-disable-next-line max-line-length
-            "LimitOrder(uint256 orderType,uint256 salt,address trader,address baseToken,bool isBaseToQuote,bool isExactInput,uint256 amount,uint256 oppositeAmountBound,uint256 deadline,bool reduceOnly,uint80 roundIdWhenCreated,uint256 triggerPrice)"
+            "LimitOrder(uint256 orderType,uint256 salt,address trader,address baseToken,bool isBaseToQuote,bool isExactInput,uint256 amount,uint256 oppositeAmountBound,uint256 deadline,bytes32 referralCode,bool reduceOnly,uint80 roundIdWhenCreated,uint256 triggerPrice)"
         );
 
     //
@@ -113,7 +113,7 @@ contract LimitOrderBook is
                 oppositeAmountBound: order.oppositeAmountBound,
                 deadline: order.deadline,
                 sqrtPriceLimitX96: 0,
-                referralCode: ""
+                referralCode: order.referralCode
             })
         );
 

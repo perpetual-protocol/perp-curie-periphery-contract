@@ -29,6 +29,7 @@ interface ILimitOrderBook {
     // Q2B + exact input, want more output base as possible, so we set a lower bound of output base
     // Q2B + exact output, want less input quote as possible, so we set a upper bound of input quote
     /// @param deadline The block timestamp that the order will expire at (in seconds)
+    /// @param referralCode The referral code
     /// @param reduceOnly The order will only reduce/close positions if true
     /// @param roundIdWhenCreated The oracle `roundId` when the stop limit order is created
     // Only avaliable if orderType is StopLimitOrder, otherwise set to 0
@@ -46,6 +47,7 @@ interface ILimitOrderBook {
         uint256 amount;
         uint256 oppositeAmountBound;
         uint256 deadline;
+        bytes32 referralCode;
         bool reduceOnly;
         uint80 roundIdWhenCreated;
         uint256 triggerPrice;

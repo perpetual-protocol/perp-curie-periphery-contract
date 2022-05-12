@@ -14,6 +14,7 @@ export interface LimitOrder {
     amount: BigNumberish
     oppositeAmountBound: BigNumberish
     deadline: BigNumberish
+    referralCode: string
     reduceOnly: boolean
     roundIdWhenCreated: BigNumberish
     triggerPrice: BigNumberish
@@ -38,6 +39,7 @@ export function getOrderTypes() {
             { name: "amount", type: "uint256" },
             { name: "oppositeAmountBound", type: "uint256" },
             { name: "deadline", type: "uint256" },
+            { name: "referralCode", type: "bytes32" },
             { name: "reduceOnly", type: "bool" },
             { name: "roundIdWhenCreated", type: "uint80" },
             { name: "triggerPrice", type: "uint256" },

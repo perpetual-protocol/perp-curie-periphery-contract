@@ -38,6 +38,7 @@ describe("LimitOrderBook signing", function () {
             amount: parseEther("3000").toString(), // quote amount: $3000
             oppositeAmountBound: parseEther("1").toString(), // base amount: 1 ETH
             deadline: ethers.constants.MaxUint256.toString(), // no expiration date
+            referralCode: ethers.constants.HashZero, // no referral code
             reduceOnly: false,
             roundIdWhenCreated: parseEther("0").toString(),
             triggerPrice: parseEther("0").toString(),
@@ -70,6 +71,7 @@ describe("LimitOrderBook signing", function () {
             amount: parseEther("3000").toString(), // quote amount: $3000
             oppositeAmountBound: parseEther("1").toString(), // base amount: 1 ETH
             deadline: ethers.constants.MaxUint256.toString(), // no expiration date
+            referralCode: ethers.constants.HashZero, // no referral code
             reduceOnly: false,
             roundIdWhenCreated: parseEther("0").toString(),
             triggerPrice: parseEther("0").toString(),
@@ -105,6 +107,7 @@ describe("LimitOrderBook signing", function () {
             amount: parseEther("6000").toString(), // quote amount: $6000
             oppositeAmountBound: parseEther("2").toString(), // base amount: 2 ETH
             deadline: ethers.constants.MaxUint256.toString(), // no expiration date
+            referralCode: ethers.constants.HashZero, // no referral code
             reduceOnly: false,
             roundIdWhenCreated: parseEther("0").toString(),
             triggerPrice: parseEther("0").toString(),
