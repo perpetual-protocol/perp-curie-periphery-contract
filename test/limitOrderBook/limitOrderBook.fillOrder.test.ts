@@ -186,7 +186,7 @@ describe("LimitOrderBook fillOrder & cancelOrder", function () {
 
         await expect(
             limitOrderBook.connect(keeper).fillLimitOrder(limitOrder, signature, parseEther("0")),
-        ).to.revertedWith("LOB_OIFA")
+        ).to.revertedWith("LOB_OMBU")
     })
 
     it("force error, when order is already cancelled", async () => {
@@ -216,7 +216,7 @@ describe("LimitOrderBook fillOrder & cancelOrder", function () {
 
         await expect(
             limitOrderBook.connect(keeper).fillLimitOrder(limitOrder, signature, parseEther("0")),
-        ).to.revertedWith("LOB_OIC")
+        ).to.revertedWith("LOB_OMBU")
     })
 
     describe("fillOrder with reduceOnly = true", () => {
