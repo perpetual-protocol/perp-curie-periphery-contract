@@ -88,12 +88,12 @@ contract LimitOrderBook is
         bytes memory signature,
         uint80 roundIdWhenTriggered
     ) external override nonReentrant {
-        bytes32 orderHash = getOrderHash(order);
-        verifySigner(order, signature);
-
         // TODO: support StopLimitOrder in the future
         // LOB_OSLO: Only Support LimitOrder
         require(order.orderType == ILimitOrderBook.OrderType.LimitOrder, "LOB_OSLO");
+
+        bytes32 orderHash = getOrderHash(order);
+        verifySigner(order, signature);
 
         // LOB_OMBU: Order Must Be Unfilled
         require(_ordersStatus[orderHash] == ILimitOrderBook.OrderStatus.Unfilled, "LOB_OMBU");
@@ -147,6 +147,10 @@ contract LimitOrderBook is
         // we didn't require `signature` as input like fillLimitOrder(),
         // so trader can actually cancel an order that is not existed
         bytes32 orderHash = getOrderHash(order);
+
+        // LOB_OMBU: Order Must Be Unfilled
+        require(_ordersStatus[orderHash] == ILimitOrderBook.OrderStatus.Unfilled, "LOB_OMBU");
+
         _ordersStatus[orderHash] = ILimitOrderBook.OrderStatus.Cancelled;
 
         emit LimitOrderCancelled(order.trader, order.baseToken, orderHash);

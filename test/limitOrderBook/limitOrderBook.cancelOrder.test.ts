@@ -21,6 +21,7 @@ import { getMaxTickRange, priceToTick } from "../helper/number"
 import { mintAndDeposit } from "../helper/token"
 import { encodePriceSqrt, syncIndexToMarketPrice } from "../shared/utilities"
 import { createLimitOrderFixture, LimitOrderFixture } from "./fixtures"
+import { getOrderHash, getSignature } from "./orderUtils"
 
 describe("LimitOrderBook cancelLimitOrder", function () {
     const [admin, trader, keeper, maker, alice] = waffle.provider.getWallets()
@@ -105,39 +106,98 @@ describe("LimitOrderBook cancelLimitOrder", function () {
             baseToken: baseToken.address,
             isBaseToQuote: false,
             isExactInput: true,
-            amount: parseEther("300"),
-            oppositeAmountBound: parseEther("0.1"),
-            deadline: ethers.constants.MaxUint256,
+            amount: parseEther("300").toString(),
+            oppositeAmountBound: parseEther("0.1").toString(),
+            deadline: ethers.constants.MaxUint256.toString(),
             referralCode: ethers.constants.HashZero,
             reduceOnly: false,
             roundIdWhenCreated: parseEther("0").toString(),
             triggerPrice: parseEther("0").toString(),
         }
 
-        await expect(await limitOrderBook.connect(trader).cancelLimitOrder(limitOrder)).to.emit(
-            limitOrderBook,
-            "LimitOrderCancelled",
-        )
+        const orderHash = await getOrderHash(fixture, limitOrder)
+
+        await expect(await limitOrderBook.connect(trader).cancelLimitOrder(limitOrder))
+            .to.emit(limitOrderBook, "LimitOrderCancelled")
+            .withArgs(trader.address, baseToken.address, orderHash)
     })
 
-    it("force error, cancel order with different trader", async () => {
+    it("force error, cancel order by the wrong person", async () => {
         // long 0.1 ETH at $3000 with $300
         const limitOrder = {
             orderType: fixture.orderTypeLimitOrder,
             salt: 1,
-            trader: keeper.address,
+            trader: trader.address,
             baseToken: baseToken.address,
             isBaseToQuote: false,
             isExactInput: true,
-            amount: parseEther("300"),
-            oppositeAmountBound: parseEther("0.1"),
-            deadline: ethers.constants.MaxUint256,
+            amount: parseEther("300").toString(),
+            oppositeAmountBound: parseEther("0.1").toString(),
+            deadline: ethers.constants.MaxUint256.toString(),
             referralCode: ethers.constants.HashZero,
             reduceOnly: false,
             roundIdWhenCreated: parseEther("0").toString(),
             triggerPrice: parseEther("0").toString(),
         }
 
-        await expect(limitOrderBook.connect(trader).cancelLimitOrder(limitOrder)).to.be.revertedWith("LOB_OSMBS")
+        await expect(limitOrderBook.connect(alice).cancelLimitOrder(limitOrder)).to.be.revertedWith("LOB_OSMBS")
+    })
+
+    it("force error, cancel a cancelled order", async () => {
+        // long 0.1 ETH at $3000 with $300
+        const limitOrder = {
+            orderType: fixture.orderTypeLimitOrder,
+            salt: 1,
+            trader: trader.address,
+            baseToken: baseToken.address,
+            isBaseToQuote: false,
+            isExactInput: true,
+            amount: parseEther("300").toString(),
+            oppositeAmountBound: parseEther("0.1").toString(),
+            deadline: ethers.constants.MaxUint256.toString(),
+            referralCode: ethers.constants.HashZero,
+            reduceOnly: false,
+            roundIdWhenCreated: parseEther("0").toString(),
+            triggerPrice: parseEther("0").toString(),
+        }
+
+        const orderHash = await getOrderHash(fixture, limitOrder)
+
+        await expect(await limitOrderBook.connect(trader).cancelLimitOrder(limitOrder))
+            .to.emit(limitOrderBook, "LimitOrderCancelled")
+            .withArgs(trader.address, baseToken.address, orderHash)
+
+        // order is cancelled, cannot cancel
+        await expect(limitOrderBook.connect(trader).cancelLimitOrder(limitOrder)).to.be.revertedWith("LOB_OMBU")
+    })
+
+    it("force error, cancel a filled order", async () => {
+        // long 0.1 ETH at $3000 with $300
+        const limitOrder = {
+            orderType: fixture.orderTypeLimitOrder,
+            salt: 1,
+            trader: trader.address,
+            baseToken: baseToken.address,
+            isBaseToQuote: false,
+            isExactInput: true,
+            amount: parseEther("300").toString(),
+            oppositeAmountBound: parseEther("0.1").toString(),
+            deadline: ethers.constants.MaxUint256.toString(),
+            referralCode: ethers.constants.HashZero,
+            reduceOnly: false,
+            roundIdWhenCreated: parseEther("0").toString(),
+            triggerPrice: parseEther("0").toString(),
+        }
+
+        const signature = await getSignature(fixture, limitOrder, trader)
+        const orderHash = await getOrderHash(fixture, limitOrder)
+
+        const tx = await limitOrderBook.connect(keeper).fillLimitOrder(limitOrder, signature, parseEther("0"))
+        await expect(tx)
+            .to.emit(limitOrderBook, "LimitOrderFilled")
+            .withArgs(trader.address, baseToken.address, orderHash, keeper.address, fixture.rewardAmount)
+
+        // order is filled, cannot cancel
+        await expect(limitOrderBook.connect(trader).cancelLimitOrder(limitOrder)).to.be.revertedWith("LOB_OMBU")
     })
 })
