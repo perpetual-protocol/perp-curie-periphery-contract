@@ -226,10 +226,8 @@ describe("LimitOrderFeeVault", function () {
         ).to.be.revertedWith("LOFV_NEBTD")
     })
 
-    it("force error, disburse by the wrong person", async () => {
-        await expect(
-            limitOrderFeeVault.connect(alice).disburse(keeper.address, parseUnits("100", 18)),
-        ).to.be.revertedWith("LOFV_SMBLOB")
+    it("force error, disburse is limitOrderBook only", async () => {
+        await expect(limitOrderFeeVault.connect(alice).disburse(keeper.address)).to.be.revertedWith("LOFV_SMBLOB")
     })
 
     it("withdraw successfully", async () => {
@@ -250,7 +248,7 @@ describe("LimitOrderFeeVault", function () {
         await expect(limitOrderFeeVault.connect(admin).withdraw(vaultBalance.add(1))).to.be.revertedWith("LOFV_NEBTW")
     })
 
-    it("force error, withdrawn by non-owner", async () => {
+    it("force error, withdraw is owner only", async () => {
         await expect(limitOrderFeeVault.connect(alice).withdraw(parseEther("1"))).to.be.revertedWith("SO_CNO")
     })
 })
