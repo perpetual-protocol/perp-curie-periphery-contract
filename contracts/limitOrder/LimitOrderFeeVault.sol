@@ -78,7 +78,7 @@ contract LimitOrderFeeVault is
     }
 
     function withdraw(uint256 amount) external override onlyOwner nonReentrant {
-        address owner = _msgSender();
+        address owner = owner();
 
         // LOFV_NEBTW: Not Enough Balance to Withdraw
         require(IERC20Upgradeable(rewardToken).balanceOf(address(this)) >= amount, "LOFV_NEBTW");

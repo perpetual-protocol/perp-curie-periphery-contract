@@ -231,15 +231,16 @@ describe("LimitOrderFeeVault", function () {
     })
 
     it("withdraw successfully", async () => {
+        expect(await rewardToken.balanceOf(admin.address)).to.be.eq(0)
+
         const vaultBalance = await rewardToken.balanceOf(limitOrderFeeVault.address)
         const tx = await limitOrderFeeVault.connect(admin).withdraw(vaultBalance)
-
         await expect(tx)
             .to.emit(limitOrderFeeVault, "Withdrawn")
             .withArgs(admin.address, rewardToken.address, vaultBalance)
-        const newVaultBalance = await rewardToken.balanceOf(limitOrderFeeVault.address)
 
-        expect(newVaultBalance).to.be.eq(0)
+        expect(await rewardToken.balanceOf(admin.address)).to.be.eq(vaultBalance)
+        expect(await rewardToken.balanceOf(limitOrderFeeVault.address)).to.be.eq(0)
     })
 
     it("force error, withdraw without the enough balance", async () => {
