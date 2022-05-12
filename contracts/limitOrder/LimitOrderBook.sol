@@ -103,7 +103,7 @@ contract LimitOrderBook is
             order.baseToken
         );
 
-        (uint256 base, uint256 quote) = IClearingHouse(clearingHouse).openPositionFor(
+        IClearingHouse(clearingHouse).openPositionFor(
             order.trader,
             IClearingHouse.OpenPositionParams({
                 baseToken: order.baseToken,
@@ -134,7 +134,7 @@ contract LimitOrderBook is
         _ordersStatus[orderHash] = ILimitOrderBook.OrderStatus.Filled;
 
         address keeper = _msgSender();
-        uint256 keeperFee = ILimitOrderFeeVault(limitOrderFeeVault).disburse(keeper, quote);
+        uint256 keeperFee = ILimitOrderFeeVault(limitOrderFeeVault).disburse(keeper);
 
         emit LimitOrderFilled(order.trader, order.baseToken, orderHash, keeper, keeperFee);
     }

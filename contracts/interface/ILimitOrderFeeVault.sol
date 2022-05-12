@@ -26,8 +26,7 @@ interface ILimitOrderFeeVault {
     event Withdrawn(address to, address token, uint256 amount);
 
     /// @param keeper The address of keeper
-    /// @param orderValue The order value (in USD) of the order
-    function disburse(address keeper, uint256 orderValue) external returns (uint256);
+    function disburse(address keeper) external returns (uint256);
 
     /// @param amount The amount of rewardToken to withdraw
     function withdraw(uint256 amount) external;

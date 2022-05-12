@@ -65,15 +65,8 @@ contract LimitOrderFeeVault is
         emit FeeAmountChanged(feeAmountArg);
     }
 
-    function disburse(address keeper, uint256 orderValue)
-        external
-        override
-        onlyLimitOrderBook
-        nonReentrant
-        returns (uint256)
-    {
-        // TODO: be aware of decimal issue when we use different reward token
-
+    // TODO: handle decimal issue if we use different rewardTokens (PERP or USDC)
+    function disburse(address keeper) external override onlyLimitOrderBook nonReentrant returns (uint256) {
         // LOFV_NEBTD: not enough balance to disburse
         require(IERC20Upgradeable(rewardToken).balanceOf(address(this)) >= feeAmount, "LOFV_NEBTD");
 
