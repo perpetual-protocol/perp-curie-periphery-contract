@@ -31,7 +31,7 @@ contract LimitOrderFeeVault is
         _;
     }
 
-    function initialize(address rewardTokenArg, uint256 feeAmountArg) external initializer {
+    function initialize(address rewardTokenArg, uint256 rewardAmountArg) external initializer {
         __OwnerPausable_init();
         __ReentrancyGuard_init();
 
@@ -39,9 +39,9 @@ contract LimitOrderFeeVault is
         require(rewardTokenArg.isContract(), "LOFV_RTINC");
         rewardToken = rewardTokenArg;
 
-        // LOFV_FAMBGT0: FeeAmount Must Be Greater Than 0
-        require(feeAmountArg > 0, "LOFV_FAMBGT0");
-        feeAmount = feeAmountArg;
+        // LOFV_RAMBGT0: RewardAmount Must Be Greater Than 0
+        require(rewardAmountArg > 0, "LOFV_RAMBGT0");
+        rewardAmount = rewardAmountArg;
     }
 
     function setRewardToken(address rewardTokenArg) external onlyOwner {
@@ -58,23 +58,23 @@ contract LimitOrderFeeVault is
         emit LimitOrderBookChanged(limitOrderBookArg);
     }
 
-    function setFeeAmount(uint256 feeAmountArg) external onlyOwner {
-        // LOFV_FAMBGT0: FeeAmount Must Be Greater Than 0
-        require(feeAmountArg > 0, "LOFV_FAMBGT0");
-        feeAmount = feeAmountArg;
-        emit FeeAmountChanged(feeAmountArg);
+    function setRewardAmount(uint256 rewardAmountArg) external onlyOwner {
+        // LOFV_RAMBGT0: RewardAmount Must Be Greater Than 0
+        require(rewardAmountArg > 0, "LOFV_RAMBGT0");
+        rewardAmount = rewardAmountArg;
+        emit RewardAmountChanged(rewardAmountArg);
     }
 
     // TODO: handle decimal issue if we use different rewardTokens (PERP or USDC)
     function disburse(address keeper) external override onlyLimitOrderBook nonReentrant returns (uint256) {
         // LOFV_NEBTD: not enough balance to disburse
-        require(IERC20Upgradeable(rewardToken).balanceOf(address(this)) >= feeAmount, "LOFV_NEBTD");
+        require(IERC20Upgradeable(rewardToken).balanceOf(address(this)) >= rewardAmount, "LOFV_NEBTD");
 
-        SafeERC20Upgradeable.safeTransfer(IERC20Upgradeable(rewardToken), keeper, feeAmount);
+        SafeERC20Upgradeable.safeTransfer(IERC20Upgradeable(rewardToken), keeper, rewardAmount);
 
-        emit Disbursed(keeper, feeAmount);
+        emit Disbursed(keeper, rewardAmount);
 
-        return feeAmount;
+        return rewardAmount;
     }
 
     function withdraw(uint256 amount) external override onlyOwner nonReentrant {

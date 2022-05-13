@@ -11,8 +11,8 @@ interface ILimitOrderFeeVault {
     event LimitOrderBookChanged(address limitOrderBook);
 
     /// @notice Emitted when feeAmount is changed
-    /// @param feeAmount The new feeAmount
-    event FeeAmountChanged(uint256 feeAmount);
+    /// @param rewardAmount The new rewardAmount
+    event RewardAmountChanged(uint256 rewardAmount);
 
     /// @notice Emitted when keeper fee is disbursed
     /// @param keeper The address of keeper

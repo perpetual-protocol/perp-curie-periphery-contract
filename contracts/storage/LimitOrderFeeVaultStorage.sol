@@ -8,5 +8,5 @@ pragma solidity 0.7.6;
 abstract contract LimitOrderFeeVaultStorageV1 {
     address public rewardToken;
     address public limitOrderBook;
-    uint256 public feeAmount;
+    uint256 public rewardAmount;
 }
