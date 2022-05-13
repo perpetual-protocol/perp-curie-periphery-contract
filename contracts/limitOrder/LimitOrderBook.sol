@@ -51,31 +51,35 @@ contract LimitOrderBook is
         __OwnerPausable_init();
         __EIP712_init(name, version); // ex: "PerpCurieLimitOrder" and "1"
 
-        // LOB_CHINC : ClearingHouse Is Not Contract
+        // LOB_CHINC: ClearingHouse Is Not Contract
         require(clearingHouseArg.isContract(), "LOB_CHINC");
         clearingHouse = clearingHouseArg;
 
-        // LOB_ABINC : AccountBalance Is Not Contract
+        // LOB_ABINC: AccountBalance Is Not Contract
         address accountBalanceArg = IClearingHouse(clearingHouse).getAccountBalance();
         require(accountBalanceArg.isContract(), "LOB_ABINC");
         accountBalance = accountBalanceArg;
 
-        // LOB_LOFVINC : LimitOrderFeeVault Is Not Contract
+        // LOB_LOFVINC: LimitOrderFeeVault Is Not Contract
         require(limitOrderFeeVaultArg.isContract(), "LOB_LOFVINC");
         limitOrderFeeVault = limitOrderFeeVaultArg;
     }
 
     function setClearingHouse(address clearingHouseArg) external onlyOwner {
-        // LOB_CHINC: ClearingHouse Is Not a Contract
+        // LOB_CHINC: ClearingHouse Is Not Contract
         require(clearingHouseArg.isContract(), "LOB_CHINC");
         clearingHouse = clearingHouseArg;
-        accountBalance = IClearingHouse(clearingHouse).getAccountBalance();
+
+        // LOB_ABINC: AccountBalance Is Not Contract
+        address accountBalanceArg = IClearingHouse(clearingHouse).getAccountBalance();
+        require(accountBalanceArg.isContract(), "LOB_ABINC");
+        accountBalance = accountBalanceArg;
 
         emit ClearingHouseChanged(clearingHouseArg);
     }
 
     function setLimitOrderFeeVault(address limitOrderFeeVaultArg) external onlyOwner {
-        // LOB_LOFVINC: LimitOrderFeeVault Is Not a Contract
+        // LOB_LOFVINC: LimitOrderFeeVault Is Not Contract
         require(limitOrderFeeVaultArg.isContract(), "LOB_LOFVINC");
         limitOrderFeeVault = limitOrderFeeVaultArg;
 
