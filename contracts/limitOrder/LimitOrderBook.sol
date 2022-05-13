@@ -103,7 +103,7 @@ contract LimitOrderBook is
             order.baseToken
         );
 
-        IClearingHouse(clearingHouse).openPositionFor(
+        (uint256 base,) = IClearingHouse(clearingHouse).openPositionFor(
             order.trader,
             IClearingHouse.OpenPositionParams({
                 baseToken: order.baseToken,
@@ -117,18 +117,9 @@ contract LimitOrderBook is
             })
         );
 
-        int256 newTakerPositionSize = IAccountBalance(accountBalance).getTakerPositionSize(
-            order.trader,
-            order.baseToken
-        );
-
         if (order.reduceOnly) {
             // LOB_NRO: Not ReduceOnly
-            require(
-                oldTakerPositionSize.mul(newTakerPositionSize) > 0 &&
-                    oldTakerPositionSize.abs() > newTakerPositionSize.abs(),
-                "LOB_NRO"
-            );
+            require((oldTakerPositionSize < 0 != order.isBaseToQuote) && oldTakerPositionSize.abs() >= base, "LOB_NRO");
         }
 
         _ordersStatus[orderHash] = ILimitOrderBook.OrderStatus.Filled;
