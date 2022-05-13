@@ -117,9 +117,10 @@ describe("LimitOrderBook fillLimitOrder", function () {
             triggerPrice: parseEther("0").toString(),
         }
 
-        // sign limit order
         const signature = await getSignature(fixture, limitOrder, trader)
         const orderHash = await getOrderHash(fixture, limitOrder)
+
+        const oldRewardBalance = await rewardToken.balanceOf(keeper.address)
 
         const tx = await limitOrderBook.connect(keeper).fillLimitOrder(limitOrder, signature, parseEther("0"))
         await expect(tx)
@@ -127,6 +128,7 @@ describe("LimitOrderBook fillLimitOrder", function () {
             .withArgs(trader.address, baseToken.address, orderHash, keeper.address, fixture.rewardAmount)
 
         await expect(tx).to.emit(limitOrderFeeVault, "Disbursed").withArgs(keeper.address, fixture.rewardAmount)
+        expect(await rewardToken.balanceOf(keeper.address)).to.be.eq(oldRewardBalance.add(fixture.rewardAmount))
 
         expect(await accountBalance.getTakerPositionSize(trader.address, baseToken.address)).to.gte(parseEther("0.1"))
         expect(await accountBalance.getTakerOpenNotional(trader.address, baseToken.address)).to.be.eq(
@@ -153,7 +155,6 @@ describe("LimitOrderBook fillLimitOrder", function () {
             triggerPrice: parseEther("0").toString(),
         }
 
-        // sign limit order
         const signature = await getSignature(fixture, limitOrder, trader)
 
         await expect(
@@ -188,7 +189,6 @@ describe("LimitOrderBook fillLimitOrder", function () {
             triggerPrice: parseEther("0").toString(),
         }
 
-        // sign limit order
         const signature = await getSignature(fixture, limitOrder, trader)
 
         await expect(await limitOrderBook.connect(trader).cancelLimitOrder(limitOrder)).to.emit(
@@ -735,7 +735,6 @@ describe("LimitOrderBook fillLimitOrder", function () {
             triggerPrice: parseEther("0").toString(),
         }
 
-        // sign limit order
         const signature = await getSignature(fixture, limitOrder, trader)
 
         await expect(
