@@ -261,7 +261,7 @@ describe("LimitOrderBook fillLimitOrder", function () {
 
         await expect(
             limitOrderBook.connect(keeper).fillLimitOrder(limitOrder, signature, parseEther("0")),
-        ).to.be.revertedWith("LOB_ROMHP")
+        ).to.be.revertedWith("LOB_ROINS")
     })
 
     describe("fillOrder when reduceOnly = true and trader has long position", () => {
@@ -381,7 +381,7 @@ describe("LimitOrderBook fillLimitOrder", function () {
 
             await expect(
                 limitOrderBook.connect(keeper).fillLimitOrder(limitOrder, signature, parseEther("0")),
-            ).to.be.revertedWith("LOB_NRO")
+            ).to.be.revertedWith("LOB_ROINS")
         })
 
         it("force error, reduceOnly is not satisfied when creating a reverse position", async () => {
@@ -407,7 +407,7 @@ describe("LimitOrderBook fillLimitOrder", function () {
 
             await expect(
                 limitOrderBook.connect(keeper).fillLimitOrder(limitOrder, signature, parseEther("0")),
-            ).to.be.revertedWith("LOB_NRO")
+            ).to.be.revertedWith("LOB_RSCBGTOS")
         })
     })
 
