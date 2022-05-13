@@ -86,12 +86,7 @@ describe("LimitOrderFeeVault", function () {
         await mintAndDeposit(fixture, trader, 1000)
 
         // trader allows limitOrderBook to open position
-        await delegateApproval.connect(trader).approve([
-            {
-                delegate: limitOrderBook.address,
-                action: fixture.clearingHouseOpenPositionAction,
-            },
-        ])
+        await delegateApproval.connect(trader).approve(limitOrderBook.address, fixture.clearingHouseOpenPositionAction)
     })
 
     it("setRewardToken", async () => {

@@ -15,6 +15,8 @@ export interface LimitOrderFixture extends ClearingHouseFixture {
     rewardAmount: BigNumber
     limitOrderFeeVault: LimitOrderFeeVault
     clearingHouseOpenPositionAction: number
+    clearingHouseAddLiquidityAction: number
+    clearingHouseRemoveLiquidityAction: number
     orderTypeLimitOrder: number
     orderTypeStopLimitOrder: number
 }
@@ -63,7 +65,9 @@ export function createLimitOrderFixture(): () => Promise<LimitOrderFixture> {
             rewardToken,
             rewardAmount,
             limitOrderFeeVault,
-            clearingHouseOpenPositionAction: 0,
+            clearingHouseOpenPositionAction: await delegateApproval.getClearingHouseOpenPositionAction(),
+            clearingHouseAddLiquidityAction: await delegateApproval.getClearingHouseAddLiquidityAction(),
+            clearingHouseRemoveLiquidityAction: await delegateApproval.getClearingHouseRemoveLiquidityAction(),
             orderTypeLimitOrder: 0,
             orderTypeStopLimitOrder: 1,
         }

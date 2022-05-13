@@ -90,12 +90,7 @@ describe("LimitOrderBook fillLimitOrder", function () {
         await mintAndDeposit(fixture, trader, 1000)
 
         // trader allows limitOrderBook to open position
-        await delegateApproval.connect(trader).approve([
-            {
-                delegate: limitOrderBook.address,
-                action: fixture.clearingHouseOpenPositionAction,
-            },
-        ])
+        await delegateApproval.connect(trader).approve(limitOrderBook.address, fixture.clearingHouseOpenPositionAction)
     })
 
     it("fill limit order", async () => {
@@ -678,12 +673,7 @@ describe("LimitOrderBook fillLimitOrder", function () {
 
         const signature = await getSignature(fixture, limitOrder, trader)
 
-        await delegateApproval.connect(trader).revoke([
-            {
-                delegate: limitOrderBook.address,
-                action: fixture.clearingHouseOpenPositionAction,
-            },
-        ])
+        await delegateApproval.connect(trader).revoke(limitOrderBook.address, fixture.clearingHouseOpenPositionAction)
 
         await expect(
             limitOrderBook.connect(keeper).fillLimitOrder(limitOrder, signature, parseEther("0")),
