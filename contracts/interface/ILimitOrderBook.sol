@@ -31,6 +31,7 @@ interface ILimitOrderBook {
     /// @param deadline The block timestamp that the order will expire at (in seconds)
     /// @param referralCode The referral code
     /// @param reduceOnly The order will only reduce/close positions if true
+    /// @param sqrtPriceLimitX96 tx will fill until it reaches this price but WON'T REVERT
     /// @param roundIdWhenCreated The oracle `roundId` when the stop limit order is created
     // Only avaliable if orderType is StopLimitOrder, otherwise set to 0
     /// @param triggerPrice The trigger price of the stop limit order
@@ -49,6 +50,7 @@ interface ILimitOrderBook {
         uint256 deadline;
         bytes32 referralCode;
         bool reduceOnly;
+        uint160 sqrtPriceLimitX96;
         uint80 roundIdWhenCreated;
         uint256 triggerPrice;
     }

@@ -40,6 +40,7 @@ describe("LimitOrderBook signing", function () {
             deadline: ethers.constants.MaxUint256.toString(), // no expiration date
             referralCode: ethers.constants.HashZero, // no referral code
             reduceOnly: false,
+            sqrtPriceLimitX96: 0,
             roundIdWhenCreated: parseEther("0").toString(),
             triggerPrice: parseEther("0").toString(),
         }
@@ -73,6 +74,7 @@ describe("LimitOrderBook signing", function () {
             deadline: ethers.constants.MaxUint256.toString(), // no expiration date
             referralCode: ethers.constants.HashZero, // no referral code
             reduceOnly: false,
+            sqrtPriceLimitX96: 0,
             roundIdWhenCreated: parseEther("0").toString(),
             triggerPrice: parseEther("0").toString(),
         }
@@ -109,6 +111,7 @@ describe("LimitOrderBook signing", function () {
             deadline: ethers.constants.MaxUint256.toString(), // no expiration date
             referralCode: ethers.constants.HashZero, // no referral code
             reduceOnly: false,
+            sqrtPriceLimitX96: 0,
             roundIdWhenCreated: parseEther("0").toString(),
             triggerPrice: parseEther("0").toString(),
         }

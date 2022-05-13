@@ -41,6 +41,7 @@ export function getOrderTypes() {
             { name: "deadline", type: "uint256" },
             { name: "referralCode", type: "bytes32" },
             { name: "reduceOnly", type: "bool" },
+            { name: "sqrtPriceLimitX96", type: "uint160"},
             { name: "roundIdWhenCreated", type: "uint80" },
             { name: "triggerPrice", type: "uint256" },
         ],

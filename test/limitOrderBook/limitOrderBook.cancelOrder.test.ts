@@ -111,6 +111,7 @@ describe("LimitOrderBook cancelLimitOrder", function () {
             deadline: ethers.constants.MaxUint256.toString(),
             referralCode: ethers.constants.HashZero,
             reduceOnly: false,
+            sqrtPriceLimitX96: 0,
             roundIdWhenCreated: parseEther("0").toString(),
             triggerPrice: parseEther("0").toString(),
         }
@@ -136,6 +137,7 @@ describe("LimitOrderBook cancelLimitOrder", function () {
             deadline: ethers.constants.MaxUint256.toString(),
             referralCode: ethers.constants.HashZero,
             reduceOnly: false,
+            sqrtPriceLimitX96: 0,
             roundIdWhenCreated: parseEther("0").toString(),
             triggerPrice: parseEther("0").toString(),
         }
@@ -157,6 +159,7 @@ describe("LimitOrderBook cancelLimitOrder", function () {
             deadline: ethers.constants.MaxUint256.toString(),
             referralCode: ethers.constants.HashZero,
             reduceOnly: false,
+            sqrtPriceLimitX96: 0,
             roundIdWhenCreated: parseEther("0").toString(),
             triggerPrice: parseEther("0").toString(),
         }
@@ -185,6 +188,7 @@ describe("LimitOrderBook cancelLimitOrder", function () {
             deadline: ethers.constants.MaxUint256.toString(),
             referralCode: ethers.constants.HashZero,
             reduceOnly: false,
+            sqrtPriceLimitX96: 0,
             roundIdWhenCreated: parseEther("0").toString(),
             triggerPrice: parseEther("0").toString(),
         }
