@@ -94,6 +94,11 @@ describe("LimitOrderBook fillLimitOrder", function () {
     })
 
     it("fill limit order", async () => {
+        // NOTE: UX issue. Although users place a $3000 limit order for 300USDC/0.1ETH, this order won't be executed
+        // successfully until market price goes down $2960 because of price slippage caused by AMM. This could be
+        // very different from the trading experience of CEX.
+        // We might need to add some wording to let our users being aware of this.
+
         // long 0.1 ETH at $3000 with $300
         const limitOrder = {
             orderType: fixture.orderTypeLimitOrder,
