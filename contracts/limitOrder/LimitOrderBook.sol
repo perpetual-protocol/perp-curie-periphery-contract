@@ -117,12 +117,13 @@ contract LimitOrderBook is
             })
         );
 
-        if (oldTakerPositionSize != 0 && order.reduceOnly) {
+        if (order.reduceOnly) {
+            // LOB_ROMHP: Reduce Only Order Must Have Position
+            require(oldTakerPositionSize != 0, "LOB_ROMHP");
+            // if trader has no position, revert
+
             // LOB_NRO: Not ReduceOnly
             require((oldTakerPositionSize < 0 != order.isBaseToQuote) && oldTakerPositionSize.abs() >= base, "LOB_NRO");
-
-            // if trader has no position, we ignore reduceOnly check
-
             // if trader has short position, he/she can only open a long position
             // => oldTakerPositionSize < 0 != order.isBaseToQuote => true != false
 

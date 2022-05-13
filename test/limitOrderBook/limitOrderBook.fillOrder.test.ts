@@ -201,46 +201,37 @@ describe("LimitOrderBook fillLimitOrder", function () {
         ).to.revertedWith("LOB_OMBU")
     })
 
-    describe("fillOrder when reduceOnly = true and trader has no position", () => {
-        beforeEach(async () => {
-            expect(await accountBalance.getTakerPositionSize(trader.address, baseToken.address)).to.be.eq(
-                parseEther("0"),
-            )
-        })
+    it("force error, fillOrder when reduceOnly = true and trader has no position", async () => {
+        expect(await accountBalance.getTakerPositionSize(trader.address, baseToken.address)).to.be.eq(parseEther("0"))
 
-        it("reduceOnly = true is ignored if trader has no position", async () => {
-            // long 0.1 ETH at $3000 with $300
-            const limitOrder = {
-                orderType: fixture.orderTypeLimitOrder,
-                salt: 1,
-                trader: trader.address,
-                baseToken: baseToken.address,
-                isBaseToQuote: false,
-                isExactInput: true,
-                amount: parseEther("300").toString(),
-                oppositeAmountBound: parseEther("0.1").toString(),
-                deadline: ethers.constants.MaxUint256.toString(),
-                referralCode: ethers.constants.HashZero,
-                reduceOnly: true,
-                sqrtPriceLimitX96: 0,
-                roundIdWhenCreated: parseEther("0").toString(),
-                triggerPrice: parseEther("0").toString(),
-            }
+        // long 0.1 ETH at $3000 with $300
+        const limitOrder = {
+            orderType: fixture.orderTypeLimitOrder,
+            salt: 1,
+            trader: trader.address,
+            baseToken: baseToken.address,
+            isBaseToQuote: false,
+            isExactInput: true,
+            amount: parseEther("300").toString(),
+            oppositeAmountBound: parseEther("0.1").toString(),
+            deadline: ethers.constants.MaxUint256.toString(),
+            referralCode: ethers.constants.HashZero,
+            reduceOnly: true,
+            sqrtPriceLimitX96: 0,
+            roundIdWhenCreated: parseEther("0").toString(),
+            triggerPrice: parseEther("0").toString(),
+        }
 
-            const signature = await getSignature(fixture, limitOrder, trader)
-            const orderHash = await getOrderHash(fixture, limitOrder)
+        const signature = await getSignature(fixture, limitOrder, trader)
 
-            const tx = await limitOrderBook.connect(keeper).fillLimitOrder(limitOrder, signature, parseEther("0"))
-            await expect(tx)
-                .to.emit(limitOrderBook, "LimitOrderFilled")
-                .withArgs(trader.address, baseToken.address, orderHash, keeper.address, fixture.rewardAmount)
-        })
+        await expect(
+            limitOrderBook.connect(keeper).fillLimitOrder(limitOrder, signature, parseEther("0")),
+        ).to.be.revertedWith("LOB_ROMHP")
     })
 
     describe("fillOrder when reduceOnly = true and trader has long position", () => {
         beforeEach(async () => {
             // long 0.1 ETH at $3000 with $300
-            // actually get: 0.100337305809351601 ETH
             await clearingHouse.connect(trader).openPosition({
                 baseToken: baseToken.address,
                 isBaseToQuote: false,
@@ -251,6 +242,9 @@ describe("LimitOrderBook fillLimitOrder", function () {
                 deadline: ethers.constants.MaxUint256,
                 referralCode: ethers.constants.HashZero,
             })
+
+            // actually get: 0.100337305809351601 ETH
+            expect(await accountBalance.getTakerPositionSize(trader.address, baseToken.address)).to.gt(parseEther("0"))
         })
 
         it("fill order when partial reduce", async () => {
