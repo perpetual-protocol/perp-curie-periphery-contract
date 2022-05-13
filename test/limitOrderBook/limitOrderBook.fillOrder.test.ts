@@ -136,6 +136,41 @@ describe("LimitOrderBook fillLimitOrder", function () {
         )
     })
 
+    it("fill two orders with the same values but different salt", async () => {
+        // long 1 ETH (base) at $3000 with $3000 (quote)
+        const limitOrder1 = {
+            orderType: fixture.orderTypeLimitOrder,
+            salt: 1,
+            trader: trader.address,
+            baseToken: baseToken.address,
+            isBaseToQuote: false, // long: Q2B
+            isExactInput: true, // exact input: quote
+            amount: parseEther("3000").toString(), // quote amount: $3000
+            oppositeAmountBound: parseEther("1").toString(), // base amount: 1 ETH
+            deadline: ethers.constants.MaxUint256.toString(), // no expiration date
+            referralCode: ethers.constants.HashZero, // no referral code
+            reduceOnly: false,
+            sqrtPriceLimitX96: 0,
+            roundIdWhenCreated: parseEther("0").toString(),
+            triggerPrice: parseEther("0").toString(),
+        }
+
+        const limitOrder2 = {
+            ...limitOrder1,
+            salt: 2,
+        }
+
+        const signature1 = await getSignature(fixture, limitOrder1, trader)
+        const signature2 = await getSignature(fixture, limitOrder2, trader)
+        expect(signature1).to.be.not.eq(signature2)
+
+        const tx1 = await limitOrderBook.connect(keeper).fillLimitOrder(limitOrder1, signature1, parseEther("0"))
+        await expect(tx1).to.emit(limitOrderBook, "LimitOrderFilled")
+
+        const tx2 = await limitOrderBook.connect(keeper).fillLimitOrder(limitOrder2, signature2, parseEther("0"))
+        await expect(tx2).to.emit(limitOrderBook, "LimitOrderFilled")
+    })
+
     it("force error, when order is already filled", async () => {
         // long 0.1 ETH at $3000 with $300
         const limitOrder = {
