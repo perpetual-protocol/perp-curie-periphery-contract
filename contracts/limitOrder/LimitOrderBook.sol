@@ -103,7 +103,7 @@ contract LimitOrderBook is
             order.baseToken
         );
 
-        (uint256 base,) = IClearingHouse(clearingHouse).openPositionFor(
+        (uint256 base, ) = IClearingHouse(clearingHouse).openPositionFor(
             order.trader,
             IClearingHouse.OpenPositionParams({
                 baseToken: order.baseToken,
@@ -117,9 +117,17 @@ contract LimitOrderBook is
             })
         );
 
-        if (order.reduceOnly) {
+        if (oldTakerPositionSize != 0 && order.reduceOnly) {
             // LOB_NRO: Not ReduceOnly
             require((oldTakerPositionSize < 0 != order.isBaseToQuote) && oldTakerPositionSize.abs() >= base, "LOB_NRO");
+
+            // if trader has no position, we ignore reduceOnly check
+
+            // if trader has short position, he/she can only open a long position
+            // => oldTakerPositionSize < 0 != order.isBaseToQuote => true != false
+
+            // if trader has long position, he/she can only open a short position
+            // => oldTakerPositionSize < 0 != order.isBaseToQuote => false != true
         }
 
         _ordersStatus[orderHash] = ILimitOrderBook.OrderStatus.Filled;
