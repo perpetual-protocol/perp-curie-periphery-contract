@@ -22,7 +22,7 @@ import { createLimitOrderFixture, LimitOrderFixture } from "../limitOrderBook/fi
 import { getSignature } from "../limitOrderBook/orderUtils"
 import { encodePriceSqrt, syncIndexToMarketPrice } from "../shared/utilities"
 
-describe.only("LimitOrderFeeVault", function () {
+describe("LimitOrderFeeVault", function () {
     const [admin, trader, keeper, maker, alice] = waffle.provider.getWallets()
     let fixture: LimitOrderFixture
     let clearingHouse: TestClearingHouse

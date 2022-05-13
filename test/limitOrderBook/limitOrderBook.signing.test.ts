@@ -7,7 +7,7 @@ import { generateTypedHash } from "./eip712Utils"
 import { createLimitOrderFixture, LimitOrderFixture } from "./fixtures"
 import { getOrderTypes } from "./orderUtils"
 
-describe.only("LimitOrderBook signing", function () {
+describe("LimitOrderBook signing", function () {
     const [admin, trader, alice] = waffle.provider.getWallets()
     let fixture: LimitOrderFixture
     let limitOrderBook: TestLimitOrderBook

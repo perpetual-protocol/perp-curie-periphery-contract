@@ -30,7 +30,7 @@ export function getOrderTypes() {
         ],
         LimitOrder: [
             // field ordering must be the same as LIMIT_ORDER_TYPEHASH
-            { name: "orderType", type: "uint256" },
+            { name: "orderType", type: "uint8" },
             { name: "salt", type: "uint256" },
             { name: "trader", type: "address" },
             { name: "baseToken", type: "address" },

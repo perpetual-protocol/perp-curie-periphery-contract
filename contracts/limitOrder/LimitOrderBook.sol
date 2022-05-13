@@ -29,12 +29,12 @@ contract LimitOrderBook is
     using PerpMath for uint256;
     using SignedSafeMathUpgradeable for int256;
 
-    // NOTE: cannot use `OrderType orderType` here, use `uint256 orderType` instead
+    // NOTE: cannot use `OrderType orderType` here, use `uint8 orderType` instead
     // solhint-disable-next-line func-name-mixedcase
     bytes32 public constant LIMIT_ORDER_TYPEHASH =
         keccak256(
             // solhint-disable-next-line max-line-length
-            "LimitOrder(uint256 orderType,uint256 salt,address trader,address baseToken,bool isBaseToQuote,bool isExactInput,uint256 amount,uint256 oppositeAmountBound,uint256 deadline,uint160 sqrtPriceLimitX96,bytes32 referralCode,bool reduceOnly,uint80 roundIdWhenCreated,uint256 triggerPrice)"
+            "LimitOrder(uint8 orderType,uint256 salt,address trader,address baseToken,bool isBaseToQuote,bool isExactInput,uint256 amount,uint256 oppositeAmountBound,uint256 deadline,uint160 sqrtPriceLimitX96,bytes32 referralCode,bool reduceOnly,uint80 roundIdWhenCreated,uint256 triggerPrice)"
         );
 
     //

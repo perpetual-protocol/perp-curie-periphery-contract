@@ -23,7 +23,7 @@ import { encodePriceSqrt, syncIndexToMarketPrice } from "../shared/utilities"
 import { createLimitOrderFixture, LimitOrderFixture } from "./fixtures"
 import { getOrderHash, getSignature } from "./orderUtils"
 
-describe.only("LimitOrderBook cancelLimitOrder", function () {
+describe("LimitOrderBook cancelLimitOrder", function () {
     const [admin, trader, keeper, maker, alice] = waffle.provider.getWallets()
     let fixture: LimitOrderFixture
     let clearingHouse: TestClearingHouse
