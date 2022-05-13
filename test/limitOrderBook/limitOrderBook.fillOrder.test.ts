@@ -24,7 +24,7 @@ import { encodePriceSqrt, syncIndexToMarketPrice } from "../shared/utilities"
 import { createLimitOrderFixture, LimitOrderFixture } from "./fixtures"
 import { getOrderHash, getSignature } from "./orderUtils"
 
-describe("LimitOrderBook fillLimitOrder", function () {
+describe.only("LimitOrderBook fillLimitOrder", function () {
     const [admin, trader, keeper, maker, alice] = waffle.provider.getWallets()
     let fixture: LimitOrderFixture
     let clearingHouse: TestClearingHouse
@@ -110,9 +110,9 @@ describe("LimitOrderBook fillLimitOrder", function () {
             amount: parseEther("300").toString(),
             oppositeAmountBound: parseEther("0.1").toString(),
             deadline: ethers.constants.MaxUint256.toString(),
+            sqrtPriceLimitX96: 0,
             referralCode: ethers.constants.HashZero,
             reduceOnly: false,
-            sqrtPriceLimitX96: 0,
             roundIdWhenCreated: parseEther("0").toString(),
             triggerPrice: parseEther("0").toString(),
         }
@@ -148,9 +148,9 @@ describe("LimitOrderBook fillLimitOrder", function () {
             amount: parseEther("3000").toString(), // quote amount: $3000
             oppositeAmountBound: parseEther("1").toString(), // base amount: 1 ETH
             deadline: ethers.constants.MaxUint256.toString(), // no expiration date
+            sqrtPriceLimitX96: 0,
             referralCode: ethers.constants.HashZero, // no referral code
             reduceOnly: false,
-            sqrtPriceLimitX96: 0,
             roundIdWhenCreated: parseEther("0").toString(),
             triggerPrice: parseEther("0").toString(),
         }
@@ -183,9 +183,9 @@ describe("LimitOrderBook fillLimitOrder", function () {
             amount: parseEther("300"),
             oppositeAmountBound: parseEther("0.1"),
             deadline: ethers.constants.MaxUint256,
+            sqrtPriceLimitX96: 0,
             referralCode: ethers.constants.HashZero,
             reduceOnly: false,
-            sqrtPriceLimitX96: 0,
             roundIdWhenCreated: parseEther("0").toString(),
             triggerPrice: parseEther("0").toString(),
         }
@@ -217,9 +217,9 @@ describe("LimitOrderBook fillLimitOrder", function () {
             amount: parseEther("300"),
             oppositeAmountBound: parseEther("0.1"),
             deadline: ethers.constants.MaxUint256,
+            sqrtPriceLimitX96: 0,
             referralCode: ethers.constants.HashZero,
             reduceOnly: false,
-            sqrtPriceLimitX96: 0,
             roundIdWhenCreated: parseEther("0").toString(),
             triggerPrice: parseEther("0").toString(),
         }
@@ -250,9 +250,9 @@ describe("LimitOrderBook fillLimitOrder", function () {
             amount: parseEther("300").toString(),
             oppositeAmountBound: parseEther("0.1").toString(),
             deadline: ethers.constants.MaxUint256.toString(),
+            sqrtPriceLimitX96: 0,
             referralCode: ethers.constants.HashZero,
             reduceOnly: true,
-            sqrtPriceLimitX96: 0,
             roundIdWhenCreated: parseEther("0").toString(),
             triggerPrice: parseEther("0").toString(),
         }
@@ -272,9 +272,9 @@ describe("LimitOrderBook fillLimitOrder", function () {
                 isBaseToQuote: false,
                 isExactInput: true,
                 amount: parseEther("300"),
-                sqrtPriceLimitX96: 0,
                 oppositeAmountBound: parseEther("0.1"),
                 deadline: ethers.constants.MaxUint256,
+                sqrtPriceLimitX96: 0,
                 referralCode: ethers.constants.HashZero,
             })
 
@@ -294,9 +294,9 @@ describe("LimitOrderBook fillLimitOrder", function () {
                 amount: parseEther("0.05").toString(),
                 oppositeAmountBound: parseEther("140").toString(),
                 deadline: ethers.constants.MaxUint256.toString(),
+                sqrtPriceLimitX96: 0,
                 referralCode: ethers.constants.HashZero,
                 reduceOnly: true,
-                sqrtPriceLimitX96: 0,
                 roundIdWhenCreated: parseEther("0").toString(),
                 triggerPrice: parseEther("0").toString(),
             }
@@ -334,9 +334,9 @@ describe("LimitOrderBook fillLimitOrder", function () {
                 amount: oldPositionSize.toString(),
                 oppositeAmountBound: parseEther("280").toString(),
                 deadline: ethers.constants.MaxUint256.toString(),
+                sqrtPriceLimitX96: 0,
                 referralCode: ethers.constants.HashZero,
                 reduceOnly: true,
-                sqrtPriceLimitX96: 0,
                 roundIdWhenCreated: parseEther("0").toString(),
                 triggerPrice: parseEther("0").toString(),
             }
@@ -370,9 +370,9 @@ describe("LimitOrderBook fillLimitOrder", function () {
                 amount: parseEther("300"),
                 oppositeAmountBound: parseEther("0.1"),
                 deadline: ethers.constants.MaxUint256,
+                sqrtPriceLimitX96: 0,
                 referralCode: ethers.constants.HashZero,
                 reduceOnly: true,
-                sqrtPriceLimitX96: 0,
                 roundIdWhenCreated: parseEther("0").toString(),
                 triggerPrice: parseEther("0").toString(),
             }
@@ -396,9 +396,9 @@ describe("LimitOrderBook fillLimitOrder", function () {
                 amount: parseEther("0.2").toString(),
                 oppositeAmountBound: parseEther("560").toString(),
                 deadline: ethers.constants.MaxUint256.toString(),
+                sqrtPriceLimitX96: 0,
                 referralCode: ethers.constants.HashZero,
                 reduceOnly: true,
-                sqrtPriceLimitX96: 0,
                 roundIdWhenCreated: parseEther("0").toString(),
                 triggerPrice: parseEther("0").toString(),
             }
@@ -419,9 +419,9 @@ describe("LimitOrderBook fillLimitOrder", function () {
                 isBaseToQuote: true,
                 isExactInput: true,
                 amount: parseEther("0.1"),
-                sqrtPriceLimitX96: 0,
                 oppositeAmountBound: parseEther("290"),
                 deadline: ethers.constants.MaxUint256,
+                sqrtPriceLimitX96: 0,
                 referralCode: ethers.constants.HashZero,
             })
 
@@ -443,9 +443,9 @@ describe("LimitOrderBook fillLimitOrder", function () {
                 amount: parseEther("0.05").toString(),
                 oppositeAmountBound: parseEther("150").toString(),
                 deadline: ethers.constants.MaxUint256.toString(),
+                sqrtPriceLimitX96: 0,
                 referralCode: ethers.constants.HashZero,
                 reduceOnly: true,
-                sqrtPriceLimitX96: 0,
                 roundIdWhenCreated: parseEther("0").toString(),
                 triggerPrice: parseEther("0").toString(),
             }
@@ -481,9 +481,9 @@ describe("LimitOrderBook fillLimitOrder", function () {
                 amount: oldPositionSize.abs().toString(),
                 oppositeAmountBound: parseEther("300").toString(),
                 deadline: ethers.constants.MaxUint256.toString(),
+                sqrtPriceLimitX96: 0,
                 referralCode: ethers.constants.HashZero,
                 reduceOnly: true,
-                sqrtPriceLimitX96: 0,
                 roundIdWhenCreated: parseEther("0").toString(),
                 triggerPrice: parseEther("0").toString(),
             }
@@ -517,9 +517,9 @@ describe("LimitOrderBook fillLimitOrder", function () {
                 amount: parseEther("0.1"),
                 oppositeAmountBound: parseEther("300"),
                 deadline: ethers.constants.MaxUint256,
+                sqrtPriceLimitX96: 0,
                 referralCode: ethers.constants.HashZero,
                 reduceOnly: true,
-                sqrtPriceLimitX96: 0,
                 roundIdWhenCreated: parseEther("0").toString(),
                 triggerPrice: parseEther("0").toString(),
             }
@@ -544,8 +544,9 @@ describe("LimitOrderBook fillLimitOrder", function () {
                 oppositeAmountBound: parseEther("600").toString(),
                 deadline: ethers.constants.MaxUint256.toString(),
                 referralCode: ethers.constants.HashZero,
-                reduceOnly: true,
                 sqrtPriceLimitX96: 0,
+                reduceOnly: true,
+
                 roundIdWhenCreated: parseEther("0").toString(),
                 triggerPrice: parseEther("0").toString(),
             }
@@ -575,8 +576,9 @@ describe("LimitOrderBook fillLimitOrder", function () {
                 oppositeAmountBound: parseEther("0.1").toString(),
                 deadline: now + 1000,
                 referralCode: ethers.constants.HashZero,
-                reduceOnly: false,
                 sqrtPriceLimitX96: 0,
+                reduceOnly: false,
+
                 roundIdWhenCreated: parseEther("0").toString(),
                 triggerPrice: parseEther("0").toString(),
             }
@@ -613,9 +615,9 @@ describe("LimitOrderBook fillLimitOrder", function () {
                 amount: parseEther("300"),
                 oppositeAmountBound: parseEther("0.1"),
                 deadline: now + 1,
+                sqrtPriceLimitX96: 0,
                 referralCode: ethers.constants.HashZero,
                 reduceOnly: false,
-                sqrtPriceLimitX96: 0,
                 roundIdWhenCreated: parseEther("0").toString(),
                 triggerPrice: parseEther("0").toString(),
             }
@@ -639,9 +641,9 @@ describe("LimitOrderBook fillLimitOrder", function () {
             amount: parseEther("300").toString(),
             oppositeAmountBound: parseEther("0.1").toString(),
             deadline: ethers.constants.MaxUint256,
+            sqrtPriceLimitX96: 0,
             referralCode: ethers.constants.HashZero,
             reduceOnly: false,
-            sqrtPriceLimitX96: 0,
             roundIdWhenCreated: parseEther("0").toString(),
             triggerPrice: parseEther("0").toString(),
         }
@@ -667,9 +669,9 @@ describe("LimitOrderBook fillLimitOrder", function () {
             amount: parseEther("300").toString(),
             oppositeAmountBound: parseEther("0.1").toString(),
             deadline: ethers.constants.MaxUint256,
+            sqrtPriceLimitX96: 0,
             referralCode: ethers.constants.HashZero,
             reduceOnly: false,
-            sqrtPriceLimitX96: 0,
             roundIdWhenCreated: parseEther("0").toString(),
             triggerPrice: parseEther("0").toString(),
         }
@@ -700,9 +702,9 @@ describe("LimitOrderBook fillLimitOrder", function () {
             amount: parseEther("300").toString(),
             oppositeAmountBound: parseEther("0.1").toString(),
             deadline: ethers.constants.MaxUint256.toString(),
+            sqrtPriceLimitX96: 0,
             referralCode: ethers.constants.HashZero,
             reduceOnly: false,
-            sqrtPriceLimitX96: 0,
             roundIdWhenCreated: parseEther("0").toString(),
             triggerPrice: parseEther("0").toString(),
         }
@@ -715,9 +717,9 @@ describe("LimitOrderBook fillLimitOrder", function () {
             isBaseToQuote: false,
             isExactInput: true,
             amount: parseEther("600000"),
-            sqrtPriceLimitX96: 0,
             oppositeAmountBound: parseEther("195"),
             deadline: ethers.constants.MaxUint256,
+            sqrtPriceLimitX96: 0,
             referralCode: ethers.constants.HashZero,
         }
         // alice open long position to make market price higher, 2960 -> 3023.113298
@@ -732,9 +734,9 @@ describe("LimitOrderBook fillLimitOrder", function () {
         // alice close her position to make market price lower
         await clearingHouse.connect(alice).closePosition({
             baseToken: baseToken.address,
-            sqrtPriceLimitX96: 0,
             oppositeAmountBound: 0,
             deadline: ethers.constants.MaxUint256,
+            sqrtPriceLimitX96: 0,
             referralCode: ethers.constants.HashZero,
         })
 
@@ -763,9 +765,9 @@ describe("LimitOrderBook fillLimitOrder", function () {
             amount: parseEther("300"),
             oppositeAmountBound: parseEther("0.1"),
             deadline: ethers.constants.MaxUint256,
+            sqrtPriceLimitX96: 0,
             referralCode: ethers.constants.HashZero,
             reduceOnly: false,
-            sqrtPriceLimitX96: 0,
             roundIdWhenCreated: parseEther("0").toString(),
             triggerPrice: parseEther("0").toString(),
         }

@@ -22,7 +22,7 @@ import { createLimitOrderFixture, LimitOrderFixture } from "../limitOrderBook/fi
 import { getSignature } from "../limitOrderBook/orderUtils"
 import { encodePriceSqrt, syncIndexToMarketPrice } from "../shared/utilities"
 
-describe("LimitOrderFeeVault", function () {
+describe.only("LimitOrderFeeVault", function () {
     const [admin, trader, keeper, maker, alice] = waffle.provider.getWallets()
     let fixture: LimitOrderFixture
     let clearingHouse: TestClearingHouse
@@ -156,9 +156,9 @@ describe("LimitOrderFeeVault", function () {
             amount: parseEther("300"),
             oppositeAmountBound: parseEther("0.1"),
             deadline: ethers.constants.MaxUint256,
+            sqrtPriceLimitX96: 0,
             referralCode: ethers.constants.HashZero,
             reduceOnly: false,
-            sqrtPriceLimitX96: 0,
             roundIdWhenCreated: parseEther("0").toString(),
             triggerPrice: parseEther("0").toString(),
         }
@@ -185,9 +185,9 @@ describe("LimitOrderFeeVault", function () {
             amount: parseEther("300"),
             oppositeAmountBound: parseEther("0.1"),
             deadline: ethers.constants.MaxUint256,
+            sqrtPriceLimitX96: 0,
             referralCode: ethers.constants.HashZero,
             reduceOnly: false,
-            sqrtPriceLimitX96: 0,
             roundIdWhenCreated: parseEther("0").toString(),
             triggerPrice: parseEther("0").toString(),
         }

@@ -23,7 +23,7 @@ import { encodePriceSqrt, syncIndexToMarketPrice } from "../shared/utilities"
 import { createLimitOrderFixture, LimitOrderFixture } from "./fixtures"
 import { getOrderHash, getSignature } from "./orderUtils"
 
-describe("LimitOrderBook cancelLimitOrder", function () {
+describe.only("LimitOrderBook cancelLimitOrder", function () {
     const [admin, trader, keeper, maker, alice] = waffle.provider.getWallets()
     let fixture: LimitOrderFixture
     let clearingHouse: TestClearingHouse
@@ -109,9 +109,9 @@ describe("LimitOrderBook cancelLimitOrder", function () {
             amount: parseEther("300").toString(),
             oppositeAmountBound: parseEther("0.1").toString(),
             deadline: ethers.constants.MaxUint256.toString(),
+            sqrtPriceLimitX96: 0,
             referralCode: ethers.constants.HashZero,
             reduceOnly: false,
-            sqrtPriceLimitX96: 0,
             roundIdWhenCreated: parseEther("0").toString(),
             triggerPrice: parseEther("0").toString(),
         }
@@ -135,9 +135,9 @@ describe("LimitOrderBook cancelLimitOrder", function () {
             amount: parseEther("300").toString(),
             oppositeAmountBound: parseEther("0.1").toString(),
             deadline: ethers.constants.MaxUint256.toString(),
+            sqrtPriceLimitX96: 0,
             referralCode: ethers.constants.HashZero,
             reduceOnly: false,
-            sqrtPriceLimitX96: 0,
             roundIdWhenCreated: parseEther("0").toString(),
             triggerPrice: parseEther("0").toString(),
         }
@@ -157,9 +157,9 @@ describe("LimitOrderBook cancelLimitOrder", function () {
             amount: parseEther("300").toString(),
             oppositeAmountBound: parseEther("0.1").toString(),
             deadline: ethers.constants.MaxUint256.toString(),
+            sqrtPriceLimitX96: 0,
             referralCode: ethers.constants.HashZero,
             reduceOnly: false,
-            sqrtPriceLimitX96: 0,
             roundIdWhenCreated: parseEther("0").toString(),
             triggerPrice: parseEther("0").toString(),
         }
@@ -186,9 +186,9 @@ describe("LimitOrderBook cancelLimitOrder", function () {
             amount: parseEther("300").toString(),
             oppositeAmountBound: parseEther("0.1").toString(),
             deadline: ethers.constants.MaxUint256.toString(),
+            sqrtPriceLimitX96: 0,
             referralCode: ethers.constants.HashZero,
             reduceOnly: false,
-            sqrtPriceLimitX96: 0,
             roundIdWhenCreated: parseEther("0").toString(),
             triggerPrice: parseEther("0").toString(),
         }
