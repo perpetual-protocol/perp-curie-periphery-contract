@@ -125,9 +125,9 @@ contract LimitOrderBook is
         _ordersStatus[orderHash] = ILimitOrderBook.OrderStatus.Filled;
 
         address keeper = _msgSender();
-        uint256 keeperFee = ILimitOrderFeeVault(limitOrderFeeVault).disburse(keeper);
+        uint256 keeperReward = ILimitOrderFeeVault(limitOrderFeeVault).disburse(keeper);
 
-        emit LimitOrderFilled(order.trader, order.baseToken, orderHash, keeper, keeperFee);
+        emit LimitOrderFilled(order.trader, order.baseToken, orderHash, keeper, keeperReward);
     }
 
     /// @inheritdoc ILimitOrderBook

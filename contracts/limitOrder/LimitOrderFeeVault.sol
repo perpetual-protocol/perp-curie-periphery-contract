@@ -51,6 +51,7 @@ contract LimitOrderFeeVault is
         emit RewardTokenChanged(rewardTokenArg);
     }
 
+    /// @dev limitOrderBook cannot be set in initializer since LimitOrderBook also depends on LimitOrderFeeVault
     function setLimitOrderBook(address limitOrderBookArg) external onlyOwner {
         // LOFV_LOBINC: LimitOrderBook Is Not a Contract
         require(limitOrderBookArg.isContract(), "LOFV_LOBINC");
@@ -67,7 +68,7 @@ contract LimitOrderFeeVault is
 
     // TODO: handle decimal issue if we use different rewardTokens (PERP or USDC)
     function disburse(address keeper) external override onlyLimitOrderBook nonReentrant returns (uint256) {
-        // LOFV_NEBTD: not enough balance to disburse
+        // LOFV_NEBTD: Not Enough Balance to Disburse
         require(IERC20Upgradeable(rewardToken).balanceOf(address(this)) >= rewardAmount, "LOFV_NEBTD");
 
         SafeERC20Upgradeable.safeTransfer(IERC20Upgradeable(rewardToken), keeper, rewardAmount);
@@ -80,7 +81,7 @@ contract LimitOrderFeeVault is
     function withdraw(uint256 amount) external override onlyOwner nonReentrant {
         address owner = owner();
 
-        // LOFV_NEBTW: Not Enough Balance to Withdraw
+        // LOFV_NEBTW: Not Enough Balance To Withdraw
         require(IERC20Upgradeable(rewardToken).balanceOf(address(this)) >= amount, "LOFV_NEBTW");
 
         SafeERC20Upgradeable.safeTransfer(IERC20Upgradeable(rewardToken), owner, amount);
