@@ -67,15 +67,14 @@ contract LimitOrderFeeVault is
 
     // TODO: handle decimal issue if we use different rewardTokens (PERP or USDC)
     function disburse(address keeper) external override onlyLimitOrderBook nonReentrant returns (uint256) {
-        uint256 normalizedRewardAmount = IERC20Upgradeable(rewardToken).balanceOf(address(this)) >= rewardAmount
-            ? rewardAmount
-            : 0;
+        // LOFV_NEBTD: not enough balance to disburse
+        require(IERC20Upgradeable(rewardToken).balanceOf(address(this)) >= rewardAmount, "LOFV_NEBTD");
 
-        SafeERC20Upgradeable.safeTransfer(IERC20Upgradeable(rewardToken), keeper, normalizedRewardAmount);
+        SafeERC20Upgradeable.safeTransfer(IERC20Upgradeable(rewardToken), keeper, rewardAmount);
 
-        emit Disbursed(keeper, normalizedRewardAmount);
+        emit Disbursed(keeper, rewardAmount);
 
-        return normalizedRewardAmount;
+        return rewardAmount;
     }
 
     function withdraw(uint256 amount) external override onlyOwner nonReentrant {

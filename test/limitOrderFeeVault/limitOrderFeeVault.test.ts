@@ -174,7 +174,7 @@ describe("LimitOrderFeeVault", function () {
         expect(newKeeperBalance.sub(oldKeeperBalance)).to.be.eq(rewardAmount)
     })
 
-    it("disburse without the enough balance", async () => {
+    it("force error, disburse without the enough balance", async () => {
         const limitOrder = {
             orderType: fixture.orderTypeLimitOrder,
             salt: 1,
@@ -195,8 +195,9 @@ describe("LimitOrderFeeVault", function () {
         // sign limit order
         const signature = await getSignature(fixture, limitOrder, trader)
         await limitOrderFeeVault.setRewardAmount(parseUnits("100000", 18))
-        const tx = await limitOrderBook.connect(keeper).fillLimitOrder(limitOrder, signature, parseEther("0"))
-        await expect(tx).to.emit(limitOrderFeeVault, "Disbursed").withArgs(keeper.address, 0)
+        await expect(
+            limitOrderBook.connect(keeper).fillLimitOrder(limitOrder, signature, parseEther("0")),
+        ).to.be.revertedWith("LOFV_NEBTD")
     })
 
     it("force error, disburse is limitOrderBook only", async () => {
