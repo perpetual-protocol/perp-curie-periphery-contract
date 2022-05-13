@@ -8,7 +8,7 @@ import {
     BaseToken,
     DelegateApproval,
     LimitOrderBook,
-    LimitOrderFeeVault,
+    LimitOrderRewardVault,
     QuoteToken,
     TestAggregatorV3,
     TestClearingHouse,
@@ -37,7 +37,7 @@ describe("LimitOrderBook fillLimitOrder", function () {
     let mockedBaseAggregator: FakeContract<TestAggregatorV3>
     let delegateApproval: DelegateApproval
     let limitOrderBook: LimitOrderBook
-    let limitOrderFeeVault: LimitOrderFeeVault
+    let limitOrderRewardVault: LimitOrderRewardVault
     let rewardToken: TestERC20
 
     beforeEach(async () => {
@@ -52,7 +52,7 @@ describe("LimitOrderBook fillLimitOrder", function () {
         pool = fixture.pool
         delegateApproval = fixture.delegateApproval
         limitOrderBook = fixture.limitOrderBook
-        limitOrderFeeVault = fixture.limitOrderFeeVault
+        limitOrderRewardVault = fixture.limitOrderRewardVault
         rewardToken = fixture.rewardToken
 
         const pool1LowerTick: number = priceToTick(2000, await pool.tickSpacing())
@@ -127,7 +127,7 @@ describe("LimitOrderBook fillLimitOrder", function () {
             .to.emit(limitOrderBook, "LimitOrderFilled")
             .withArgs(trader.address, baseToken.address, orderHash, keeper.address, fixture.rewardAmount)
 
-        await expect(tx).to.emit(limitOrderFeeVault, "Disbursed").withArgs(keeper.address, fixture.rewardAmount)
+        await expect(tx).to.emit(limitOrderRewardVault, "Disbursed").withArgs(keeper.address, fixture.rewardAmount)
         expect(await rewardToken.balanceOf(keeper.address)).to.be.eq(oldRewardBalance.add(fixture.rewardAmount))
 
         expect(await accountBalance.getTakerPositionSize(trader.address, baseToken.address)).to.gte(parseEther("0.1"))
@@ -309,7 +309,7 @@ describe("LimitOrderBook fillLimitOrder", function () {
                 .to.emit(limitOrderBook, "LimitOrderFilled")
                 .withArgs(trader.address, baseToken.address, orderHash, keeper.address, fixture.rewardAmount)
 
-            await expect(tx).to.emit(limitOrderFeeVault, "Disbursed").withArgs(keeper.address, fixture.rewardAmount)
+            await expect(tx).to.emit(limitOrderRewardVault, "Disbursed").withArgs(keeper.address, fixture.rewardAmount)
 
             expect(await accountBalance.getTakerPositionSize(trader.address, baseToken.address)).to.gte(
                 parseEther("0.05"),
@@ -591,7 +591,7 @@ describe("LimitOrderBook fillLimitOrder", function () {
                 .to.emit(limitOrderBook, "LimitOrderFilled")
                 .withArgs(trader.address, baseToken.address, orderHash, keeper.address, fixture.rewardAmount)
 
-            await expect(tx).to.emit(limitOrderFeeVault, "Disbursed").withArgs(keeper.address, fixture.rewardAmount)
+            await expect(tx).to.emit(limitOrderRewardVault, "Disbursed").withArgs(keeper.address, fixture.rewardAmount)
 
             expect(await accountBalance.getTakerPositionSize(trader.address, baseToken.address)).to.gte(
                 parseEther("0.1"),
@@ -740,7 +740,7 @@ describe("LimitOrderBook fillLimitOrder", function () {
             .to.emit(limitOrderBook, "LimitOrderFilled")
             .withArgs(trader.address, baseToken.address, orderHash, keeper.address, fixture.rewardAmount)
 
-        await expect(tx).to.emit(limitOrderFeeVault, "Disbursed").withArgs(keeper.address, fixture.rewardAmount)
+        await expect(tx).to.emit(limitOrderRewardVault, "Disbursed").withArgs(keeper.address, fixture.rewardAmount)
 
         expect(await accountBalance.getTakerPositionSize(trader.address, baseToken.address)).to.gte(parseEther("0.1"))
         expect(await accountBalance.getTakerOpenNotional(trader.address, baseToken.address)).to.be.gte(

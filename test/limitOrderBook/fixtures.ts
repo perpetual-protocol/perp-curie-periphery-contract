@@ -2,7 +2,7 @@ import { loadFixture } from "ethereum-waffle"
 import { BigNumber } from "ethers"
 import { parseUnits } from "ethers/lib/utils"
 import { ethers } from "hardhat"
-import { DelegateApproval, LimitOrderFeeVault, TestERC20, TestLimitOrderBook } from "../../typechain-types"
+import { DelegateApproval, LimitOrderRewardVault, TestERC20, TestLimitOrderBook } from "../../typechain-types"
 import { ClearingHouseFixture, createClearingHouseFixture } from "../clearingHouse/fixtures"
 
 export interface LimitOrderFixture extends ClearingHouseFixture {
@@ -13,7 +13,7 @@ export interface LimitOrderFixture extends ClearingHouseFixture {
     delegateApproval: DelegateApproval
     rewardToken: TestERC20
     rewardAmount: BigNumber
-    limitOrderFeeVault: LimitOrderFeeVault
+    limitOrderRewardVault: LimitOrderRewardVault
     clearingHouseOpenPositionAction: number
     clearingHouseAddLiquidityAction: number
     clearingHouseRemoveLiquidityAction: number
@@ -35,9 +35,9 @@ export function createLimitOrderFixture(): () => Promise<LimitOrderFixture> {
         await rewardToken.__TestERC20_init("TestPERP", "PERP", 18)
 
         const rewardAmount = parseUnits("1", 18)
-        const limitOrderFeeVaultFactory = await ethers.getContractFactory("LimitOrderFeeVault")
-        const limitOrderFeeVault = (await limitOrderFeeVaultFactory.deploy()) as LimitOrderFeeVault
-        await limitOrderFeeVault.initialize(rewardToken.address, rewardAmount)
+        const limitOrderRewardVaultFactory = await ethers.getContractFactory("LimitOrderRewardVault")
+        const limitOrderRewardVault = (await limitOrderRewardVaultFactory.deploy()) as LimitOrderRewardVault
+        await limitOrderRewardVault.initialize(rewardToken.address, rewardAmount)
 
         const EIP712Name = "PerpCurieLimitOrder"
         const EIP712Version = "1"
@@ -45,14 +45,14 @@ export function createLimitOrderFixture(): () => Promise<LimitOrderFixture> {
 
         const limitOrderBookFactory = await ethers.getContractFactory("TestLimitOrderBook")
         const limitOrderBook = (await limitOrderBookFactory.deploy()) as TestLimitOrderBook
-        await limitOrderBook.initialize(EIP712Name, EIP712Version, clearingHouse.address, limitOrderFeeVault.address)
+        await limitOrderBook.initialize(EIP712Name, EIP712Version, clearingHouse.address, limitOrderRewardVault.address)
 
         const tokenDecimals = await rewardToken.decimals()
         const mintedTokenAmount = parseUnits("1000", tokenDecimals)
 
-        // mint token to limitOrderFeeVault
-        await rewardToken.mint(limitOrderFeeVault.address, mintedTokenAmount)
-        await limitOrderFeeVault.setLimitOrderBook(limitOrderBook.address)
+        // mint token to limitOrderRewardVault
+        await rewardToken.mint(limitOrderRewardVault.address, mintedTokenAmount)
+        await limitOrderRewardVault.setLimitOrderBook(limitOrderBook.address)
 
         return {
             ...rest,
@@ -64,7 +64,7 @@ export function createLimitOrderFixture(): () => Promise<LimitOrderFixture> {
             clearingHouse,
             rewardToken,
             rewardAmount,
-            limitOrderFeeVault,
+            limitOrderRewardVault,
             clearingHouseOpenPositionAction: await delegateApproval.getClearingHouseOpenPositionAction(),
             clearingHouseAddLiquidityAction: await delegateApproval.getClearingHouseAddLiquidityAction(),
             clearingHouseRemoveLiquidityAction: await delegateApproval.getClearingHouseRemoveLiquidityAction(),

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 pragma solidity 0.7.6;
 
-interface ILimitOrderFeeVault {
+interface ILimitOrderRewardVault {
     /// @notice Emitted when rewardToken is changed
     /// @param rewardToken The new address of rewardToken
     event RewardTokenChanged(address rewardToken);
@@ -10,13 +10,13 @@ interface ILimitOrderFeeVault {
     /// @param limitOrderBook The new address of limitOrderBook
     event LimitOrderBookChanged(address limitOrderBook);
 
-    /// @notice Emitted when feeAmount is changed
+    /// @notice Emitted when rewardAmount is changed
     /// @param rewardAmount The new rewardAmount
     event RewardAmountChanged(uint256 rewardAmount);
 
-    /// @notice Emitted when keeper fee is disbursed
+    /// @notice Emitted when keeper reward is disbursed
     /// @param keeper The address of keeper
-    /// @param amount The fee reward to keeper
+    /// @param amount The reward to keeper
     event Disbursed(address keeper, uint256 amount);
 
     /// @notice Emitted when token is withdrawn

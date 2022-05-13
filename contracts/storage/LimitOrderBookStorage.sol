@@ -11,5 +11,5 @@ abstract contract LimitOrderBookStorageV1 {
     mapping(bytes32 => ILimitOrderBook.OrderStatus) internal _ordersStatus;
     address public clearingHouse;
     address public accountBalance;
-    address public limitOrderFeeVault;
+    address public limitOrderRewardVault;
 }

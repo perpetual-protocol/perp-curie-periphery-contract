@@ -7,7 +7,7 @@ import {
     BaseToken,
     DelegateApproval,
     LimitOrderBook,
-    LimitOrderFeeVault,
+    LimitOrderRewardVault,
     QuoteToken,
     TestAggregatorV3,
     TestClearingHouse,
@@ -22,7 +22,7 @@ import { createLimitOrderFixture, LimitOrderFixture } from "../limitOrderBook/fi
 import { getSignature } from "../limitOrderBook/orderUtils"
 import { encodePriceSqrt, syncIndexToMarketPrice } from "../shared/utilities"
 
-describe("LimitOrderFeeVault", function () {
+describe("LimitOrderRewardVault", function () {
     const [admin, trader, keeper, maker, alice] = waffle.provider.getWallets()
     let fixture: LimitOrderFixture
     let clearingHouse: TestClearingHouse
@@ -33,7 +33,7 @@ describe("LimitOrderFeeVault", function () {
     let mockedBaseAggregator: FakeContract<TestAggregatorV3>
     let delegateApproval: DelegateApproval
     let limitOrderBook: LimitOrderBook
-    let limitOrderFeeVault: LimitOrderFeeVault
+    let limitOrderRewardVault: LimitOrderRewardVault
     let rewardToken: TestERC20
 
     const emptyAddress = "0x0000000000000000000000000000000000000000"
@@ -48,7 +48,7 @@ describe("LimitOrderFeeVault", function () {
         pool = fixture.pool
         delegateApproval = fixture.delegateApproval
         limitOrderBook = fixture.limitOrderBook
-        limitOrderFeeVault = fixture.limitOrderFeeVault
+        limitOrderRewardVault = fixture.limitOrderRewardVault
         rewardToken = fixture.rewardToken
 
         const pool1LowerTick: number = priceToTick(2000, await pool.tickSpacing())
@@ -94,15 +94,15 @@ describe("LimitOrderFeeVault", function () {
         const rewardToken2 = (await rewardToken2Factory.deploy()) as TestERC20
         await rewardToken2.__TestERC20_init("TestPERP-2", "PERP-2", 18)
 
-        await expect(limitOrderFeeVault.setRewardToken(rewardToken2.address))
-            .to.emit(limitOrderFeeVault, "RewardTokenChanged")
+        await expect(limitOrderRewardVault.setRewardToken(rewardToken2.address))
+            .to.emit(limitOrderRewardVault, "RewardTokenChanged")
             .withArgs(rewardToken2.address)
 
-        expect(await limitOrderFeeVault.rewardToken()).to.be.eq(rewardToken2.address)
+        expect(await limitOrderRewardVault.rewardToken()).to.be.eq(rewardToken2.address)
 
-        await expect(limitOrderFeeVault.setRewardToken(emptyAddress)).to.be.revertedWith("LOFV_RTINC")
+        await expect(limitOrderRewardVault.setRewardToken(emptyAddress)).to.be.revertedWith("LOFV_RTINC")
 
-        await expect(limitOrderFeeVault.connect(alice).setRewardToken(emptyAddress)).to.be.revertedWith("SO_CNO")
+        await expect(limitOrderRewardVault.connect(alice).setRewardToken(emptyAddress)).to.be.revertedWith("SO_CNO")
     })
 
     it("setLimitOrderBook", async () => {
@@ -112,32 +112,32 @@ describe("LimitOrderFeeVault", function () {
             fixture.EIP712Name,
             fixture.EIP712Version,
             clearingHouse.address,
-            limitOrderFeeVault.address,
+            limitOrderRewardVault.address,
         )
 
-        await expect(limitOrderFeeVault.setLimitOrderBook(limitOrderBook2.address))
-            .to.emit(limitOrderFeeVault, "LimitOrderBookChanged")
+        await expect(limitOrderRewardVault.setLimitOrderBook(limitOrderBook2.address))
+            .to.emit(limitOrderRewardVault, "LimitOrderBookChanged")
             .withArgs(limitOrderBook2.address)
 
-        expect(await limitOrderFeeVault.limitOrderBook()).to.be.eq(limitOrderBook2.address)
+        expect(await limitOrderRewardVault.limitOrderBook()).to.be.eq(limitOrderBook2.address)
 
-        await expect(limitOrderFeeVault.setLimitOrderBook(emptyAddress)).to.be.revertedWith("LOFV_LOBINC")
+        await expect(limitOrderRewardVault.setLimitOrderBook(emptyAddress)).to.be.revertedWith("LOFV_LOBINC")
 
-        await expect(limitOrderFeeVault.connect(alice).setLimitOrderBook(emptyAddress)).to.be.revertedWith("SO_CNO")
+        await expect(limitOrderRewardVault.connect(alice).setLimitOrderBook(emptyAddress)).to.be.revertedWith("SO_CNO")
     })
 
     it("setRewardAmount", async () => {
         const newRewardAmount = parseUnits("2", 18)
 
-        await expect(limitOrderFeeVault.setRewardAmount(newRewardAmount))
-            .to.emit(limitOrderFeeVault, "RewardAmountChanged")
+        await expect(limitOrderRewardVault.setRewardAmount(newRewardAmount))
+            .to.emit(limitOrderRewardVault, "RewardAmountChanged")
             .withArgs(newRewardAmount)
 
-        expect(await limitOrderFeeVault.rewardAmount()).to.be.eq(newRewardAmount)
+        expect(await limitOrderRewardVault.rewardAmount()).to.be.eq(newRewardAmount)
 
-        await expect(limitOrderFeeVault.setRewardAmount(0)).to.be.revertedWith("LOFV_RAMBGT0")
+        await expect(limitOrderRewardVault.setRewardAmount(0)).to.be.revertedWith("LOFV_RAMBGT0")
 
-        await expect(limitOrderFeeVault.connect(alice).setRewardAmount(newRewardAmount)).to.be.revertedWith("SO_CNO")
+        await expect(limitOrderRewardVault.connect(alice).setRewardAmount(newRewardAmount)).to.be.revertedWith("SO_CNO")
     })
 
     it("disburse", async () => {
@@ -161,9 +161,9 @@ describe("LimitOrderFeeVault", function () {
         // sign limit order
         const signature = await getSignature(fixture, limitOrder, trader)
         const oldKeeperBalance = await rewardToken.balanceOf(keeper.address)
-        const rewardAmount = await limitOrderFeeVault.rewardAmount()
+        const rewardAmount = await limitOrderRewardVault.rewardAmount()
         const tx = await limitOrderBook.connect(keeper).fillLimitOrder(limitOrder, signature, parseEther("0"))
-        await expect(tx).to.emit(limitOrderFeeVault, "Disbursed").withArgs(keeper.address, fixture.rewardAmount)
+        await expect(tx).to.emit(limitOrderRewardVault, "Disbursed").withArgs(keeper.address, fixture.rewardAmount)
 
         const newKeeperBalance = await rewardToken.balanceOf(keeper.address)
         expect(newKeeperBalance.sub(oldKeeperBalance)).to.be.eq(rewardAmount)
@@ -189,36 +189,38 @@ describe("LimitOrderFeeVault", function () {
 
         // sign limit order
         const signature = await getSignature(fixture, limitOrder, trader)
-        await limitOrderFeeVault.setRewardAmount(parseUnits("100000", 18))
+        await limitOrderRewardVault.setRewardAmount(parseUnits("100000", 18))
         await expect(
             limitOrderBook.connect(keeper).fillLimitOrder(limitOrder, signature, parseEther("0")),
         ).to.be.revertedWith("LOFV_NEBTD")
     })
 
     it("force error, disburse is limitOrderBook only", async () => {
-        await expect(limitOrderFeeVault.connect(alice).disburse(keeper.address)).to.be.revertedWith("LOFV_SMBLOB")
+        await expect(limitOrderRewardVault.connect(alice).disburse(keeper.address)).to.be.revertedWith("LOFV_SMBLOB")
     })
 
     it("withdraw", async () => {
         expect(await rewardToken.balanceOf(admin.address)).to.be.eq(0)
 
-        const vaultBalance = await rewardToken.balanceOf(limitOrderFeeVault.address)
-        const tx = await limitOrderFeeVault.connect(admin).withdraw(vaultBalance)
+        const vaultBalance = await rewardToken.balanceOf(limitOrderRewardVault.address)
+        const tx = await limitOrderRewardVault.connect(admin).withdraw(vaultBalance)
         await expect(tx)
-            .to.emit(limitOrderFeeVault, "Withdrawn")
+            .to.emit(limitOrderRewardVault, "Withdrawn")
             .withArgs(admin.address, rewardToken.address, vaultBalance)
 
         expect(await rewardToken.balanceOf(admin.address)).to.be.eq(vaultBalance)
-        expect(await rewardToken.balanceOf(limitOrderFeeVault.address)).to.be.eq(0)
+        expect(await rewardToken.balanceOf(limitOrderRewardVault.address)).to.be.eq(0)
     })
 
     it("force error, withdraw without the enough balance", async () => {
-        const vaultBalance = await rewardToken.balanceOf(limitOrderFeeVault.address)
+        const vaultBalance = await rewardToken.balanceOf(limitOrderRewardVault.address)
 
-        await expect(limitOrderFeeVault.connect(admin).withdraw(vaultBalance.add(1))).to.be.revertedWith("LOFV_NEBTW")
+        await expect(limitOrderRewardVault.connect(admin).withdraw(vaultBalance.add(1))).to.be.revertedWith(
+            "LOFV_NEBTW",
+        )
     })
 
     it("force error, withdraw is owner only", async () => {
-        await expect(limitOrderFeeVault.connect(alice).withdraw(parseEther("1"))).to.be.revertedWith("SO_CNO")
+        await expect(limitOrderRewardVault.connect(alice).withdraw(parseEther("1"))).to.be.revertedWith("SO_CNO")
     })
 })

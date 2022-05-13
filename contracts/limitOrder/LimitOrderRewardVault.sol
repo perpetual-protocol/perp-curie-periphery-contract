@@ -6,19 +6,19 @@ import { BlockContext } from "../base/BlockContext.sol";
 import { AddressUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol";
 import { SignedSafeMathUpgradeable } from "@openzeppelin/contracts-upgradeable/math/SignedSafeMathUpgradeable.sol";
 import { PerpMath } from "@perp/curie-contract/contracts/lib/PerpMath.sol";
-import { ILimitOrderFeeVault } from "../interface/ILimitOrderFeeVault.sol";
-import { LimitOrderFeeVaultStorageV1 } from "../storage/LimitOrderFeeVaultStorage.sol";
+import { ILimitOrderRewardVault } from "../interface/ILimitOrderRewardVault.sol";
+import { LimitOrderRewardVaultStorageV1 } from "../storage/LimitOrderRewardVaultStorage.sol";
 import { OwnerPausable } from "../base/OwnerPausable.sol";
 import { ReentrancyGuardUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
 // solhint-disable-next-line max-line-length
 import { SafeERC20Upgradeable, IERC20Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC20/SafeERC20Upgradeable.sol";
 
-contract LimitOrderFeeVault is
-    ILimitOrderFeeVault,
+contract LimitOrderRewardVault is
+    ILimitOrderRewardVault,
     BlockContext,
     ReentrancyGuardUpgradeable,
     OwnerPausable,
-    LimitOrderFeeVaultStorageV1
+    LimitOrderRewardVaultStorageV1
 {
     using AddressUpgradeable for address;
     using PerpMath for int256;
@@ -51,7 +51,7 @@ contract LimitOrderFeeVault is
         emit RewardTokenChanged(rewardTokenArg);
     }
 
-    /// @dev limitOrderBook cannot be set in initializer since LimitOrderBook also depends on LimitOrderFeeVault
+    /// @dev limitOrderBook cannot be set in initializer since LimitOrderBook also depends on LimitOrderRewardVault
     function setLimitOrderBook(address limitOrderBookArg) external onlyOwner {
         // LOFV_LOBINC: LimitOrderBook Is Not a Contract
         require(limitOrderBookArg.isContract(), "LOFV_LOBINC");

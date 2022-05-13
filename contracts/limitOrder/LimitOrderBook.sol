@@ -9,7 +9,7 @@ import { EIP712Upgradeable } from "@openzeppelin/contracts-upgradeable/drafts/EI
 import { SignedSafeMathUpgradeable } from "@openzeppelin/contracts-upgradeable/math/SignedSafeMathUpgradeable.sol";
 import { PerpMath } from "@perp/curie-contract/contracts/lib/PerpMath.sol";
 import { ILimitOrderBook } from "../interface/ILimitOrderBook.sol";
-import { ILimitOrderFeeVault } from "../interface/ILimitOrderFeeVault.sol";
+import { ILimitOrderRewardVault } from "../interface/ILimitOrderRewardVault.sol";
 import { LimitOrderBookStorageV1 } from "../storage/LimitOrderBookStorage.sol";
 import { OwnerPausable } from "../base/OwnerPausable.sol";
 import { ReentrancyGuardUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
@@ -45,7 +45,7 @@ contract LimitOrderBook is
         string memory name,
         string memory version,
         address clearingHouseArg,
-        address limitOrderFeeVaultArg
+        address limitOrderRewardVaultArg
     ) external initializer {
         __ReentrancyGuard_init();
         __OwnerPausable_init();
@@ -60,9 +60,9 @@ contract LimitOrderBook is
         require(accountBalanceArg.isContract(), "LOB_ABINC");
         accountBalance = accountBalanceArg;
 
-        // LOB_LOFVINC: LimitOrderFeeVault Is Not Contract
-        require(limitOrderFeeVaultArg.isContract(), "LOB_LOFVINC");
-        limitOrderFeeVault = limitOrderFeeVaultArg;
+        // LOB_LOFVINC: LimitOrderRewardVault Is Not Contract
+        require(limitOrderRewardVaultArg.isContract(), "LOB_LOFVINC");
+        limitOrderRewardVault = limitOrderRewardVaultArg;
     }
 
     function setClearingHouse(address clearingHouseArg) external onlyOwner {
@@ -78,12 +78,12 @@ contract LimitOrderBook is
         emit ClearingHouseChanged(clearingHouseArg);
     }
 
-    function setLimitOrderFeeVault(address limitOrderFeeVaultArg) external onlyOwner {
-        // LOB_LOFVINC: LimitOrderFeeVault Is Not Contract
-        require(limitOrderFeeVaultArg.isContract(), "LOB_LOFVINC");
-        limitOrderFeeVault = limitOrderFeeVaultArg;
+    function setLimitOrderRewardVault(address limitOrderRewardVaultArg) external onlyOwner {
+        // LOB_LOFVINC: LimitOrderRewardVault Is Not Contract
+        require(limitOrderRewardVaultArg.isContract(), "LOB_LOFVINC");
+        limitOrderRewardVault = limitOrderRewardVaultArg;
 
-        emit LimitOrderFeeVaultChanged(limitOrderFeeVaultArg);
+        emit LimitOrderRewardVaultChanged(limitOrderRewardVaultArg);
     }
 
     /// @inheritdoc ILimitOrderBook
@@ -139,7 +139,7 @@ contract LimitOrderBook is
         _ordersStatus[orderHash] = ILimitOrderBook.OrderStatus.Filled;
 
         address keeper = _msgSender();
-        uint256 keeperReward = ILimitOrderFeeVault(limitOrderFeeVault).disburse(keeper);
+        uint256 keeperReward = ILimitOrderRewardVault(limitOrderRewardVault).disburse(keeper);
 
         emit LimitOrderFilled(order.trader, order.baseToken, orderHash, keeper, keeperReward);
     }

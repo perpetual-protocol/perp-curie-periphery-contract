@@ -59,22 +59,22 @@ interface ILimitOrderBook {
     /// @param clearingHouseArg The new address of clearingHouse
     event ClearingHouseChanged(address indexed clearingHouseArg);
 
-    /// @notice Emitted when limitOrderFeeVault is changed
-    /// @param limitOrderFeeVaultArg The new address of limitOrderFeeVault
-    event LimitOrderFeeVaultChanged(address indexed limitOrderFeeVaultArg);
+    /// @notice Emitted when limitOrderRewardVault is changed
+    /// @param limitOrderRewardVaultArg The new address of limitOrderRewardVault
+    event LimitOrderRewardVaultChanged(address indexed limitOrderRewardVaultArg);
 
     /// @notice Emitted when the limit order is filled
     /// @param trader The address of trader who created the limit order
     /// @param baseToken The address of baseToken (vETH, vBTC, ...)
     /// @param orderHash The hash of the filled limit order
     /// @param keeper The address of keeper
-    /// @param keeperFee The fee reward to keeper
+    /// @param keeperReward The reward to keeper
     event LimitOrderFilled(
         address indexed trader,
         address indexed baseToken,
         bytes32 orderHash,
         address keeper,
-        uint256 keeperFee
+        uint256 keeperReward
     );
 
     /// @notice Emitted when the limit order is cancelled

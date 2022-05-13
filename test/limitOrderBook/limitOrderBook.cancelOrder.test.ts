@@ -8,7 +8,7 @@ import {
     BaseToken,
     DelegateApproval,
     LimitOrderBook,
-    LimitOrderFeeVault,
+    LimitOrderRewardVault,
     QuoteToken,
     TestAggregatorV3,
     TestClearingHouse,
@@ -36,7 +36,7 @@ describe("LimitOrderBook cancelLimitOrder", function () {
     let mockedBaseAggregator: FakeContract<TestAggregatorV3>
     let delegateApproval: DelegateApproval
     let limitOrderBook: LimitOrderBook
-    let limitOrderFeeVault: LimitOrderFeeVault
+    let limitOrderRewardVault: LimitOrderRewardVault
     let rewardToken: TestERC20
 
     beforeEach(async () => {
@@ -51,7 +51,7 @@ describe("LimitOrderBook cancelLimitOrder", function () {
         pool = fixture.pool
         delegateApproval = fixture.delegateApproval
         limitOrderBook = fixture.limitOrderBook
-        limitOrderFeeVault = fixture.limitOrderFeeVault
+        limitOrderRewardVault = fixture.limitOrderRewardVault
         rewardToken = fixture.rewardToken
 
         const pool1LowerTick: number = priceToTick(2000, await pool.tickSpacing())
