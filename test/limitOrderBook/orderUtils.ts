@@ -14,6 +14,7 @@ export interface LimitOrder {
     amount: BigNumberish
     oppositeAmountBound: BigNumberish
     deadline: BigNumberish
+    referralCode: string
     reduceOnly: boolean
     roundIdWhenCreated: BigNumberish
     triggerPrice: BigNumberish
@@ -29,7 +30,7 @@ export function getOrderTypes() {
         ],
         LimitOrder: [
             // field ordering must be the same as LIMIT_ORDER_TYPEHASH
-            { name: "orderType", type: "uint256" },
+            { name: "orderType", type: "uint8" },
             { name: "salt", type: "uint256" },
             { name: "trader", type: "address" },
             { name: "baseToken", type: "address" },
@@ -38,6 +39,8 @@ export function getOrderTypes() {
             { name: "amount", type: "uint256" },
             { name: "oppositeAmountBound", type: "uint256" },
             { name: "deadline", type: "uint256" },
+            { name: "sqrtPriceLimitX96", type: "uint160" },
+            { name: "referralCode", type: "bytes32" },
             { name: "reduceOnly", type: "bool" },
             { name: "roundIdWhenCreated", type: "uint80" },
             { name: "triggerPrice", type: "uint256" },

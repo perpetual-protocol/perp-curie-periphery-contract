@@ -29,6 +29,8 @@ interface ILimitOrderBook {
     // Q2B + exact input, want more output base as possible, so we set a lower bound of output base
     // Q2B + exact output, want less input quote as possible, so we set a upper bound of input quote
     /// @param deadline The block timestamp that the order will expire at (in seconds)
+    /// @param sqrtPriceLimitX96 tx will fill until it reaches this price but WON'T REVERT
+    /// @param referralCode The referral code
     /// @param reduceOnly The order will only reduce/close positions if true
     /// @param roundIdWhenCreated The oracle `roundId` when the stop limit order is created
     // Only avaliable if orderType is StopLimitOrder, otherwise set to 0
@@ -46,6 +48,8 @@ interface ILimitOrderBook {
         uint256 amount;
         uint256 oppositeAmountBound;
         uint256 deadline;
+        uint160 sqrtPriceLimitX96;
+        bytes32 referralCode;
         bool reduceOnly;
         uint80 roundIdWhenCreated;
         uint256 triggerPrice;
@@ -55,22 +59,22 @@ interface ILimitOrderBook {
     /// @param clearingHouseArg The new address of clearingHouse
     event ClearingHouseChanged(address indexed clearingHouseArg);
 
-    /// @notice Emitted when limitOrderFeeVault is changed
-    /// @param limitOrderFeeVaultArg The new address of limitOrderFeeVault
-    event LimitOrderFeeVaultChanged(address indexed limitOrderFeeVaultArg);
+    /// @notice Emitted when limitOrderRewardVault is changed
+    /// @param limitOrderRewardVaultArg The new address of limitOrderRewardVault
+    event LimitOrderRewardVaultChanged(address indexed limitOrderRewardVaultArg);
 
     /// @notice Emitted when the limit order is filled
     /// @param trader The address of trader who created the limit order
     /// @param baseToken The address of baseToken (vETH, vBTC, ...)
     /// @param orderHash The hash of the filled limit order
     /// @param keeper The address of keeper
-    /// @param keeperFee The fee reward to keeper
+    /// @param keeperReward The reward to keeper
     event LimitOrderFilled(
         address indexed trader,
         address indexed baseToken,
         bytes32 orderHash,
         address keeper,
-        uint256 keeperFee
+        uint256 keeperReward
     );
 
     /// @notice Emitted when the limit order is cancelled

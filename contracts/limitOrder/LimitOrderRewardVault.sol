@@ -6,19 +6,19 @@ import { BlockContext } from "../base/BlockContext.sol";
 import { AddressUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol";
 import { SignedSafeMathUpgradeable } from "@openzeppelin/contracts-upgradeable/math/SignedSafeMathUpgradeable.sol";
 import { PerpMath } from "@perp/curie-contract/contracts/lib/PerpMath.sol";
-import { ILimitOrderFeeVault } from "../interface/ILimitOrderFeeVault.sol";
-import { LimitOrderFeeVaultStorageV1 } from "../storage/LimitOrderFeeVaultStorage.sol";
+import { ILimitOrderRewardVault } from "../interface/ILimitOrderRewardVault.sol";
+import { LimitOrderRewardVaultStorageV1 } from "../storage/LimitOrderRewardVaultStorage.sol";
 import { OwnerPausable } from "../base/OwnerPausable.sol";
 import { ReentrancyGuardUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
 // solhint-disable-next-line max-line-length
 import { SafeERC20Upgradeable, IERC20Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC20/SafeERC20Upgradeable.sol";
 
-contract LimitOrderFeeVault is
-    ILimitOrderFeeVault,
+contract LimitOrderRewardVault is
+    ILimitOrderRewardVault,
     BlockContext,
     ReentrancyGuardUpgradeable,
     OwnerPausable,
-    LimitOrderFeeVaultStorageV1
+    LimitOrderRewardVaultStorageV1
 {
     using AddressUpgradeable for address;
     using PerpMath for int256;
@@ -31,7 +31,7 @@ contract LimitOrderFeeVault is
         _;
     }
 
-    function initialize(address rewardTokenArg, uint256 feeAmountArg) external initializer {
+    function initialize(address rewardTokenArg, uint256 rewardAmountArg) external initializer {
         __OwnerPausable_init();
         __ReentrancyGuard_init();
 
@@ -39,9 +39,9 @@ contract LimitOrderFeeVault is
         require(rewardTokenArg.isContract(), "LOFV_RTINC");
         rewardToken = rewardTokenArg;
 
-        // LOFV_FAMBGT0: FeeAmount Must Be Greater Than 0
-        require(feeAmountArg > 0, "LOFV_FAMBGT0");
-        feeAmount = feeAmountArg;
+        // LOFV_RAMBGT0: RewardAmount Must Be Greater Than 0
+        require(rewardAmountArg > 0, "LOFV_RAMBGT0");
+        rewardAmount = rewardAmountArg;
     }
 
     function setRewardToken(address rewardTokenArg) external onlyOwner {
@@ -51,6 +51,7 @@ contract LimitOrderFeeVault is
         emit RewardTokenChanged(rewardTokenArg);
     }
 
+    /// @dev limitOrderBook cannot be set in initializer since LimitOrderBook also depends on LimitOrderRewardVault
     function setLimitOrderBook(address limitOrderBookArg) external onlyOwner {
         // LOFV_LOBINC: LimitOrderBook Is Not a Contract
         require(limitOrderBookArg.isContract(), "LOFV_LOBINC");
@@ -58,44 +59,33 @@ contract LimitOrderFeeVault is
         emit LimitOrderBookChanged(limitOrderBookArg);
     }
 
-    function setFeeAmount(uint256 feeAmountArg) external onlyOwner {
-        // LOFV_FAMBGT0: FeeAmount Must Be Greater Than 0
-        require(feeAmountArg > 0, "LOFV_FAMBGT0");
-        feeAmount = feeAmountArg;
-        emit FeeAmountChanged(feeAmountArg);
+    function setRewardAmount(uint256 rewardAmountArg) external onlyOwner {
+        // LOFV_RAMBGT0: RewardAmount Must Be Greater Than 0
+        require(rewardAmountArg > 0, "LOFV_RAMBGT0");
+        rewardAmount = rewardAmountArg;
+        emit RewardAmountChanged(rewardAmountArg);
     }
 
-    function disburse(address keeper, uint256 orderValue)
-        external
-        override
-        onlyLimitOrderBook
-        nonReentrant
-        returns (uint256)
-    {
-        // TODO: be aware of decimal issue when we use different reward token
+    // TODO: handle decimal issue if we use different rewardTokens (PERP or USDC)
+    function disburse(address keeper) external override onlyLimitOrderBook nonReentrant returns (uint256) {
+        // LOFV_NEBTD: Not Enough Balance to Disburse
+        require(IERC20Upgradeable(rewardToken).balanceOf(address(this)) >= rewardAmount, "LOFV_NEBTD");
 
-        // LOFV_NEBTD: not enough balance to disburse
-        require(IERC20Upgradeable(rewardToken).balanceOf(address(this)) >= feeAmount, "LOFV_NEBTD");
+        SafeERC20Upgradeable.safeTransfer(IERC20Upgradeable(rewardToken), keeper, rewardAmount);
 
-        SafeERC20Upgradeable.safeTransfer(IERC20Upgradeable(rewardToken), keeper, feeAmount);
+        emit Disbursed(keeper, rewardAmount);
 
-        emit Disbursed(keeper, feeAmount);
-
-        return feeAmount;
+        return rewardAmount;
     }
 
-    // TODO: should we support multiple token to withdraw? or only support rewardToken?
-    function withdraw(address token, uint256 amount) external override onlyOwner nonReentrant {
-        // LOFV_WTMBRT: Withdrawn Token Must Be RewardToken
-        require(token == rewardToken, "LOFV_WTMBRT");
+    function withdraw(uint256 amount) external override onlyOwner nonReentrant {
+        address owner = owner();
 
-        address to = _msgSender();
+        // LOFV_NEBTW: Not Enough Balance To Withdraw
+        require(IERC20Upgradeable(rewardToken).balanceOf(address(this)) >= amount, "LOFV_NEBTW");
 
-        // LOFV_NEBTW: not enough balance to withdraw
-        require(IERC20Upgradeable(token).balanceOf(address(this)) >= amount, "LOFV_NEBTW");
+        SafeERC20Upgradeable.safeTransfer(IERC20Upgradeable(rewardToken), owner, amount);
 
-        SafeERC20Upgradeable.safeTransfer(IERC20Upgradeable(token), to, amount);
-
-        emit Withdrawn(to, token, amount);
+        emit Withdrawn(owner, rewardToken, amount);
     }
 }

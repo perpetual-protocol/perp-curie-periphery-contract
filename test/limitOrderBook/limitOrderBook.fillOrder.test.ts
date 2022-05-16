@@ -4,16 +4,12 @@ import { parseEther } from "@ethersproject/units"
 import { expect } from "chai"
 import { ethers, waffle } from "hardhat"
 import {
+    AccountBalance,
     BaseToken,
-    ClearingHouseConfig,
     DelegateApproval,
-    Exchange,
     LimitOrderBook,
-    LimitOrderFeeVault,
-    MarketRegistry,
-    OrderBook,
+    LimitOrderRewardVault,
     QuoteToken,
-    TestAccountBalance,
     TestAggregatorV3,
     TestClearingHouse,
     TestERC20,
@@ -28,60 +24,39 @@ import { encodePriceSqrt, syncIndexToMarketPrice } from "../shared/utilities"
 import { createLimitOrderFixture, LimitOrderFixture } from "./fixtures"
 import { getOrderHash, getSignature } from "./orderUtils"
 
-describe("LimitOrderBook fillOrder & cancelOrder", function () {
+describe("LimitOrderBook fillLimitOrder", function () {
     const [admin, trader, keeper, maker, alice] = waffle.provider.getWallets()
     let fixture: LimitOrderFixture
-    let limitOrderBook: LimitOrderBook
     let clearingHouse: TestClearingHouse
-    let delegateApproval: DelegateApproval
-    let marketRegistry: MarketRegistry
-    let clearingHouseConfig: ClearingHouseConfig
-    let exchange: Exchange
-    let orderBook: OrderBook
-    let accountBalance: TestAccountBalance
+    let accountBalance: AccountBalance
     let vault: Vault
     let collateral: TestERC20
     let baseToken: BaseToken
-    let baseToken2: BaseToken
     let quoteToken: QuoteToken
     let pool: UniswapV3Pool
-    let pool2: UniswapV3Pool
     let mockedBaseAggregator: FakeContract<TestAggregatorV3>
-    let mockedBaseAggregator2: FakeContract<TestAggregatorV3>
-    let collateralDecimals: number
+    let delegateApproval: DelegateApproval
+    let limitOrderBook: LimitOrderBook
+    let limitOrderRewardVault: LimitOrderRewardVault
     let rewardToken: TestERC20
-    let limitOrderFeeVault: LimitOrderFeeVault
-
-    const fakeSignature = "0x0000000000000000000000000000000000000000000000000000000000000000"
 
     beforeEach(async () => {
         fixture = await loadFixture(createLimitOrderFixture())
-        limitOrderBook = fixture.limitOrderBook
         clearingHouse = fixture.clearingHouse as TestClearingHouse
-        delegateApproval = fixture.delegateApproval
-
-        orderBook = fixture.orderBook
-        accountBalance = fixture.accountBalance as TestAccountBalance
-        clearingHouseConfig = fixture.clearingHouseConfig
+        accountBalance = fixture.accountBalance
         vault = fixture.vault
-        exchange = fixture.exchange
-        marketRegistry = fixture.marketRegistry
         collateral = fixture.USDC
         baseToken = fixture.baseToken
-        baseToken2 = fixture.baseToken2
         quoteToken = fixture.quoteToken
         mockedBaseAggregator = fixture.mockedBaseAggregator
-        mockedBaseAggregator2 = fixture.mockedBaseAggregator2
         pool = fixture.pool
-        pool2 = fixture.pool2
-        collateralDecimals = await collateral.decimals()
-        limitOrderFeeVault = fixture.limitOrderFeeVault
+        delegateApproval = fixture.delegateApproval
+        limitOrderBook = fixture.limitOrderBook
+        limitOrderRewardVault = fixture.limitOrderRewardVault
         rewardToken = fixture.rewardToken
 
         const pool1LowerTick: number = priceToTick(2000, await pool.tickSpacing())
         const pool1UpperTick: number = priceToTick(4000, await pool.tickSpacing())
-        delegateApproval = fixture.delegateApproval
-        limitOrderBook = fixture.limitOrderBook
 
         // ETH
         await initAndAddPool(
@@ -111,18 +86,19 @@ describe("LimitOrderBook fillOrder & cancelOrder", function () {
             deadline: ethers.constants.MaxUint256,
         })
 
-        // prepare collateral for taker
+        // prepare collateral for trader
         await mintAndDeposit(fixture, trader, 1000)
 
-        await delegateApproval.connect(trader).approve([
-            {
-                delegate: limitOrderBook.address,
-                action: fixture.clearingHouseOpenPositionAction,
-            },
-        ])
+        // trader allows limitOrderBook to open position
+        await delegateApproval.connect(trader).approve(limitOrderBook.address, fixture.clearingHouseOpenPositionAction)
     })
 
-    it("fill limit order successfully", async () => {
+    it("fill limit order", async () => {
+        // NOTE: UX issue. Although users place a $3000 limit order for 300USDC/0.1ETH, this order won't be executed
+        // successfully until market price goes down $2960 because of price slippage caused by AMM. This could be
+        // very different from the trading experience of CEX.
+        // We might need to add some wording to let our users being aware of this.
+
         // long 0.1 ETH at $3000 with $300
         const limitOrder = {
             orderType: fixture.orderTypeLimitOrder,
@@ -134,26 +110,65 @@ describe("LimitOrderBook fillOrder & cancelOrder", function () {
             amount: parseEther("300").toString(),
             oppositeAmountBound: parseEther("0.1").toString(),
             deadline: ethers.constants.MaxUint256.toString(),
+            sqrtPriceLimitX96: 0,
+            referralCode: ethers.constants.HashZero,
             reduceOnly: false,
             roundIdWhenCreated: parseEther("0").toString(),
             triggerPrice: parseEther("0").toString(),
         }
 
-        // sign limit order
         const signature = await getSignature(fixture, limitOrder, trader)
         const orderHash = await getOrderHash(fixture, limitOrder)
+
+        const oldRewardBalance = await rewardToken.balanceOf(keeper.address)
 
         const tx = await limitOrderBook.connect(keeper).fillLimitOrder(limitOrder, signature, parseEther("0"))
         await expect(tx)
             .to.emit(limitOrderBook, "LimitOrderFilled")
             .withArgs(trader.address, baseToken.address, orderHash, keeper.address, fixture.rewardAmount)
 
-        await expect(tx).to.emit(limitOrderFeeVault, "Disbursed").withArgs(keeper.address, fixture.rewardAmount)
+        await expect(tx).to.emit(limitOrderRewardVault, "Disbursed").withArgs(keeper.address, fixture.rewardAmount)
+        expect(await rewardToken.balanceOf(keeper.address)).to.be.eq(oldRewardBalance.add(fixture.rewardAmount))
 
         expect(await accountBalance.getTakerPositionSize(trader.address, baseToken.address)).to.gte(parseEther("0.1"))
         expect(await accountBalance.getTakerOpenNotional(trader.address, baseToken.address)).to.be.eq(
             parseEther("-300"),
         )
+    })
+
+    it("fill two orders with the same values but different salt", async () => {
+        // long 1 ETH (base) at $3000 with $3000 (quote)
+        const limitOrder1 = {
+            orderType: fixture.orderTypeLimitOrder,
+            salt: 1,
+            trader: trader.address,
+            baseToken: baseToken.address,
+            isBaseToQuote: false, // long: Q2B
+            isExactInput: true, // exact input: quote
+            amount: parseEther("3000").toString(), // quote amount: $3000
+            oppositeAmountBound: parseEther("1").toString(), // base amount: 1 ETH
+            deadline: ethers.constants.MaxUint256.toString(), // no expiration date
+            sqrtPriceLimitX96: 0,
+            referralCode: ethers.constants.HashZero, // no referral code
+            reduceOnly: false,
+            roundIdWhenCreated: parseEther("0").toString(),
+            triggerPrice: parseEther("0").toString(),
+        }
+
+        const limitOrder2 = {
+            ...limitOrder1,
+            salt: 2,
+        }
+
+        const signature1 = await getSignature(fixture, limitOrder1, trader)
+        const signature2 = await getSignature(fixture, limitOrder2, trader)
+        expect(signature1).to.be.not.eq(signature2)
+
+        const tx1 = await limitOrderBook.connect(keeper).fillLimitOrder(limitOrder1, signature1, parseEther("0"))
+        await expect(tx1).to.emit(limitOrderBook, "LimitOrderFilled")
+
+        const tx2 = await limitOrderBook.connect(keeper).fillLimitOrder(limitOrder2, signature2, parseEther("0"))
+        await expect(tx2).to.emit(limitOrderBook, "LimitOrderFilled")
     })
 
     it("force error, when order is already filled", async () => {
@@ -168,12 +183,13 @@ describe("LimitOrderBook fillOrder & cancelOrder", function () {
             amount: parseEther("300"),
             oppositeAmountBound: parseEther("0.1"),
             deadline: ethers.constants.MaxUint256,
+            sqrtPriceLimitX96: 0,
+            referralCode: ethers.constants.HashZero,
             reduceOnly: false,
             roundIdWhenCreated: parseEther("0").toString(),
             triggerPrice: parseEther("0").toString(),
         }
 
-        // sign limit order
         const signature = await getSignature(fixture, limitOrder, trader)
 
         await expect(
@@ -186,7 +202,7 @@ describe("LimitOrderBook fillOrder & cancelOrder", function () {
 
         await expect(
             limitOrderBook.connect(keeper).fillLimitOrder(limitOrder, signature, parseEther("0")),
-        ).to.revertedWith("LOB_OIFA")
+        ).to.revertedWith("LOB_OMBU")
     })
 
     it("force error, when order is already cancelled", async () => {
@@ -201,12 +217,13 @@ describe("LimitOrderBook fillOrder & cancelOrder", function () {
             amount: parseEther("300"),
             oppositeAmountBound: parseEther("0.1"),
             deadline: ethers.constants.MaxUint256,
+            sqrtPriceLimitX96: 0,
+            referralCode: ethers.constants.HashZero,
             reduceOnly: false,
             roundIdWhenCreated: parseEther("0").toString(),
             triggerPrice: parseEther("0").toString(),
         }
 
-        // sign limit order
         const signature = await getSignature(fixture, limitOrder, trader)
 
         await expect(await limitOrderBook.connect(trader).cancelLimitOrder(limitOrder)).to.emit(
@@ -216,10 +233,38 @@ describe("LimitOrderBook fillOrder & cancelOrder", function () {
 
         await expect(
             limitOrderBook.connect(keeper).fillLimitOrder(limitOrder, signature, parseEther("0")),
-        ).to.revertedWith("LOB_OIC")
+        ).to.revertedWith("LOB_OMBU")
     })
 
-    describe("fillOrder with reduceOnly = true", () => {
+    it("force error, fillOrder when reduceOnly = true and trader has no position", async () => {
+        expect(await accountBalance.getTakerPositionSize(trader.address, baseToken.address)).to.be.eq(parseEther("0"))
+
+        // long 0.1 ETH at $3000 with $300
+        const limitOrder = {
+            orderType: fixture.orderTypeLimitOrder,
+            salt: 1,
+            trader: trader.address,
+            baseToken: baseToken.address,
+            isBaseToQuote: false,
+            isExactInput: true,
+            amount: parseEther("300").toString(),
+            oppositeAmountBound: parseEther("0.1").toString(),
+            deadline: ethers.constants.MaxUint256.toString(),
+            sqrtPriceLimitX96: 0,
+            referralCode: ethers.constants.HashZero,
+            reduceOnly: true,
+            roundIdWhenCreated: parseEther("0").toString(),
+            triggerPrice: parseEther("0").toString(),
+        }
+
+        const signature = await getSignature(fixture, limitOrder, trader)
+
+        await expect(
+            limitOrderBook.connect(keeper).fillLimitOrder(limitOrder, signature, parseEther("0")),
+        ).to.be.revertedWith("LOB_ROINS")
+    })
+
+    describe("fillOrder when reduceOnly = true and trader has long position", () => {
         beforeEach(async () => {
             // long 0.1 ETH at $3000 with $300
             await clearingHouse.connect(trader).openPosition({
@@ -227,14 +272,17 @@ describe("LimitOrderBook fillOrder & cancelOrder", function () {
                 isBaseToQuote: false,
                 isExactInput: true,
                 amount: parseEther("300"),
-                sqrtPriceLimitX96: 0,
                 oppositeAmountBound: parseEther("0.1"),
                 deadline: ethers.constants.MaxUint256,
+                sqrtPriceLimitX96: 0,
                 referralCode: ethers.constants.HashZero,
             })
+
+            // actually get: 0.100337305809351601 ETH
+            expect(await accountBalance.getTakerPositionSize(trader.address, baseToken.address)).to.gt(parseEther("0"))
         })
 
-        it("fill order successfully", async () => {
+        it("fill order when partial reduce", async () => {
             // short 0.05 ETH at $2800 with $150
             const limitOrder = {
                 orderType: fixture.orderTypeLimitOrder,
@@ -246,12 +294,13 @@ describe("LimitOrderBook fillOrder & cancelOrder", function () {
                 amount: parseEther("0.05").toString(),
                 oppositeAmountBound: parseEther("140").toString(),
                 deadline: ethers.constants.MaxUint256.toString(),
+                sqrtPriceLimitX96: 0,
+                referralCode: ethers.constants.HashZero,
                 reduceOnly: true,
                 roundIdWhenCreated: parseEther("0").toString(),
                 triggerPrice: parseEther("0").toString(),
             }
 
-            // sign limit order
             const signature = await getSignature(fixture, limitOrder, trader)
             const orderHash = await getOrderHash(fixture, limitOrder)
 
@@ -260,7 +309,7 @@ describe("LimitOrderBook fillOrder & cancelOrder", function () {
                 .to.emit(limitOrderBook, "LimitOrderFilled")
                 .withArgs(trader.address, baseToken.address, orderHash, keeper.address, fixture.rewardAmount)
 
-            await expect(tx).to.emit(limitOrderFeeVault, "Disbursed").withArgs(keeper.address, fixture.rewardAmount)
+            await expect(tx).to.emit(limitOrderRewardVault, "Disbursed").withArgs(keeper.address, fixture.rewardAmount)
 
             expect(await accountBalance.getTakerPositionSize(trader.address, baseToken.address)).to.gte(
                 parseEther("0.05"),
@@ -271,7 +320,45 @@ describe("LimitOrderBook fillOrder & cancelOrder", function () {
             )
         })
 
-        it("force error, when order does not satisfy reduceOnly, create another long position", async () => {
+        it("fill order when fully close", async () => {
+            const oldPositionSize = await accountBalance.getTakerPositionSize(trader.address, baseToken.address)
+
+            // short (close) the whole ETH position at $2800 with around $280
+            const limitOrder = {
+                orderType: fixture.orderTypeLimitOrder,
+                salt: 1,
+                trader: trader.address,
+                baseToken: baseToken.address,
+                isBaseToQuote: true,
+                isExactInput: true,
+                amount: oldPositionSize.toString(),
+                oppositeAmountBound: parseEther("280").toString(),
+                deadline: ethers.constants.MaxUint256.toString(),
+                sqrtPriceLimitX96: 0,
+                referralCode: ethers.constants.HashZero,
+                reduceOnly: true,
+                roundIdWhenCreated: parseEther("0").toString(),
+                triggerPrice: parseEther("0").toString(),
+            }
+
+            const signature = await getSignature(fixture, limitOrder, trader)
+            const orderHash = await getOrderHash(fixture, limitOrder)
+
+            const tx = await limitOrderBook.connect(keeper).fillLimitOrder(limitOrder, signature, parseEther("0"))
+            await expect(tx)
+                .to.emit(limitOrderBook, "LimitOrderFilled")
+                .withArgs(trader.address, baseToken.address, orderHash, keeper.address, fixture.rewardAmount)
+
+            expect(await accountBalance.getTakerPositionSize(trader.address, baseToken.address)).to.be.eq(
+                parseEther("0"),
+            )
+
+            expect(await accountBalance.getTakerOpenNotional(trader.address, baseToken.address)).to.be.eq(
+                parseEther("0"),
+            )
+        })
+
+        it("force error, reduceOnly is not satisfied when increasing long position", async () => {
             // long 0.1 ETH at $3000 with $300
             const limitOrder = {
                 orderType: fixture.orderTypeLimitOrder,
@@ -283,21 +370,22 @@ describe("LimitOrderBook fillOrder & cancelOrder", function () {
                 amount: parseEther("300"),
                 oppositeAmountBound: parseEther("0.1"),
                 deadline: ethers.constants.MaxUint256,
+                sqrtPriceLimitX96: 0,
+                referralCode: ethers.constants.HashZero,
                 reduceOnly: true,
                 roundIdWhenCreated: parseEther("0").toString(),
                 triggerPrice: parseEther("0").toString(),
             }
 
-            // sign limit order
             const signature = await getSignature(fixture, limitOrder, trader)
 
             await expect(
                 limitOrderBook.connect(keeper).fillLimitOrder(limitOrder, signature, parseEther("0")),
-            ).to.be.revertedWith("LOB_NRO")
+            ).to.be.revertedWith("LOB_ROINS")
         })
 
-        it("force error, when order does not satisfy reduceOnly, create a reverse position", async () => {
-            // short 0.2 ETH at $2800 with $560
+        it("force error, reduceOnly is not satisfied when creating a reverse position", async () => {
+            // short 0.2 ETH at $2800 with $560 (more than the old long position)
             const limitOrder = {
                 orderType: fixture.orderTypeLimitOrder,
                 salt: 1,
@@ -308,61 +396,167 @@ describe("LimitOrderBook fillOrder & cancelOrder", function () {
                 amount: parseEther("0.2").toString(),
                 oppositeAmountBound: parseEther("560").toString(),
                 deadline: ethers.constants.MaxUint256.toString(),
+                sqrtPriceLimitX96: 0,
+                referralCode: ethers.constants.HashZero,
                 reduceOnly: true,
                 roundIdWhenCreated: parseEther("0").toString(),
                 triggerPrice: parseEther("0").toString(),
             }
 
-            // sign limit order
             const signature = await getSignature(fixture, limitOrder, trader)
 
             await expect(
                 limitOrderBook.connect(keeper).fillLimitOrder(limitOrder, signature, parseEther("0")),
-            ).to.be.revertedWith("LOB_NRO")
+            ).to.be.revertedWith("LOB_RSCBGTOS")
         })
     })
 
-    it("cancel order successfully", async () => {
-        // long 0.1 ETH at $3000 with $300
-        const limitOrder = {
-            orderType: fixture.orderTypeLimitOrder,
-            salt: 1,
-            trader: trader.address,
-            baseToken: baseToken.address,
-            isBaseToQuote: false,
-            isExactInput: true,
-            amount: parseEther("300"),
-            oppositeAmountBound: parseEther("0.1"),
-            deadline: ethers.constants.MaxUint256,
-            reduceOnly: false,
-            roundIdWhenCreated: parseEther("0").toString(),
-            triggerPrice: parseEther("0").toString(),
-        }
+    describe("fillOrder when reduceOnly = true and trader has short position", () => {
+        beforeEach(async () => {
+            // short 0.1 ETH at $2900 with $290
+            await clearingHouse.connect(trader).openPosition({
+                baseToken: baseToken.address,
+                isBaseToQuote: true,
+                isExactInput: true,
+                amount: parseEther("0.1"),
+                oppositeAmountBound: parseEther("290"),
+                deadline: ethers.constants.MaxUint256,
+                sqrtPriceLimitX96: 0,
+                referralCode: ethers.constants.HashZero,
+            })
 
-        await expect(await limitOrderBook.connect(trader).cancelLimitOrder(limitOrder)).to.emit(
-            limitOrderBook,
-            "LimitOrderCancelled",
-        )
-    })
+            // actually get: -0.1 ETH
+            expect(await accountBalance.getTakerPositionSize(trader.address, baseToken.address)).to.be.eq(
+                parseEther("-0.1"),
+            )
+        })
 
-    it("force error, cancel order with different trader", async () => {
-        // long 0.1 ETH at $3000 with $300
-        const limitOrder = {
-            orderType: fixture.orderTypeLimitOrder,
-            salt: 1,
-            trader: keeper.address,
-            baseToken: baseToken.address,
-            isBaseToQuote: false,
-            isExactInput: true,
-            amount: parseEther("300"),
-            oppositeAmountBound: parseEther("0.1"),
-            deadline: ethers.constants.MaxUint256,
-            reduceOnly: false,
-            roundIdWhenCreated: parseEther("0").toString(),
-            triggerPrice: parseEther("0").toString(),
-        }
+        it("fill order when partial reduce", async () => {
+            // long 0.05 ETH at $3000 with $150
+            const limitOrder = {
+                orderType: fixture.orderTypeLimitOrder,
+                salt: 1,
+                trader: trader.address,
+                baseToken: baseToken.address,
+                isBaseToQuote: false,
+                isExactInput: false,
+                amount: parseEther("0.05").toString(),
+                oppositeAmountBound: parseEther("150").toString(),
+                deadline: ethers.constants.MaxUint256.toString(),
+                sqrtPriceLimitX96: 0,
+                referralCode: ethers.constants.HashZero,
+                reduceOnly: true,
+                roundIdWhenCreated: parseEther("0").toString(),
+                triggerPrice: parseEther("0").toString(),
+            }
 
-        await expect(limitOrderBook.connect(trader).cancelLimitOrder(limitOrder)).to.be.revertedWith("LOB_OSMBS")
+            const signature = await getSignature(fixture, limitOrder, trader)
+            const orderHash = await getOrderHash(fixture, limitOrder)
+
+            const tx = await limitOrderBook.connect(keeper).fillLimitOrder(limitOrder, signature, parseEther("0"))
+            await expect(tx)
+                .to.emit(limitOrderBook, "LimitOrderFilled")
+                .withArgs(trader.address, baseToken.address, orderHash, keeper.address, fixture.rewardAmount)
+
+            expect(await accountBalance.getTakerPositionSize(trader.address, baseToken.address)).to.be.eq(
+                parseEther("-0.05"),
+            )
+
+            expect(await accountBalance.getTakerOpenNotional(trader.address, baseToken.address)).to.be.eq(
+                parseEther("146.519225712358588504"),
+            )
+        })
+
+        it("fill order when fully close", async () => {
+            const oldPositionSize = await accountBalance.getTakerPositionSize(trader.address, baseToken.address)
+
+            // long (close) the whole ETH position at $3000 with around $300
+            const limitOrder = {
+                orderType: fixture.orderTypeLimitOrder,
+                salt: 1,
+                trader: trader.address,
+                baseToken: baseToken.address,
+                isBaseToQuote: false,
+                isExactInput: false,
+                amount: oldPositionSize.abs().toString(),
+                oppositeAmountBound: parseEther("300").toString(),
+                deadline: ethers.constants.MaxUint256.toString(),
+                sqrtPriceLimitX96: 0,
+                referralCode: ethers.constants.HashZero,
+                reduceOnly: true,
+                roundIdWhenCreated: parseEther("0").toString(),
+                triggerPrice: parseEther("0").toString(),
+            }
+
+            const signature = await getSignature(fixture, limitOrder, trader)
+            const orderHash = await getOrderHash(fixture, limitOrder)
+
+            const tx = await limitOrderBook.connect(keeper).fillLimitOrder(limitOrder, signature, parseEther("0"))
+            await expect(tx)
+                .to.emit(limitOrderBook, "LimitOrderFilled")
+                .withArgs(trader.address, baseToken.address, orderHash, keeper.address, fixture.rewardAmount)
+
+            expect(await accountBalance.getTakerPositionSize(trader.address, baseToken.address)).to.be.eq(
+                parseEther("0"),
+            )
+
+            expect(await accountBalance.getTakerOpenNotional(trader.address, baseToken.address)).to.be.eq(
+                parseEther("0"),
+            )
+        })
+
+        it("force error, reduceOnly is not satisfied when increasing short position", async () => {
+            // short 0.1 ETH at $3000 with $300
+            const limitOrder = {
+                orderType: fixture.orderTypeLimitOrder,
+                salt: 1,
+                trader: trader.address,
+                baseToken: baseToken.address,
+                isBaseToQuote: true,
+                isExactInput: true,
+                amount: parseEther("0.1"),
+                oppositeAmountBound: parseEther("300"),
+                deadline: ethers.constants.MaxUint256,
+                sqrtPriceLimitX96: 0,
+                referralCode: ethers.constants.HashZero,
+                reduceOnly: true,
+                roundIdWhenCreated: parseEther("0").toString(),
+                triggerPrice: parseEther("0").toString(),
+            }
+
+            const signature = await getSignature(fixture, limitOrder, trader)
+
+            await expect(
+                limitOrderBook.connect(keeper).fillLimitOrder(limitOrder, signature, parseEther("0")),
+            ).to.be.revertedWith("LOB_ROINS")
+        })
+
+        it("force error, reduceOnly is not satisfied when creating a reverse position", async () => {
+            // long 0.2 ETH at $3000 with $600 (more than the old short position)
+            const limitOrder = {
+                orderType: fixture.orderTypeLimitOrder,
+                salt: 1,
+                trader: trader.address,
+                baseToken: baseToken.address,
+                isBaseToQuote: false,
+                isExactInput: false,
+                amount: parseEther("0.2").toString(),
+                oppositeAmountBound: parseEther("600").toString(),
+                deadline: ethers.constants.MaxUint256.toString(),
+                referralCode: ethers.constants.HashZero,
+                sqrtPriceLimitX96: 0,
+                reduceOnly: true,
+
+                roundIdWhenCreated: parseEther("0").toString(),
+                triggerPrice: parseEther("0").toString(),
+            }
+
+            const signature = await getSignature(fixture, limitOrder, trader)
+
+            await expect(
+                limitOrderBook.connect(keeper).fillLimitOrder(limitOrder, signature, parseEther("0")),
+            ).to.be.revertedWith("LOB_RSCBGTOS")
+        })
     })
 
     // TODO: test deadline, check ClearingHouse.addLiquidity L104
@@ -381,7 +575,10 @@ describe("LimitOrderBook fillOrder & cancelOrder", function () {
                 amount: parseEther("300").toString(),
                 oppositeAmountBound: parseEther("0.1").toString(),
                 deadline: now + 1000,
+                referralCode: ethers.constants.HashZero,
+                sqrtPriceLimitX96: 0,
                 reduceOnly: false,
+
                 roundIdWhenCreated: parseEther("0").toString(),
                 triggerPrice: parseEther("0").toString(),
             }
@@ -394,7 +591,7 @@ describe("LimitOrderBook fillOrder & cancelOrder", function () {
                 .to.emit(limitOrderBook, "LimitOrderFilled")
                 .withArgs(trader.address, baseToken.address, orderHash, keeper.address, fixture.rewardAmount)
 
-            await expect(tx).to.emit(limitOrderFeeVault, "Disbursed").withArgs(keeper.address, fixture.rewardAmount)
+            await expect(tx).to.emit(limitOrderRewardVault, "Disbursed").withArgs(keeper.address, fixture.rewardAmount)
 
             expect(await accountBalance.getTakerPositionSize(trader.address, baseToken.address)).to.gte(
                 parseEther("0.1"),
@@ -418,6 +615,8 @@ describe("LimitOrderBook fillOrder & cancelOrder", function () {
                 amount: parseEther("300"),
                 oppositeAmountBound: parseEther("0.1"),
                 deadline: now + 1,
+                sqrtPriceLimitX96: 0,
+                referralCode: ethers.constants.HashZero,
                 reduceOnly: false,
                 roundIdWhenCreated: parseEther("0").toString(),
                 triggerPrice: parseEther("0").toString(),
@@ -442,6 +641,8 @@ describe("LimitOrderBook fillOrder & cancelOrder", function () {
             amount: parseEther("300").toString(),
             oppositeAmountBound: parseEther("0.1").toString(),
             deadline: ethers.constants.MaxUint256,
+            sqrtPriceLimitX96: 0,
+            referralCode: ethers.constants.HashZero,
             reduceOnly: false,
             roundIdWhenCreated: parseEther("0").toString(),
             triggerPrice: parseEther("0").toString(),
@@ -468,6 +669,8 @@ describe("LimitOrderBook fillOrder & cancelOrder", function () {
             amount: parseEther("300").toString(),
             oppositeAmountBound: parseEther("0.1").toString(),
             deadline: ethers.constants.MaxUint256,
+            sqrtPriceLimitX96: 0,
+            referralCode: ethers.constants.HashZero,
             reduceOnly: false,
             roundIdWhenCreated: parseEther("0").toString(),
             triggerPrice: parseEther("0").toString(),
@@ -475,12 +678,7 @@ describe("LimitOrderBook fillOrder & cancelOrder", function () {
 
         const signature = await getSignature(fixture, limitOrder, trader)
 
-        await delegateApproval.connect(trader).revoke([
-            {
-                delegate: limitOrderBook.address,
-                action: fixture.clearingHouseOpenPositionAction,
-            },
-        ])
+        await delegateApproval.connect(trader).revoke(limitOrderBook.address, fixture.clearingHouseOpenPositionAction)
 
         await expect(
             limitOrderBook.connect(keeper).fillLimitOrder(limitOrder, signature, parseEther("0")),
@@ -499,6 +697,8 @@ describe("LimitOrderBook fillOrder & cancelOrder", function () {
             amount: parseEther("300").toString(),
             oppositeAmountBound: parseEther("0.1").toString(),
             deadline: ethers.constants.MaxUint256.toString(),
+            sqrtPriceLimitX96: 0,
+            referralCode: ethers.constants.HashZero,
             reduceOnly: false,
             roundIdWhenCreated: parseEther("0").toString(),
             triggerPrice: parseEther("0").toString(),
@@ -512,9 +712,9 @@ describe("LimitOrderBook fillOrder & cancelOrder", function () {
             isBaseToQuote: false,
             isExactInput: true,
             amount: parseEther("600000"),
-            sqrtPriceLimitX96: 0,
             oppositeAmountBound: parseEther("195"),
             deadline: ethers.constants.MaxUint256,
+            sqrtPriceLimitX96: 0,
             referralCode: ethers.constants.HashZero,
         }
         // alice open long position to make market price higher, 2960 -> 3023.113298
@@ -529,9 +729,9 @@ describe("LimitOrderBook fillOrder & cancelOrder", function () {
         // alice close her position to make market price lower
         await clearingHouse.connect(alice).closePosition({
             baseToken: baseToken.address,
-            sqrtPriceLimitX96: 0,
             oppositeAmountBound: 0,
             deadline: ethers.constants.MaxUint256,
+            sqrtPriceLimitX96: 0,
             referralCode: ethers.constants.HashZero,
         })
 
@@ -540,7 +740,7 @@ describe("LimitOrderBook fillOrder & cancelOrder", function () {
             .to.emit(limitOrderBook, "LimitOrderFilled")
             .withArgs(trader.address, baseToken.address, orderHash, keeper.address, fixture.rewardAmount)
 
-        await expect(tx).to.emit(limitOrderFeeVault, "Disbursed").withArgs(keeper.address, fixture.rewardAmount)
+        await expect(tx).to.emit(limitOrderRewardVault, "Disbursed").withArgs(keeper.address, fixture.rewardAmount)
 
         expect(await accountBalance.getTakerPositionSize(trader.address, baseToken.address)).to.gte(parseEther("0.1"))
         expect(await accountBalance.getTakerOpenNotional(trader.address, baseToken.address)).to.be.gte(
@@ -560,12 +760,13 @@ describe("LimitOrderBook fillOrder & cancelOrder", function () {
             amount: parseEther("300"),
             oppositeAmountBound: parseEther("0.1"),
             deadline: ethers.constants.MaxUint256,
+            sqrtPriceLimitX96: 0,
+            referralCode: ethers.constants.HashZero,
             reduceOnly: false,
             roundIdWhenCreated: parseEther("0").toString(),
             triggerPrice: parseEther("0").toString(),
         }
 
-        // sign limit order
         const signature = await getSignature(fixture, limitOrder, trader)
 
         await expect(

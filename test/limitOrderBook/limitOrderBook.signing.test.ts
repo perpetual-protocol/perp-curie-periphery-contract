@@ -33,11 +33,13 @@ describe("LimitOrderBook signing", function () {
             salt: 1,
             trader: trader.address,
             baseToken: baseToken.address,
-            isBaseToQuote: false, // long: Q2B
-            isExactInput: true, // exact input: quote
-            amount: parseEther("3000").toString(), // quote amount: $3000
-            oppositeAmountBound: parseEther("1").toString(), // base amount: 1 ETH
-            deadline: ethers.constants.MaxUint256.toString(), // no expiration date
+            isBaseToQuote: false,
+            isExactInput: true,
+            amount: parseEther("3000").toString(),
+            oppositeAmountBound: parseEther("1").toString(),
+            deadline: ethers.constants.MaxUint256.toString(),
+            sqrtPriceLimitX96: 0,
+            referralCode: ethers.constants.HashZero,
             reduceOnly: false,
             roundIdWhenCreated: parseEther("0").toString(),
             triggerPrice: parseEther("0").toString(),
@@ -65,11 +67,13 @@ describe("LimitOrderBook signing", function () {
             salt: 1,
             trader: trader.address,
             baseToken: baseToken.address,
-            isBaseToQuote: false, // long: Q2B
-            isExactInput: true, // exact input: quote
-            amount: parseEther("3000").toString(), // quote amount: $3000
-            oppositeAmountBound: parseEther("1").toString(), // base amount: 1 ETH
-            deadline: ethers.constants.MaxUint256.toString(), // no expiration date
+            isBaseToQuote: false,
+            isExactInput: true,
+            amount: parseEther("3000").toString(),
+            oppositeAmountBound: parseEther("1").toString(),
+            deadline: ethers.constants.MaxUint256.toString(),
+            sqrtPriceLimitX96: 0,
+            referralCode: ethers.constants.HashZero,
             reduceOnly: false,
             roundIdWhenCreated: parseEther("0").toString(),
             triggerPrice: parseEther("0").toString(),
@@ -100,11 +104,13 @@ describe("LimitOrderBook signing", function () {
             salt: 123,
             trader: trader.address,
             baseToken: baseToken.address,
-            isBaseToQuote: false, // long: Q2B
-            isExactInput: true, // exact input: quote
-            amount: parseEther("6000").toString(), // quote amount: $6000
-            oppositeAmountBound: parseEther("2").toString(), // base amount: 2 ETH
-            deadline: ethers.constants.MaxUint256.toString(), // no expiration date
+            isBaseToQuote: false,
+            isExactInput: true,
+            amount: parseEther("6000").toString(),
+            oppositeAmountBound: parseEther("2").toString(),
+            deadline: ethers.constants.MaxUint256.toString(),
+            sqrtPriceLimitX96: 0,
+            referralCode: ethers.constants.HashZero,
             reduceOnly: false,
             roundIdWhenCreated: parseEther("0").toString(),
             triggerPrice: parseEther("0").toString(),
