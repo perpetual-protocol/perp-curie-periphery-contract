@@ -15,18 +15,18 @@ jobs:
             # https://github.com/marketplace/actions/webfactory-ssh-agent#using-multiple-keys
                 ssh-private-key: ${{ secrets.PERP_LUSHAN_DEPLOY_PRIVATE_KEY }}
 
-            - name: Get npm cache directory
-              id: npm-cache
-              run: |
-                  echo "::set-output name=dir::$(npm config get cache)"
-            - uses: actions/cache@v2
-              with:
-                  path: |
-                      ${{ steps.npm-cache.outputs.dir }}
-                      **/node_modules
-                  key: ${{ github.job }}-${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
-                  restore-keys: |
-                      ${{ github.job }}-${{ runner.os }}-node-
+#            - name: Get npm cache directory
+#              id: npm-cache
+#              run: |
+#                  echo "::set-output name=dir::$(npm config get cache)"
+#            - uses: actions/cache@v2
+#              with:
+#                  path: |
+#                      ${{ steps.npm-cache.outputs.dir }}
+#                      **/node_modules
+#                  key: ${{ github.job }}-${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+#                  restore-keys: |
+#                      ${{ github.job }}-${{ runner.os }}-node-
 
             - name: Use Node.js 16.x
               uses: actions/setup-node@v1
@@ -57,18 +57,18 @@ jobs:
             # https://github.com/marketplace/actions/webfactory-ssh-agent#using-multiple-keys
                 ssh-private-key: ${{ secrets.PERP_LUSHAN_DEPLOY_PRIVATE_KEY }}
 
-            - name: Get npm cache directory
-              id: npm-cache
-              run: |
-                  echo "::set-output name=dir::$(npm config get cache)"
-            - uses: actions/cache@v2
-              with:
-                  path: |
-                      ${{ steps.npm-cache.outputs.dir }}
-                      **/node_modules
-                  key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
-                  restore-keys: |
-                      ${{ runner.os }}-node-
+#            - name: Get npm cache directory
+#              id: npm-cache
+#              run: |
+#                  echo "::set-output name=dir::$(npm config get cache)"
+#            - uses: actions/cache@v2
+#              with:
+#                  path: |
+#                      ${{ steps.npm-cache.outputs.dir }}
+#                      **/node_modules
+#                  key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+#                  restore-keys: |
+#                      ${{ runner.os }}-node-
 
             - name: Use Node.js 16.x
               uses: actions/setup-node@v1
