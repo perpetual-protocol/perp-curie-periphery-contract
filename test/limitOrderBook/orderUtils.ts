@@ -14,6 +14,7 @@ export interface LimitOrder {
     amount: BigNumberish
     oppositeAmountBound: BigNumberish
     deadline: BigNumberish
+    sqrtPriceLimitX96: BigNumberish
     referralCode: string
     reduceOnly: boolean
     roundIdWhenCreated: BigNumberish
