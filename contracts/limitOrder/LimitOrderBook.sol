@@ -8,6 +8,7 @@ import { ECDSAUpgradeable } from "@openzeppelin/contracts-upgradeable/cryptograp
 import { EIP712Upgradeable } from "@openzeppelin/contracts-upgradeable/drafts/EIP712Upgradeable.sol";
 import { SignedSafeMathUpgradeable } from "@openzeppelin/contracts-upgradeable/math/SignedSafeMathUpgradeable.sol";
 import { PerpMath } from "@perp/curie-contract/contracts/lib/PerpMath.sol";
+import { PerpSafeCast } from "@perp/curie-contract/contracts/lib/PerpSafeCast.sol";
 import { ILimitOrderBook } from "../interface/ILimitOrderBook.sol";
 import { ILimitOrderRewardVault } from "../interface/ILimitOrderRewardVault.sol";
 import { LimitOrderBookStorageV1 } from "../storage/LimitOrderBookStorage.sol";
@@ -27,6 +28,7 @@ contract LimitOrderBook is
     using AddressUpgradeable for address;
     using PerpMath for int256;
     using PerpMath for uint256;
+    using PerpSafeCast for uint256;
     using SignedSafeMathUpgradeable for int256;
 
     // NOTE: cannot use `OrderType orderType` here, use `uint8 orderType` instead
@@ -117,7 +119,7 @@ contract LimitOrderBook is
             // => oldTakerPositionSize < 0 != order.isBaseToQuote => false != true
         }
 
-        (uint256 base, ) = IClearingHouse(clearingHouse).openPositionFor(
+        (uint256 base, uint256 quote, uint256 fee) = IClearingHouse(clearingHouse).openPositionFor(
             order.trader,
             IClearingHouse.OpenPositionParams({
                 baseToken: order.baseToken,
@@ -141,7 +143,26 @@ contract LimitOrderBook is
         address keeper = _msgSender();
         uint256 keeperReward = ILimitOrderRewardVault(limitOrderRewardVault).disburse(keeper);
 
-        emit LimitOrderFilled(order.trader, order.baseToken, orderHash, keeper, keeperReward);
+        int256 exchangedPositionSize;
+        int256 exchangedPositionNotional;
+        if (order.isBaseToQuote) {
+            exchangedPositionSize = base.neg256();
+            exchangedPositionNotional = quote.toInt256().add(fee.toInt256());
+        } else {
+            exchangedPositionSize = base.toInt256();
+            exchangedPositionNotional = quote.neg256().add(fee.toInt256());
+        }
+
+        emit LimitOrderFilled(
+            order.trader,
+            order.baseToken,
+            orderHash,
+            keeper,
+            keeperReward,
+            exchangedPositionSize,
+            exchangedPositionNotional,
+            fee
+        );
     }
 
     /// @inheritdoc ILimitOrderBook

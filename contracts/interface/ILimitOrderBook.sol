@@ -74,7 +74,10 @@ interface ILimitOrderBook {
         address indexed baseToken,
         bytes32 orderHash,
         address keeper,
-        uint256 keeperReward
+        uint256 keeperReward,
+        int256 exchangedPositionSize,
+        int256 exchangedPositionNotional,
+        uint256 fee
     );
 
     /// @notice Emitted when the limit order is cancelled
