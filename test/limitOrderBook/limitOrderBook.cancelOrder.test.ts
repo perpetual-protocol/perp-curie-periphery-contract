@@ -192,9 +192,7 @@ describe("LimitOrderBook cancelLimitOrder", function () {
         const orderHash = await getOrderHash(fixture, limitOrder)
 
         const tx = await limitOrderBook.connect(keeper).fillLimitOrder(limitOrder, signature, parseEther("0"))
-        await expect(tx)
-            .to.emit(limitOrderBook, "LimitOrderFilled")
-            .withArgs(trader.address, baseToken.address, orderHash, keeper.address, fixture.rewardAmount)
+        await expect(tx).to.emit(limitOrderBook, "LimitOrderFilled")
 
         // order is filled, cannot cancel
         await expect(limitOrderBook.connect(trader).cancelLimitOrder(limitOrder)).to.be.revertedWith("LOB_OMBU")
