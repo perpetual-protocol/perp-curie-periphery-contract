@@ -179,7 +179,27 @@ contract LimitOrderBook is
 
         _ordersStatus[orderHash] = ILimitOrderBook.OrderStatus.Cancelled;
 
-        emit LimitOrderCancelled(order.trader, order.baseToken, orderHash);
+        int256 positionSize;
+        int256 positionNotional;
+        if (order.isBaseToQuote) {
+            if (order.isExactInput) {
+                positionSize = order.amount.neg256();
+                positionNotional = order.oppositeAmountBound.toInt256();
+            } else {
+                positionSize = order.oppositeAmountBound.neg256();
+                positionNotional = order.amount.toInt256();
+            }
+        } else {
+            if (order.isExactInput) {
+                positionSize = order.oppositeAmountBound.toInt256();
+                positionNotional = order.amount.neg256();
+            } else {
+                positionSize = order.amount.toInt256();
+                positionNotional = order.oppositeAmountBound.neg256();
+            }
+        }
+
+        emit LimitOrderCancelled(order.trader, order.baseToken, orderHash, positionSize, positionNotional);
     }
 
     //

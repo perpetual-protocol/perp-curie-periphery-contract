@@ -69,6 +69,9 @@ interface ILimitOrderBook {
     /// @param orderHash The hash of the filled limit order
     /// @param keeper The address of keeper
     /// @param keeperReward The reward to keeper
+    /// @param exchangedPositionSize The exchanged position size
+    /// @param exchangedPositionNotional The exchanged position notional
+    /// @param fee The trading fee
     event LimitOrderFilled(
         address indexed trader,
         address indexed baseToken,
@@ -84,7 +87,15 @@ interface ILimitOrderBook {
     /// @param trader The address of trader who cancelled the limit order
     /// @param baseToken The address of baseToken (vETH, vBTC, ...)
     /// @param orderHash The hash of the filled limit order
-    event LimitOrderCancelled(address indexed trader, address indexed baseToken, bytes32 orderHash);
+    /// @param positionSize The exchanged position size
+    /// @param positionNotional The exchanged position notional
+    event LimitOrderCancelled(
+        address indexed trader,
+        address indexed baseToken,
+        bytes32 orderHash,
+        int256 positionSize,
+        int256 positionNotional
+    );
 
     /// @param order LimitOrder struct
     /// @param signature The EIP-712 signature of `order` generated from `eth_signTypedData_V4`
