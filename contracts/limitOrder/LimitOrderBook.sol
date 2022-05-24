@@ -17,6 +17,8 @@ import { ReentrancyGuardUpgradeable } from "@openzeppelin/contracts-upgradeable/
 import { IClearingHouse } from "@perp/curie-contract/contracts/interface/IClearingHouse.sol";
 import { IAccountBalance } from "@perp/curie-contract/contracts/interface/IAccountBalance.sol";
 import { IBaseToken } from "@perp/curie-contract/contracts/interface/IBaseToken.sol";
+import { ChainlinkPriceFeed } from "@perp/perp-oracle-contract/contracts/ChainlinkPriceFeed.sol";
+import "hardhat/console.sol";
 
 contract LimitOrderBook is
     ILimitOrderBook,
@@ -118,21 +120,25 @@ contract LimitOrderBook is
 
         if (order.orderType == ILimitOrderBook.OrderType.StopLimitOrder) {
             // TODO: is Chainlink roundId always increased?
-            require(order.roundIdWhenCreated > 0 && roundIdWhenTriggered > order.roundIdWhenCreated, "");
+            require(order.roundIdWhenCreated > 0 && roundIdWhenTriggered > order.roundIdWhenCreated, "a1");
 
-            require(order.triggerPrice > 0, "");
+            console.logUint(order.roundIdWhenCreated);
+            console.logUint(order.triggerPrice);
+            console.logUint(roundIdWhenTriggered);
 
-            IPriceFeed priceFeed = IBaseToken(order.baseToken).getPriceFeed();
-            (, uint256 triggerPrice, ) = priceFeed.getRoundData(roundIdWhenTriggered);
+            require(order.triggerPrice > 0, "a2");
 
-            // TODO: get price using `roundIdWhenTriggered` from Chainlink
-            uint256 triggeredPrice = 123;
+            // TODO: we can only support stop limit order for markets that use ChainlinkPriceFeed.
+            // how to make sure this?
+            ChainlinkPriceFeed chainlinkPriceFeed = ChainlinkPriceFeed(IBaseToken(order.baseToken).getPriceFeed());
+            (uint256 triggeredPrice, ) = chainlinkPriceFeed.getRoundData(roundIdWhenTriggered);
+
             if (order.isBaseToQuote) {
                 // sell stop limit order
-                require(triggeredPrice <= order.triggerPrice, "");
+                require(triggeredPrice <= order.triggerPrice, "a3");
             } else {
                 // buy stop limit order
-                require(triggeredPrice >= order.triggerPrice, "");
+                require(triggeredPrice >= order.triggerPrice, "a4");
             }
         }
 

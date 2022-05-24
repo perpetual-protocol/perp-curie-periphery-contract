@@ -838,10 +838,9 @@
   resolved "https://registry.yarnpkg.com/@perp/curie-liquidity-mining/-/curie-liquidity-mining-0.3.2.tgz#c8831cd0e750db6b1ecaf2b40ceec6dc596ecb54"
   integrity sha512-CqxkNHIGD1BC6lV2E+ROpRaMnj4RgQmlIIaklmtTbuVbC4lwzPW31SgGl1KPmOv+bxKaGyD/Qd7nmYqu5ZgoNg==
 
-"@perp/perp-oracle-contract@0.1.2":
-  version "0.1.2"
-  resolved "https://registry.yarnpkg.com/@perp/perp-oracle-contract/-/perp-oracle-contract-0.1.2.tgz#6c9d80d40cf7e1d0e7aeb1889856de5904630f62"
-  integrity sha512-0FNnTqP1fU3wHnsCo2OFkDyO+66dl02+BCW9WlCSdo+Am8DSf+IPZjUct+YCB1I6fSgdJZgEN2OS3er16Sz1OQ==
+"@perp/perp-oracle-contract@git+ssh://git@github.com:perpetual-protocol/perp-oracle-contract.git#2ba8be46c34dbb4cb433bf0bff545f18fb5e2730":
+  version "0.4.1"
+  resolved "git+ssh://git@github.com:perpetual-protocol/perp-oracle-contract.git#2ba8be46c34dbb4cb433bf0bff545f18fb5e2730"
 
 "@resolver-engine/core@^0.3.3":
   version "0.3.3"

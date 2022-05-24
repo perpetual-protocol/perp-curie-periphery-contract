@@ -1012,4 +1012,31 @@ describe("LimitOrderBook fillLimitOrder", function () {
             limitOrderBook.connect(keeper).fillLimitOrder(limitOrder, signature, parseEther("0")),
         ).to.revertedWith("LOB_OSLO")
     })
+
+    describe.only("stop limit order", async () => {
+        it("do", async () => {
+            const limitOrder = {
+                orderType: fixture.orderTypeStopLimitOrder,
+                salt: 1,
+                trader: trader.address,
+                baseToken: baseToken.address,
+                isBaseToQuote: false,
+                isExactInput: false,
+                amount: parseEther("0.1"),
+                oppositeAmountBound: parseEther("300"),
+                deadline: ethers.constants.MaxUint256,
+                sqrtPriceLimitX96: 0,
+                referralCode: ethers.constants.HashZero,
+                reduceOnly: false,
+                roundIdWhenCreated: "18446744073709586284",
+                triggerPrice: parseEther("1900").toString(),
+            }
+
+            const signature = await getSignature(fixture, limitOrder, trader)
+
+            await expect(
+                limitOrderBook.connect(keeper).fillLimitOrder(limitOrder, signature, "18446744073709586287"),
+            ).to.emit(limitOrderBook, "LimitOrderFilled")
+        })
+    })
 })
