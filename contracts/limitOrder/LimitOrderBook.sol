@@ -122,8 +122,11 @@ contract LimitOrderBook is
             // TODO: is Chainlink roundId always increased?
             require(order.roundIdWhenCreated > 0 && roundIdWhenTriggered > order.roundIdWhenCreated, "a1");
 
+            console.log("roundIdWhenCreated");
             console.logUint(order.roundIdWhenCreated);
+            console.log("triggerPrice");
             console.logUint(order.triggerPrice);
+            console.log("roundIdWhenTriggered");
             console.logUint(roundIdWhenTriggered);
 
             require(order.triggerPrice > 0, "a2");
@@ -132,6 +135,9 @@ contract LimitOrderBook is
             // how to make sure this?
             ChainlinkPriceFeed chainlinkPriceFeed = ChainlinkPriceFeed(IBaseToken(order.baseToken).getPriceFeed());
             (uint256 triggeredPrice, ) = chainlinkPriceFeed.getRoundData(roundIdWhenTriggered);
+
+            console.log("triggeredPrice");
+            console.logUint(triggeredPrice);
 
             if (order.isBaseToQuote) {
                 // sell stop limit order
