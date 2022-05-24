@@ -32,12 +32,12 @@ interface ILimitOrderBook {
     /// @param sqrtPriceLimitX96 tx will fill until it reaches this price but WON'T REVERT
     /// @param referralCode The referral code
     /// @param reduceOnly The order will only reduce/close positions if true
-    /// @param roundIdWhenCreated The oracle `roundId` when the stop limit order is created
+    /// @param roundIdWhenCreated Chainlink `roundId` when the stop limit order is created
     // Only avaliable if orderType is StopLimitOrder, otherwise set to 0
     /// @param triggerPrice The trigger price of the stop limit order
     // Only avaliable if orderType is StopLimitOrder, otherwise set to 0
-    // If Q2B (long), the order will be tradable when oracle price >= triggerPrice
-    // If B2Q (short), the order will be tradable when oracle price <= triggerPrice
+    // If Q2B (long), the order will only be tradable when Chainlink price >= triggerPrice
+    // If B2Q (short), the order will only be tradable when Chainlink price <= triggerPrice
     struct LimitOrder {
         OrderType orderType;
         uint256 salt;

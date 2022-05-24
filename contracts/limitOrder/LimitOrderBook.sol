@@ -16,6 +16,7 @@ import { OwnerPausable } from "../base/OwnerPausable.sol";
 import { ReentrancyGuardUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
 import { IClearingHouse } from "@perp/curie-contract/contracts/interface/IClearingHouse.sol";
 import { IAccountBalance } from "@perp/curie-contract/contracts/interface/IAccountBalance.sol";
+import { IBaseToken } from "@perp/curie-contract/contracts/interface/IBaseToken.sol";
 
 contract LimitOrderBook is
     ILimitOrderBook,
@@ -94,10 +95,6 @@ contract LimitOrderBook is
         bytes memory signature,
         uint80 roundIdWhenTriggered
     ) external override nonReentrant {
-        // TODO: support StopLimitOrder in the future
-        // LOB_OSLO: Only Support LimitOrder
-        require(order.orderType == ILimitOrderBook.OrderType.LimitOrder, "LOB_OSLO");
-
         bytes32 orderHash = getOrderHash(order);
         verifySigner(order, signature);
 
@@ -117,6 +114,26 @@ contract LimitOrderBook is
             // => oldTakerPositionSize < 0 != order.isBaseToQuote => true != false
             // if trader has long position, he/she can only open a short position
             // => oldTakerPositionSize < 0 != order.isBaseToQuote => false != true
+        }
+
+        if (order.orderType == ILimitOrderBook.OrderType.StopLimitOrder) {
+            // TODO: is Chainlink roundId always increased?
+            require(order.roundIdWhenCreated > 0 && roundIdWhenTriggered > order.roundIdWhenCreated, "");
+
+            require(order.triggerPrice > 0, "");
+
+            IPriceFeed priceFeed = IBaseToken(order.baseToken).getPriceFeed();
+            (, uint256 triggerPrice, ) = priceFeed.getRoundData(roundIdWhenTriggered);
+
+            // TODO: get price using `roundIdWhenTriggered` from Chainlink
+            uint256 triggeredPrice = 123;
+            if (order.isBaseToQuote) {
+                // sell stop limit order
+                require(triggeredPrice <= order.triggerPrice, "");
+            } else {
+                // buy stop limit order
+                require(triggeredPrice >= order.triggerPrice, "");
+            }
         }
 
         (uint256 base, uint256 quote, uint256 fee) = IClearingHouse(clearingHouse).openPositionFor(
