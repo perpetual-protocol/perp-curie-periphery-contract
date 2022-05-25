@@ -7,6 +7,7 @@ import { AddressUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/Ad
 import { ECDSAUpgradeable } from "@openzeppelin/contracts-upgradeable/cryptography/ECDSAUpgradeable.sol";
 import { EIP712Upgradeable } from "@openzeppelin/contracts-upgradeable/drafts/EIP712Upgradeable.sol";
 import { SignedSafeMathUpgradeable } from "@openzeppelin/contracts-upgradeable/math/SignedSafeMathUpgradeable.sol";
+import { SafeMathUpgradeable } from "@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
 import { PerpMath } from "@perp/curie-contract/contracts/lib/PerpMath.sol";
 import { PerpSafeCast } from "@perp/curie-contract/contracts/lib/PerpSafeCast.sol";
 import { ILimitOrderBook } from "../interface/ILimitOrderBook.sol";
@@ -33,6 +34,8 @@ contract LimitOrderBook is
     using PerpMath for uint256;
     using PerpSafeCast for uint256;
     using SignedSafeMathUpgradeable for int256;
+    using SafeMathUpgradeable for uint256;
+    using SafeMathUpgradeable for uint8;
 
     // NOTE: cannot use `OrderType orderType` here, use `uint8 orderType` instead
     // solhint-disable-next-line func-name-mixedcase
@@ -131,11 +134,9 @@ contract LimitOrderBook is
 
             require(order.triggerPrice > 0, "a2");
 
-            // TODO: we can only support stop limit order for markets that use ChainlinkPriceFeed.
-            // how to make sure this?
-            ChainlinkPriceFeed chainlinkPriceFeed = ChainlinkPriceFeed(IBaseToken(order.baseToken).getPriceFeed());
-            (uint256 triggeredPrice, ) = chainlinkPriceFeed.getRoundData(roundIdWhenTriggered);
-
+            // TODO: we can only support stop limit order for markets that use ChainlinkPriceFeed
+            // TODO: if roundId is not existed, would aggregator revert?
+            uint256 triggeredPrice = _getPriceByRoundId(order.baseToken, roundIdWhenTriggered);
             console.log("triggeredPrice");
             console.logUint(triggeredPrice);
 
@@ -247,5 +248,26 @@ contract LimitOrderBook is
         require(signer == order.trader, "LOB_SINT");
 
         return signer;
+    }
+
+    //
+    // INTERNAL VIEW
+    //
+
+    function _formatDecimals(
+        uint256 price,
+        uint8 fromDecimals,
+        uint8 toDecimals
+    ) internal pure returns (uint256) {
+        // LOB_ID: Invalid Decimals
+        require(fromDecimals <= toDecimals, "LOB_ID");
+
+        return price.mul(10**(toDecimals.sub(fromDecimals)));
+    }
+
+    function _getPriceByRoundId(address baseToken, uint80 roundId) internal view returns (uint256) {
+        ChainlinkPriceFeed chainlinkPriceFeed = ChainlinkPriceFeed(IBaseToken(baseToken).getPriceFeed());
+        (uint256 price, ) = chainlinkPriceFeed.getRoundData(roundId);
+        return _formatDecimals(price, chainlinkPriceFeed.decimals(), 18);
     }
 }
