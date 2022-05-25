@@ -988,32 +988,7 @@ describe("LimitOrderBook fillLimitOrder", function () {
         )
     })
 
-    it("force error, only support limit order type now", async () => {
-        const limitOrder = {
-            orderType: fixture.orderTypeStopLimitOrder,
-            salt: 1,
-            trader: trader.address,
-            baseToken: baseToken.address,
-            isBaseToQuote: false,
-            isExactInput: false,
-            amount: parseEther("0.1"),
-            oppositeAmountBound: parseEther("300"),
-            deadline: ethers.constants.MaxUint256,
-            sqrtPriceLimitX96: 0,
-            referralCode: ethers.constants.HashZero,
-            reduceOnly: false,
-            roundIdWhenCreated: parseEther("0").toString(),
-            triggerPrice: parseEther("0").toString(),
-        }
-
-        const signature = await getSignature(fixture, limitOrder, trader)
-
-        await expect(
-            limitOrderBook.connect(keeper).fillLimitOrder(limitOrder, signature, parseEther("0")),
-        ).to.revertedWith("LOB_OSLO")
-    })
-
-    describe.only("stop limit order", async () => {
+    describe("stop limit order", async () => {
         beforeEach(async () => {
             const priceFeedDecimals = await mockedBaseAggregator.decimals()
             const timestamp = (await waffle.provider.getBlock("latest")).timestamp
