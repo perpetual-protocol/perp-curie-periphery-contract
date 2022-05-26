@@ -265,20 +265,26 @@ contract LimitOrderBook is
         // TODO: if roundId is not existed, would aggregator revert?
         uint256 triggeredPrice = _getPriceByRoundId(order.baseToken, roundIdWhenTriggered);
 
+        // NOTE: we need to make sure the price has reached trigger price.
+        // however, we can only know whether index price has reached trigger price,
+        // we didn't know whether market price has reached trigger price
+
+        // rules of advanced order types
+        // https://help.ftx.com/hc/en-us/articles/360031896592-Advanced-Order-Types
         if (order.orderType == ILimitOrderBook.OrderType.StopLimitOrder) {
             if (order.isBaseToQuote) {
-                // sell stop limit order
+                // sell stop-loss limit order
                 require(triggeredPrice <= order.triggerPrice, "a1");
             } else {
-                // buy stop limit order
+                // buy stop-loss limit order
                 require(triggeredPrice >= order.triggerPrice, "a2");
             }
         } else if (order.orderType == ILimitOrderBook.OrderType.TakeProfitLimitOrder) {
             if (order.isBaseToQuote) {
-                // sell take profit limit order
+                // sell take-profit limit order
                 require(triggeredPrice >= order.triggerPrice, "a3");
             } else {
-                // buy take profit limit order
+                // buy take-profit limit order
                 require(triggeredPrice <= order.triggerPrice, "a4");
             }
         } else {
