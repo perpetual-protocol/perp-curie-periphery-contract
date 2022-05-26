@@ -122,7 +122,8 @@ contract LimitOrderBook is
         }
 
         if (order.orderType == ILimitOrderBook.OrderType.StopLimitOrder) {
-            // TODO: is Chainlink roundId always increased?
+            // NOTE: Chainlink proxy's roundId is always increased
+            // https://docs.chain.link/docs/historical-price-data/
             require(order.roundIdWhenCreated > 0 && roundIdWhenTriggered > order.roundIdWhenCreated, "a1");
 
             console.log("roundIdWhenCreated");
