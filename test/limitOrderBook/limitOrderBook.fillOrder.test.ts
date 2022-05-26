@@ -1,6 +1,6 @@
 import { FakeContract } from "@defi-wonderland/smock"
 import { loadFixture } from "@ethereum-waffle/provider"
-import { parseEther, parseUnits } from "@ethersproject/units"
+import { parseEther } from "@ethersproject/units"
 import { expect } from "chai"
 import { ethers, waffle } from "hardhat"
 import {
@@ -986,66 +986,5 @@ describe("LimitOrderBook fillLimitOrder", function () {
         expect(await accountBalance.getTakerOpenNotional(trader.address, baseToken.address)).to.be.eq(
             parseEther("-298.991479024232165335"),
         )
-    })
-
-    describe("stop limit order", async () => {
-        beforeEach(async () => {
-            const priceFeedDecimals = await mockedBaseAggregator.decimals()
-            const timestamp = (await waffle.provider.getBlock("latest")).timestamp
-
-            const roundData = {
-                // "roundId": [roundId, answer, startedAt, updatedAt, answeredInRound]
-                "18446744000000000000": [
-                    "18446744000000000000",
-                    parseUnits("1800", priceFeedDecimals),
-                    timestamp,
-                    timestamp,
-                    "18446744000000000000",
-                ],
-                "18446744000000000001": [
-                    "18446744000000000001",
-                    parseUnits("1900", priceFeedDecimals),
-                    timestamp + 15,
-                    timestamp + 15,
-                    "18446744000000000001",
-                ],
-                "18446744000000000002": [
-                    "18446744000000000002",
-                    parseUnits("1700", priceFeedDecimals),
-                    timestamp + 30,
-                    timestamp + 30,
-                    "18446744000000000002",
-                ],
-            }
-
-            mockedBaseAggregator.getRoundData.returns((roundId: any) => {
-                return roundData[roundId]
-            })
-        })
-
-        it("fill stop limit order: Q2B (long) exact output", async () => {
-            const stopLimitOrder = {
-                orderType: fixture.orderTypeStopLimitOrder,
-                salt: 1,
-                trader: trader.address,
-                baseToken: baseToken.address,
-                isBaseToQuote: false,
-                isExactInput: false,
-                amount: parseEther("0.1"),
-                oppositeAmountBound: parseEther("300"),
-                deadline: ethers.constants.MaxUint256,
-                sqrtPriceLimitX96: 0,
-                referralCode: ethers.constants.HashZero,
-                reduceOnly: false,
-                roundIdWhenCreated: "18446744000000000000",
-                triggerPrice: parseEther("1900").toString(),
-            }
-
-            const signature = await getSignature(fixture, stopLimitOrder, trader)
-
-            await expect(
-                limitOrderBook.connect(keeper).fillLimitOrder(stopLimitOrder, signature, "18446744000000000001"),
-            ).to.emit(limitOrderBook, "LimitOrderFilled")
-        })
     })
 })
