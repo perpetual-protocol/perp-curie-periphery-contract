@@ -114,40 +114,19 @@ contract LimitOrderBook is
         if (order.reduceOnly) {
             // LOB_ROINS: ReduceOnly Is Not Satisfied
             require((oldTakerPositionSize != 0) && (oldTakerPositionSize < 0 != order.isBaseToQuote), "LOB_ROINS");
-            // if trader has no position, he/she will get reverted
-            // if trader has short position, he/she can only open a long position
+
+            // if trader has no position, order will get reverted
+            // if trader has short position, trader can only open a long position
             // => oldTakerPositionSize < 0 != order.isBaseToQuote => true != false
-            // if trader has long position, he/she can only open a short position
+            // if trader has long position, trader can only open a short position
             // => oldTakerPositionSize < 0 != order.isBaseToQuote => false != true
         }
 
-        if (order.orderType == ILimitOrderBook.OrderType.StopLimitOrder) {
-            // NOTE: Chainlink proxy's roundId is always increased
-            // https://docs.chain.link/docs/historical-price-data/
-            require(order.roundIdWhenCreated > 0 && roundIdWhenTriggered > order.roundIdWhenCreated, "a1");
-
-            console.log("roundIdWhenCreated");
-            console.logUint(order.roundIdWhenCreated);
-            console.log("triggerPrice");
-            console.logUint(order.triggerPrice);
-            console.log("roundIdWhenTriggered");
-            console.logUint(roundIdWhenTriggered);
-
-            require(order.triggerPrice > 0, "a2");
-
-            // TODO: we can only support stop limit order for markets that use ChainlinkPriceFeed
-            // TODO: if roundId is not existed, would aggregator revert?
-            uint256 triggeredPrice = _getPriceByRoundId(order.baseToken, roundIdWhenTriggered);
-            console.log("triggeredPrice");
-            console.logUint(triggeredPrice);
-
-            if (order.isBaseToQuote) {
-                // sell stop limit order
-                require(triggeredPrice <= order.triggerPrice, "a3");
-            } else {
-                // buy stop limit order
-                require(triggeredPrice >= order.triggerPrice, "a4");
-            }
+        if (
+            order.orderType == ILimitOrderBook.OrderType.StopLimitOrder ||
+            order.orderType == ILimitOrderBook.OrderType.TakeProfitLimitOrder
+        ) {
+            _verifyTriggerPrice(order, roundIdWhenTriggered);
         }
 
         (uint256 base, uint256 quote, uint256 fee) = IClearingHouse(clearingHouse).openPositionFor(
@@ -270,5 +249,41 @@ contract LimitOrderBook is
         ChainlinkPriceFeed chainlinkPriceFeed = ChainlinkPriceFeed(IBaseToken(baseToken).getPriceFeed());
         (uint256 price, ) = chainlinkPriceFeed.getRoundData(roundId);
         return _formatDecimals(price, chainlinkPriceFeed.decimals(), 18);
+    }
+
+    function _verifyTriggerPrice(LimitOrder memory order, uint80 roundIdWhenTriggered) internal view {
+        // NOTE: Chainlink proxy's roundId is always increased
+        // https://docs.chain.link/docs/historical-price-data/
+
+        // LOB_IRI: Invalid Round Id
+        require(order.roundIdWhenCreated > 0 && roundIdWhenTriggered > order.roundIdWhenCreated, "LOB_IRI");
+
+        // LOB_ITP: Invalid Trigger Price
+        require(order.triggerPrice > 0, "LOB_ITP");
+
+        // TODO: we can only support stop limit order for markets that use ChainlinkPriceFeed
+        // TODO: if roundId is not existed, would aggregator revert?
+        uint256 triggeredPrice = _getPriceByRoundId(order.baseToken, roundIdWhenTriggered);
+
+        if (order.orderType == ILimitOrderBook.OrderType.StopLimitOrder) {
+            if (order.isBaseToQuote) {
+                // sell stop limit order
+                require(triggeredPrice <= order.triggerPrice, "a1");
+            } else {
+                // buy stop limit order
+                require(triggeredPrice >= order.triggerPrice, "a2");
+            }
+        } else if (order.orderType == ILimitOrderBook.OrderType.TakeProfitLimitOrder) {
+            if (order.isBaseToQuote) {
+                // sell take profit limit order
+                require(triggeredPrice >= order.triggerPrice, "a3");
+            } else {
+                // buy take profit limit order
+                require(triggeredPrice <= order.triggerPrice, "a4");
+            }
+        } else {
+            // LOB_IOT: Invalid Order Type
+            revert("LOB_IOT");
+        }
     }
 }
