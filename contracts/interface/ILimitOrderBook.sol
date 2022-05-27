@@ -86,9 +86,9 @@ interface ILimitOrderBook {
     /// @notice Emitted when the limit order is cancelled
     /// @param trader The address of trader who cancelled the limit order
     /// @param baseToken The address of baseToken (vETH, vBTC, ...)
-    /// @param orderHash The hash of the filled limit order
-    /// @param positionSize The exchanged position size
-    /// @param positionNotional The exchanged position notional
+    /// @param orderHash The hash of the cancelled limit order
+    /// @param positionSize The position size
+    /// @param positionNotional The position notional
     event LimitOrderCancelled(
         address indexed trader,
         address indexed baseToken,
