@@ -1,10 +1,11 @@
-import { FakeContract, smock } from "@defi-wonderland/smock"
+import { MockContract, smock } from "@defi-wonderland/smock"
 import { ethers } from "hardhat"
 import {
     BaseToken,
     ChainlinkPriceFeed,
     QuoteToken,
     TestAggregatorV3,
+    TestAggregatorV3__factory,
     UniswapV3Factory,
     UniswapV3Pool,
     VirtualToken,
@@ -14,8 +15,8 @@ import { isAscendingTokenOrder } from "./utilities"
 interface TokensFixture {
     token0: BaseToken
     token1: QuoteToken
-    mockedAggregator0: FakeContract<TestAggregatorV3>
-    mockedAggregator1: FakeContract<TestAggregatorV3>
+    mockedAggregator0: MockContract<TestAggregatorV3>
+    mockedAggregator1: MockContract<TestAggregatorV3>
 }
 
 interface PoolFixture {
@@ -27,7 +28,7 @@ interface PoolFixture {
 
 interface BaseTokenFixture {
     baseToken: BaseToken
-    mockedAggregator: FakeContract<TestAggregatorV3>
+    mockedAggregator: MockContract<TestAggregatorV3>
 }
 
 export function createQuoteTokenFixture(name: string, symbol: string): () => Promise<QuoteToken> {
@@ -41,7 +42,8 @@ export function createQuoteTokenFixture(name: string, symbol: string): () => Pro
 
 export function createBaseTokenFixture(name: string, symbol: string): () => Promise<BaseTokenFixture> {
     return async (): Promise<BaseTokenFixture> => {
-        const mockedAggregator = await smock.fake<TestAggregatorV3>("TestAggregatorV3")
+        const aggregatorFactory = await smock.mock<TestAggregatorV3__factory>("TestAggregatorV3")
+        const mockedAggregator = await aggregatorFactory.deploy()
         mockedAggregator.decimals.returns(() => {
             return 6
         })
@@ -77,8 +79,8 @@ export async function tokensFixture(): Promise<TokensFixture> {
 
     let token0: BaseToken
     let token1: QuoteToken
-    let mockedAggregator0: FakeContract<TestAggregatorV3>
-    let mockedAggregator1: FakeContract<TestAggregatorV3>
+    let mockedAggregator0: MockContract<TestAggregatorV3>
+    let mockedAggregator1: MockContract<TestAggregatorV3>
     if (isAscendingTokenOrder(randomToken0.address, randomToken1.address)) {
         token0 = randomToken0
         mockedAggregator0 = randomMockedAggregator0

@@ -1,4 +1,4 @@
-import { FakeContract } from "@defi-wonderland/smock"
+import { MockContract } from "@defi-wonderland/smock"
 import { ethers } from "hardhat"
 import {
     AccountBalance,
@@ -36,9 +36,9 @@ export interface ClearingHouseFixture {
     USDC: TestERC20
     quoteToken: QuoteToken
     baseToken: BaseToken
-    mockedBaseAggregator: FakeContract<TestAggregatorV3>
+    mockedBaseAggregator: MockContract<TestAggregatorV3>
     baseToken2: BaseToken
-    mockedBaseAggregator2: FakeContract<TestAggregatorV3>
+    mockedBaseAggregator2: MockContract<TestAggregatorV3>
     pool2: UniswapV3Pool
 }
 
@@ -58,7 +58,7 @@ export function createClearingHouseFixture(
         const USDC = (await tokenFactory.deploy()) as TestERC20
         await USDC.__TestERC20_init("TestUSDC", "USDC", 6)
 
-        let baseToken: BaseToken, quoteToken: QuoteToken, mockedBaseAggregator: FakeContract<TestAggregatorV3>
+        let baseToken: BaseToken, quoteToken: QuoteToken, mockedBaseAggregator: MockContract<TestAggregatorV3>
         const { token0, mockedAggregator0, token1 } = await tokensFixture()
 
         // we assume (base, quote) == (token0, token1)

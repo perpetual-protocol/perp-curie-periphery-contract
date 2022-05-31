@@ -23,6 +23,10 @@ contract TestLimitOrderBook is LimitOrderBook {
         return _testBlockTimestamp;
     }
 
+    function getPriceByRoundId(address baseToken, uint80 roundId) external view returns (uint256) {
+        return _getPriceByRoundId(baseToken, roundId);
+    }
+
     //
     // INTERNAL VIEW
     //
