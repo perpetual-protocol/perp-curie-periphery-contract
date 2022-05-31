@@ -194,7 +194,7 @@ describe("LimitOrderBook fillLimitOrder advanced order types", function () {
             const signature = await getSignature(fixture, stopLimitOrder, trader)
 
             await expect(
-                limitOrderBook.connect(keeper).fillLimitOrder(stopLimitOrder, signature, computeRoundId(1, 1)),
+                limitOrderBook.connect(keeper).fillLimitOrder(stopLimitOrder, signature, computeRoundId(1, 2)),
             ).to.revertedWith("LOB_ITP")
         })
 
