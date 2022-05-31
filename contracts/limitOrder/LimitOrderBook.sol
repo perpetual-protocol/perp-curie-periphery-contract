@@ -19,7 +19,6 @@ import { IClearingHouse } from "@perp/curie-contract/contracts/interface/ICleari
 import { IAccountBalance } from "@perp/curie-contract/contracts/interface/IAccountBalance.sol";
 import { IBaseToken } from "@perp/curie-contract/contracts/interface/IBaseToken.sol";
 import { ChainlinkPriceFeed } from "@perp/perp-oracle-contract/contracts/ChainlinkPriceFeed.sol";
-import "hardhat/console.sol";
 
 contract LimitOrderBook is
     ILimitOrderBook,
@@ -261,11 +260,10 @@ contract LimitOrderBook is
         // LOB_ITP: Invalid Trigger Price
         require(order.triggerPrice > 0, "LOB_ITP");
 
-        // TODO: we can only support stop limit order for markets that use ChainlinkPriceFeed
-        // TODO: if roundId is not existed, would aggregator revert?
+        // NOTE: we can only support stop limit order for markets that use ChainlinkPriceFeed
         uint256 triggeredPrice = _getPriceByRoundId(order.baseToken, roundIdWhenTriggered);
 
-        // NOTE: we need to make sure the price has reached trigger price.
+        // we need to make sure the price has reached trigger price.
         // however, we can only know whether index price has reached trigger price,
         // we didn't know whether market price has reached trigger price
 
@@ -273,19 +271,19 @@ contract LimitOrderBook is
         // https://help.ftx.com/hc/en-us/articles/360031896592-Advanced-Order-Types
         if (order.orderType == ILimitOrderBook.OrderType.StopLimitOrder) {
             if (order.isBaseToQuote) {
-                // sell stop-loss limit order
-                require(triggeredPrice <= order.triggerPrice, "a1");
+                // LOB_SSLOTPNM: Sell Stop Limit Order Trigger Price Not Matched
+                require(triggeredPrice <= order.triggerPrice, "LOB_SSLOTPNM");
             } else {
-                // buy stop-loss limit order
-                require(triggeredPrice >= order.triggerPrice, "a2");
+                // LOB_BSLOTPNM: Buy Stop Limit Order Trigger Price Not Matched
+                require(triggeredPrice >= order.triggerPrice, "LOB_BSLOTPNM");
             }
         } else if (order.orderType == ILimitOrderBook.OrderType.TakeProfitLimitOrder) {
             if (order.isBaseToQuote) {
-                // sell take-profit limit order
-                require(triggeredPrice >= order.triggerPrice, "a3");
+                // LOB_STLOTPNM: Sell Take-profit Limit Order Trigger Price Not Matched
+                require(triggeredPrice >= order.triggerPrice, "LOB_STLOTPNM");
             } else {
-                // buy take-profit limit order
-                require(triggeredPrice <= order.triggerPrice, "a4");
+                // LOB_BTLOTPNM: Buy Take-profit Limit Order Trigger Price Not Matched
+                require(triggeredPrice <= order.triggerPrice, "LOB_BTLOTPNM");
             }
         } else {
             // LOB_IOT: Invalid Order Type
