@@ -829,18 +829,18 @@
   resolved "https://registry.yarnpkg.com/@openzeppelin/contracts/-/contracts-3.4.1-solc-0.7-2.tgz#371c67ebffe50f551c3146a9eec5fe6ffe862e92"
   integrity sha512-tAG9LWg8+M2CMu7hIsqHPaTyG4uDzjr6mhvH96LvOpLZZj6tgzTluBt+LsCf1/QaYrlis6pITvpIaIhE+iZB+Q==
 
-"@perp/curie-contract@git+ssh://git@github.com:perpetual-protocol/perp-lushan.git#92ebce5762a06b9dadc0df087555b5fd09636142":
+"@perp/curie-contract@git+ssh://git@github.com:perpetual-protocol/perp-lushan.git#e57b29a6c848d013e540359037e05b113c314b5c":
   version "1.3.0-limit-order"
-  resolved "git+ssh://git@github.com:perpetual-protocol/perp-lushan.git#92ebce5762a06b9dadc0df087555b5fd09636142"
+  resolved "git+ssh://git@github.com:perpetual-protocol/perp-lushan.git#e57b29a6c848d013e540359037e05b113c314b5c"
 
 "@perp/curie-liquidity-mining@0.3.2":
   version "0.3.2"
   resolved "https://registry.yarnpkg.com/@perp/curie-liquidity-mining/-/curie-liquidity-mining-0.3.2.tgz#c8831cd0e750db6b1ecaf2b40ceec6dc596ecb54"
   integrity sha512-CqxkNHIGD1BC6lV2E+ROpRaMnj4RgQmlIIaklmtTbuVbC4lwzPW31SgGl1KPmOv+bxKaGyD/Qd7nmYqu5ZgoNg==
 
-"@perp/perp-oracle-contract@git+ssh://git@github.com:perpetual-protocol/perp-oracle-contract.git#2ba8be46c34dbb4cb433bf0bff545f18fb5e2730":
+"@perp/perp-oracle-contract@git+ssh://git@github.com:perpetual-protocol/perp-oracle-contract.git#79783c48653feac65f866e9944c48bf4ea943b08":
   version "0.4.1"
-  resolved "git+ssh://git@github.com:perpetual-protocol/perp-oracle-contract.git#2ba8be46c34dbb4cb433bf0bff545f18fb5e2730"
+  resolved "git+ssh://git@github.com:perpetual-protocol/perp-oracle-contract.git#79783c48653feac65f866e9944c48bf4ea943b08"
 
 "@resolver-engine/core@^0.3.3":
   version "0.3.3"
