@@ -254,13 +254,13 @@ contract LimitOrderBook is
         // NOTE: Chainlink proxy's roundId is always increased
         // https://docs.chain.link/docs/historical-price-data/
 
-        // LOB_IRI: Invalid Round Id
+        // LOB_IRI: Invalid RoundId
         require(order.roundIdWhenCreated > 0 && roundIdWhenTriggered > order.roundIdWhenCreated, "LOB_IRI");
 
         // LOB_ITP: Invalid Trigger Price
         require(order.triggerPrice > 0, "LOB_ITP");
 
-        // NOTE: we can only support stop limit order for markets that use ChainlinkPriceFeed
+        // NOTE: we can only support stop/take-profit limit order for markets that use ChainlinkPriceFeed
         uint256 triggeredPrice = _getPriceByRoundId(order.baseToken, roundIdWhenTriggered);
 
         // we need to make sure the price has reached trigger price.
