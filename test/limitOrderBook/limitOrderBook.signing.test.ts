@@ -41,7 +41,7 @@ describe("LimitOrderBook signing", function () {
             sqrtPriceLimitX96: 0,
             referralCode: ethers.constants.HashZero,
             reduceOnly: false,
-            roundIdWhenCreated: parseEther("0").toString(),
+            roundIdWhenCreated: "0",
             triggerPrice: parseEther("0").toString(),
         }
 
@@ -75,7 +75,7 @@ describe("LimitOrderBook signing", function () {
             sqrtPriceLimitX96: 0,
             referralCode: ethers.constants.HashZero,
             reduceOnly: false,
-            roundIdWhenCreated: parseEther("0").toString(),
+            roundIdWhenCreated: "0",
             triggerPrice: parseEther("0").toString(),
         }
 
@@ -112,7 +112,7 @@ describe("LimitOrderBook signing", function () {
             sqrtPriceLimitX96: 0,
             referralCode: ethers.constants.HashZero,
             reduceOnly: false,
-            roundIdWhenCreated: parseEther("0").toString(),
+            roundIdWhenCreated: "0",
             triggerPrice: parseEther("0").toString(),
         }
 

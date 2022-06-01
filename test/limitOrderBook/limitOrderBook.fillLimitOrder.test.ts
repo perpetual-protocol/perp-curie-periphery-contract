@@ -116,7 +116,7 @@ describe("LimitOrderBook fillLimitOrder", function () {
             sqrtPriceLimitX96: 0,
             referralCode: ethers.constants.HashZero,
             reduceOnly: false,
-            roundIdWhenCreated: parseEther("0").toString(),
+            roundIdWhenCreated: "0",
             triggerPrice: parseEther("0").toString(),
         }
 
@@ -125,7 +125,7 @@ describe("LimitOrderBook fillLimitOrder", function () {
 
         const oldRewardBalance = await rewardToken.balanceOf(keeper.address)
 
-        const tx = await limitOrderBook.connect(keeper).fillLimitOrder(limitOrder, signature, parseEther("0"))
+        const tx = await limitOrderBook.connect(keeper).fillLimitOrder(limitOrder, signature, "0")
         await expect(tx).to.emit(clearingHouse, "PositionChanged").withArgs(
             trader.address,
             baseToken.address,
@@ -172,7 +172,7 @@ describe("LimitOrderBook fillLimitOrder", function () {
             sqrtPriceLimitX96: 0,
             referralCode: ethers.constants.HashZero,
             reduceOnly: false,
-            roundIdWhenCreated: parseEther("0").toString(),
+            roundIdWhenCreated: "0",
             triggerPrice: parseEther("0").toString(),
         }
 
@@ -181,7 +181,7 @@ describe("LimitOrderBook fillLimitOrder", function () {
 
         const oldRewardBalance = await rewardToken.balanceOf(keeper.address)
 
-        const tx = await limitOrderBook.connect(keeper).fillLimitOrder(limitOrder, signature, parseEther("0"))
+        const tx = await limitOrderBook.connect(keeper).fillLimitOrder(limitOrder, signature, "0")
         await expect(tx).to.emit(clearingHouse, "PositionChanged").withArgs(
             trader.address,
             baseToken.address,
@@ -230,7 +230,7 @@ describe("LimitOrderBook fillLimitOrder", function () {
             sqrtPriceLimitX96: 0,
             referralCode: ethers.constants.HashZero,
             reduceOnly: false,
-            roundIdWhenCreated: parseEther("0").toString(),
+            roundIdWhenCreated: "0",
             triggerPrice: parseEther("0").toString(),
         }
 
@@ -239,7 +239,7 @@ describe("LimitOrderBook fillLimitOrder", function () {
 
         const oldRewardBalance = await rewardToken.balanceOf(keeper.address)
 
-        const tx = await limitOrderBook.connect(keeper).fillLimitOrder(limitOrder, signature, parseEther("0"))
+        const tx = await limitOrderBook.connect(keeper).fillLimitOrder(limitOrder, signature, "0")
         await expect(tx).to.emit(clearingHouse, "PositionChanged").withArgs(
             trader.address,
             baseToken.address,
@@ -288,7 +288,7 @@ describe("LimitOrderBook fillLimitOrder", function () {
             sqrtPriceLimitX96: 0,
             referralCode: ethers.constants.HashZero,
             reduceOnly: false,
-            roundIdWhenCreated: parseEther("0").toString(),
+            roundIdWhenCreated: "0",
             triggerPrice: parseEther("0").toString(),
         }
 
@@ -297,7 +297,7 @@ describe("LimitOrderBook fillLimitOrder", function () {
 
         const oldRewardBalance = await rewardToken.balanceOf(keeper.address)
 
-        const tx = await limitOrderBook.connect(keeper).fillLimitOrder(limitOrder, signature, parseEther("0"))
+        const tx = await limitOrderBook.connect(keeper).fillLimitOrder(limitOrder, signature, "0")
         await expect(tx).to.emit(clearingHouse, "PositionChanged").withArgs(
             trader.address,
             baseToken.address,
@@ -343,7 +343,7 @@ describe("LimitOrderBook fillLimitOrder", function () {
             sqrtPriceLimitX96: 0,
             referralCode: ethers.constants.HashZero,
             reduceOnly: false,
-            roundIdWhenCreated: parseEther("0").toString(),
+            roundIdWhenCreated: "0",
             triggerPrice: parseEther("0").toString(),
         }
 
@@ -378,19 +378,20 @@ describe("LimitOrderBook fillLimitOrder", function () {
             sqrtPriceLimitX96: 0,
             referralCode: ethers.constants.HashZero,
             reduceOnly: false,
-            roundIdWhenCreated: parseEther("0").toString(),
+            roundIdWhenCreated: "0",
             triggerPrice: parseEther("0").toString(),
         }
 
         const signature = await getSignature(fixture, limitOrder, trader)
 
-        await expect(
-            await limitOrderBook.connect(keeper).fillLimitOrder(limitOrder, signature, parseEther("0")),
-        ).to.emit(limitOrderBook, "LimitOrderFilled")
+        await expect(await limitOrderBook.connect(keeper).fillLimitOrder(limitOrder, signature, "0")).to.emit(
+            limitOrderBook,
+            "LimitOrderFilled",
+        )
 
-        await expect(
-            limitOrderBook.connect(keeper).fillLimitOrder(limitOrder, signature, parseEther("0")),
-        ).to.revertedWith("LOB_OMBU")
+        await expect(limitOrderBook.connect(keeper).fillLimitOrder(limitOrder, signature, "0")).to.revertedWith(
+            "LOB_OMBU",
+        )
     })
 
     it("force error, when order is already cancelled", async () => {
@@ -408,7 +409,7 @@ describe("LimitOrderBook fillLimitOrder", function () {
             sqrtPriceLimitX96: 0,
             referralCode: ethers.constants.HashZero,
             reduceOnly: false,
-            roundIdWhenCreated: parseEther("0").toString(),
+            roundIdWhenCreated: "0",
             triggerPrice: parseEther("0").toString(),
         }
 
@@ -419,9 +420,9 @@ describe("LimitOrderBook fillLimitOrder", function () {
             "LimitOrderCancelled",
         )
 
-        await expect(
-            limitOrderBook.connect(keeper).fillLimitOrder(limitOrder, signature, parseEther("0")),
-        ).to.revertedWith("LOB_OMBU")
+        await expect(limitOrderBook.connect(keeper).fillLimitOrder(limitOrder, signature, "0")).to.revertedWith(
+            "LOB_OMBU",
+        )
     })
 
     it("force error, fillOrder when reduceOnly = true and trader has no position", async () => {
@@ -441,15 +442,15 @@ describe("LimitOrderBook fillLimitOrder", function () {
             sqrtPriceLimitX96: 0,
             referralCode: ethers.constants.HashZero,
             reduceOnly: true,
-            roundIdWhenCreated: parseEther("0").toString(),
+            roundIdWhenCreated: "0",
             triggerPrice: parseEther("0").toString(),
         }
 
         const signature = await getSignature(fixture, limitOrder, trader)
 
-        await expect(
-            limitOrderBook.connect(keeper).fillLimitOrder(limitOrder, signature, parseEther("0")),
-        ).to.be.revertedWith("LOB_ROINS")
+        await expect(limitOrderBook.connect(keeper).fillLimitOrder(limitOrder, signature, "0")).to.be.revertedWith(
+            "LOB_ROINS",
+        )
     })
 
     describe("fillOrder when reduceOnly = true and trader has long position", () => {
@@ -486,14 +487,14 @@ describe("LimitOrderBook fillLimitOrder", function () {
                 sqrtPriceLimitX96: 0,
                 referralCode: ethers.constants.HashZero,
                 reduceOnly: true,
-                roundIdWhenCreated: parseEther("0").toString(),
+                roundIdWhenCreated: "0",
                 triggerPrice: parseEther("0").toString(),
             }
 
             const signature = await getSignature(fixture, limitOrder, trader)
             const orderHash = await getOrderHash(fixture, limitOrder)
 
-            const tx = await limitOrderBook.connect(keeper).fillLimitOrder(limitOrder, signature, parseEther("0"))
+            const tx = await limitOrderBook.connect(keeper).fillLimitOrder(limitOrder, signature, "0")
             await expect(tx).to.emit(limitOrderBook, "LimitOrderFilled").withArgs(
                 trader.address,
                 baseToken.address,
@@ -533,14 +534,14 @@ describe("LimitOrderBook fillLimitOrder", function () {
                 sqrtPriceLimitX96: 0,
                 referralCode: ethers.constants.HashZero,
                 reduceOnly: true,
-                roundIdWhenCreated: parseEther("0").toString(),
+                roundIdWhenCreated: "0",
                 triggerPrice: parseEther("0").toString(),
             }
 
             const signature = await getSignature(fixture, limitOrder, trader)
             const orderHash = await getOrderHash(fixture, limitOrder)
 
-            const tx = await limitOrderBook.connect(keeper).fillLimitOrder(limitOrder, signature, parseEther("0"))
+            const tx = await limitOrderBook.connect(keeper).fillLimitOrder(limitOrder, signature, "0")
             await expect(tx).to.emit(limitOrderBook, "LimitOrderFilled").withArgs(
                 trader.address,
                 baseToken.address,
@@ -576,15 +577,15 @@ describe("LimitOrderBook fillLimitOrder", function () {
                 sqrtPriceLimitX96: 0,
                 referralCode: ethers.constants.HashZero,
                 reduceOnly: true,
-                roundIdWhenCreated: parseEther("0").toString(),
+                roundIdWhenCreated: "0",
                 triggerPrice: parseEther("0").toString(),
             }
 
             const signature = await getSignature(fixture, limitOrder, trader)
 
-            await expect(
-                limitOrderBook.connect(keeper).fillLimitOrder(limitOrder, signature, parseEther("0")),
-            ).to.be.revertedWith("LOB_ROINS")
+            await expect(limitOrderBook.connect(keeper).fillLimitOrder(limitOrder, signature, "0")).to.be.revertedWith(
+                "LOB_ROINS",
+            )
         })
 
         it("force error, reduceOnly is not satisfied when creating a reverse position", async () => {
@@ -603,15 +604,15 @@ describe("LimitOrderBook fillLimitOrder", function () {
                 sqrtPriceLimitX96: 0,
                 referralCode: ethers.constants.HashZero,
                 reduceOnly: true,
-                roundIdWhenCreated: parseEther("0").toString(),
+                roundIdWhenCreated: "0",
                 triggerPrice: parseEther("0").toString(),
             }
 
             const signature = await getSignature(fixture, limitOrder, trader)
 
-            await expect(
-                limitOrderBook.connect(keeper).fillLimitOrder(limitOrder, signature, parseEther("0")),
-            ).to.be.revertedWith("LOB_RSCBGTOS")
+            await expect(limitOrderBook.connect(keeper).fillLimitOrder(limitOrder, signature, "0")).to.be.revertedWith(
+                "LOB_RSCBGTOS",
+            )
         })
     })
 
@@ -649,14 +650,14 @@ describe("LimitOrderBook fillLimitOrder", function () {
                 sqrtPriceLimitX96: 0,
                 referralCode: ethers.constants.HashZero,
                 reduceOnly: true,
-                roundIdWhenCreated: parseEther("0").toString(),
+                roundIdWhenCreated: "0",
                 triggerPrice: parseEther("0").toString(),
             }
 
             const signature = await getSignature(fixture, limitOrder, trader)
             const orderHash = await getOrderHash(fixture, limitOrder)
 
-            const tx = await limitOrderBook.connect(keeper).fillLimitOrder(limitOrder, signature, parseEther("0"))
+            const tx = await limitOrderBook.connect(keeper).fillLimitOrder(limitOrder, signature, "0")
             await expect(tx).to.emit(limitOrderBook, "LimitOrderFilled").withArgs(
                 trader.address,
                 baseToken.address,
@@ -694,14 +695,14 @@ describe("LimitOrderBook fillLimitOrder", function () {
                 sqrtPriceLimitX96: 0,
                 referralCode: ethers.constants.HashZero,
                 reduceOnly: true,
-                roundIdWhenCreated: parseEther("0").toString(),
+                roundIdWhenCreated: "0",
                 triggerPrice: parseEther("0").toString(),
             }
 
             const signature = await getSignature(fixture, limitOrder, trader)
             const orderHash = await getOrderHash(fixture, limitOrder)
 
-            const tx = await limitOrderBook.connect(keeper).fillLimitOrder(limitOrder, signature, parseEther("0"))
+            const tx = await limitOrderBook.connect(keeper).fillLimitOrder(limitOrder, signature, "0")
             await expect(tx).to.emit(limitOrderBook, "LimitOrderFilled").withArgs(
                 trader.address,
                 baseToken.address,
@@ -737,15 +738,15 @@ describe("LimitOrderBook fillLimitOrder", function () {
                 sqrtPriceLimitX96: 0,
                 referralCode: ethers.constants.HashZero,
                 reduceOnly: true,
-                roundIdWhenCreated: parseEther("0").toString(),
+                roundIdWhenCreated: "0",
                 triggerPrice: parseEther("0").toString(),
             }
 
             const signature = await getSignature(fixture, limitOrder, trader)
 
-            await expect(
-                limitOrderBook.connect(keeper).fillLimitOrder(limitOrder, signature, parseEther("0")),
-            ).to.be.revertedWith("LOB_ROINS")
+            await expect(limitOrderBook.connect(keeper).fillLimitOrder(limitOrder, signature, "0")).to.be.revertedWith(
+                "LOB_ROINS",
+            )
         })
 
         it("force error, reduceOnly is not satisfied when creating a reverse position", async () => {
@@ -764,15 +765,15 @@ describe("LimitOrderBook fillLimitOrder", function () {
                 referralCode: ethers.constants.HashZero,
                 sqrtPriceLimitX96: 0,
                 reduceOnly: true,
-                roundIdWhenCreated: parseEther("0").toString(),
+                roundIdWhenCreated: "0",
                 triggerPrice: parseEther("0").toString(),
             }
 
             const signature = await getSignature(fixture, limitOrder, trader)
 
-            await expect(
-                limitOrderBook.connect(keeper).fillLimitOrder(limitOrder, signature, parseEther("0")),
-            ).to.be.revertedWith("LOB_RSCBGTOS")
+            await expect(limitOrderBook.connect(keeper).fillLimitOrder(limitOrder, signature, "0")).to.be.revertedWith(
+                "LOB_RSCBGTOS",
+            )
         })
     })
 
@@ -795,14 +796,14 @@ describe("LimitOrderBook fillLimitOrder", function () {
                 referralCode: ethers.constants.HashZero,
                 sqrtPriceLimitX96: 0,
                 reduceOnly: false,
-                roundIdWhenCreated: parseEther("0").toString(),
+                roundIdWhenCreated: "0",
                 triggerPrice: parseEther("0").toString(),
             }
 
             const signature = await getSignature(fixture, limitOrder, trader)
             const orderHash = await getOrderHash(fixture, limitOrder)
 
-            const tx = await limitOrderBook.connect(keeper).fillLimitOrder(limitOrder, signature, parseEther("0"))
+            const tx = await limitOrderBook.connect(keeper).fillLimitOrder(limitOrder, signature, "0")
             await expect(tx).to.emit(limitOrderBook, "LimitOrderFilled").withArgs(
                 trader.address,
                 baseToken.address,
@@ -842,7 +843,7 @@ describe("LimitOrderBook fillLimitOrder", function () {
                 sqrtPriceLimitX96: 0,
                 referralCode: ethers.constants.HashZero,
                 reduceOnly: false,
-                roundIdWhenCreated: parseEther("0").toString(),
+                roundIdWhenCreated: "0",
                 triggerPrice: parseEther("0").toString(),
             }
 
@@ -850,9 +851,9 @@ describe("LimitOrderBook fillLimitOrder", function () {
 
             await forwardTimestamp(clearingHouse, 10)
 
-            await expect(
-                limitOrderBook.connect(keeper).fillLimitOrder(limitOrder, signature, parseEther("0")),
-            ).to.be.revertedWith("CH_TE")
+            await expect(limitOrderBook.connect(keeper).fillLimitOrder(limitOrder, signature, "0")).to.be.revertedWith(
+                "CH_TE",
+            )
         })
     })
 
@@ -871,7 +872,7 @@ describe("LimitOrderBook fillLimitOrder", function () {
             sqrtPriceLimitX96: 0,
             referralCode: ethers.constants.HashZero,
             reduceOnly: false,
-            roundIdWhenCreated: parseEther("0").toString(),
+            roundIdWhenCreated: "0",
             triggerPrice: parseEther("0").toString(),
         }
 
@@ -879,9 +880,9 @@ describe("LimitOrderBook fillLimitOrder", function () {
 
         await withdraw(trader, vault, 1000, fixture.USDC)
 
-        await expect(
-            limitOrderBook.connect(keeper).fillLimitOrder(limitOrder, signature, parseEther("0")),
-        ).to.be.revertedWith("CH_NEFCI")
+        await expect(limitOrderBook.connect(keeper).fillLimitOrder(limitOrder, signature, "0")).to.be.revertedWith(
+            "CH_NEFCI",
+        )
     })
 
     it("force error, fill order failed after user revoke his/her approval", async () => {
@@ -899,7 +900,7 @@ describe("LimitOrderBook fillLimitOrder", function () {
             sqrtPriceLimitX96: 0,
             referralCode: ethers.constants.HashZero,
             reduceOnly: false,
-            roundIdWhenCreated: parseEther("0").toString(),
+            roundIdWhenCreated: "0",
             triggerPrice: parseEther("0").toString(),
         }
 
@@ -907,9 +908,9 @@ describe("LimitOrderBook fillLimitOrder", function () {
 
         await delegateApproval.connect(trader).revoke(limitOrderBook.address, fixture.clearingHouseOpenPositionAction)
 
-        await expect(
-            limitOrderBook.connect(keeper).fillLimitOrder(limitOrder, signature, parseEther("0")),
-        ).to.be.revertedWith("CH_SHNAOPT")
+        await expect(limitOrderBook.connect(keeper).fillLimitOrder(limitOrder, signature, "0")).to.be.revertedWith(
+            "CH_SHNAOPT",
+        )
     })
 
     it("keeper keep trying to fill limit orders in a row", async () => {
@@ -927,7 +928,7 @@ describe("LimitOrderBook fillLimitOrder", function () {
             sqrtPriceLimitX96: 0,
             referralCode: ethers.constants.HashZero,
             reduceOnly: false,
-            roundIdWhenCreated: parseEther("0").toString(),
+            roundIdWhenCreated: "0",
             triggerPrice: parseEther("0").toString(),
         }
 
@@ -953,9 +954,9 @@ describe("LimitOrderBook fillLimitOrder", function () {
         expect(marketPrice1).to.be.gt(3000)
 
         // cannot fill the limit order because market price > limit price ($3000)
-        await expect(
-            limitOrderBook.connect(keeper).fillLimitOrder(limitOrder, signature, parseEther("0")),
-        ).to.be.revertedWith("CH_TMRL")
+        await expect(limitOrderBook.connect(keeper).fillLimitOrder(limitOrder, signature, "0")).to.be.revertedWith(
+            "CH_TMRL",
+        )
 
         // alice closes her position to make market price lower, 3023 -> 2960
         await clearingHouse.connect(alice).closePosition({
@@ -968,7 +969,7 @@ describe("LimitOrderBook fillLimitOrder", function () {
         const marketPrice2 = parseFloat(await getMarketTwap(exchange, baseToken, 0))
         expect(marketPrice2).to.be.lt(3000)
 
-        const tx = await limitOrderBook.connect(keeper).fillLimitOrder(limitOrder, signature, parseEther("0"))
+        const tx = await limitOrderBook.connect(keeper).fillLimitOrder(limitOrder, signature, "0")
         await expect(tx).to.emit(limitOrderBook, "LimitOrderFilled").withArgs(
             trader.address,
             baseToken.address,
@@ -1008,8 +1009,8 @@ describe("LimitOrderBook fillLimitOrder", function () {
 
         const signature = await getSignature(fixture, stopLimitOrder, trader)
 
-        await expect(
-            limitOrderBook.connect(keeper).fillLimitOrder(stopLimitOrder, signature, parseEther("0")),
-        ).to.revertedWith("function was called with incorrect parameters")
+        await expect(limitOrderBook.connect(keeper).fillLimitOrder(stopLimitOrder, signature, "0")).to.revertedWith(
+            "function was called with incorrect parameters",
+        )
     })
 })

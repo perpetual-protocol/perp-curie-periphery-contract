@@ -107,7 +107,7 @@ describe("LimitOrderBook cancelLimitOrder", function () {
             sqrtPriceLimitX96: 0,
             referralCode: ethers.constants.HashZero,
             reduceOnly: false,
-            roundIdWhenCreated: parseEther("0").toString(),
+            roundIdWhenCreated: "0",
             triggerPrice: parseEther("0").toString(),
         }
 
@@ -139,7 +139,7 @@ describe("LimitOrderBook cancelLimitOrder", function () {
             sqrtPriceLimitX96: 0,
             referralCode: ethers.constants.HashZero,
             reduceOnly: false,
-            roundIdWhenCreated: parseEther("0").toString(),
+            roundIdWhenCreated: "0",
             triggerPrice: parseEther("0").toString(),
         }
 
@@ -171,7 +171,7 @@ describe("LimitOrderBook cancelLimitOrder", function () {
             sqrtPriceLimitX96: 0,
             referralCode: ethers.constants.HashZero,
             reduceOnly: false,
-            roundIdWhenCreated: parseEther("0").toString(),
+            roundIdWhenCreated: "0",
             triggerPrice: parseEther("0").toString(),
         }
 
@@ -193,7 +193,7 @@ describe("LimitOrderBook cancelLimitOrder", function () {
             sqrtPriceLimitX96: 0,
             referralCode: ethers.constants.HashZero,
             reduceOnly: false,
-            roundIdWhenCreated: parseEther("0").toString(),
+            roundIdWhenCreated: "0",
             triggerPrice: parseEther("0").toString(),
         }
 
@@ -223,13 +223,13 @@ describe("LimitOrderBook cancelLimitOrder", function () {
             sqrtPriceLimitX96: 0,
             referralCode: ethers.constants.HashZero,
             reduceOnly: false,
-            roundIdWhenCreated: parseEther("0").toString(),
+            roundIdWhenCreated: "0",
             triggerPrice: parseEther("0").toString(),
         }
 
         const signature = await getSignature(fixture, limitOrder, trader)
 
-        const tx = await limitOrderBook.connect(keeper).fillLimitOrder(limitOrder, signature, parseEther("0"))
+        const tx = await limitOrderBook.connect(keeper).fillLimitOrder(limitOrder, signature, "0")
         await expect(tx).to.emit(limitOrderBook, "LimitOrderFilled")
 
         // order is filled, cannot cancel
