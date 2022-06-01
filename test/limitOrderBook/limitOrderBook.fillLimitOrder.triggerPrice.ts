@@ -221,6 +221,7 @@ describe("LimitOrderBook fillLimitOrder advanced order types", function () {
         it("fill stop limit order: Q2B (long) exact output", async () => {
             // a limit order to long exact 0.1 ETH for a maximum of $300 at limit price $3000
             // fill price is guaranteed to be <= limit price
+            const triggerPrice = parseEther("2900")
             const stopLimitOrder = {
                 orderType: fixture.orderTypeStopLimitOrder,
                 salt: 1,
@@ -235,16 +236,17 @@ describe("LimitOrderBook fillLimitOrder advanced order types", function () {
                 referralCode: ethers.constants.HashZero,
                 reduceOnly: false,
                 roundIdWhenCreated: computeRoundId(1, 1),
-                triggerPrice: parseEther("2900").toString(),
+                triggerPrice: triggerPrice.toString(),
             }
 
             const signature = await getSignature(fixture, stopLimitOrder, trader)
             const orderHash = await getOrderHash(fixture, stopLimitOrder)
 
-            expect(await limitOrderBook.getPriceByRoundId(baseToken.address, computeRoundId(1, 4))).to.be.gte(
-                parseEther("2900"),
-            )
-            await expect(limitOrderBook.connect(keeper).fillLimitOrder(stopLimitOrder, signature, computeRoundId(1, 4)))
+            const roundIdWhenTriggered = computeRoundId(1, 4) // 3000
+            const triggeredPrice = await limitOrderBook.getPriceByRoundId(baseToken.address, roundIdWhenTriggered)
+            expect(triggeredPrice).to.be.gte(triggerPrice)
+
+            await expect(limitOrderBook.connect(keeper).fillLimitOrder(stopLimitOrder, signature, roundIdWhenTriggered))
                 .to.emit(limitOrderBook, "LimitOrderFilled")
                 .withArgs(
                     trader.address,
@@ -264,14 +266,16 @@ describe("LimitOrderBook fillLimitOrder advanced order types", function () {
             }
             const signature2 = await getSignature(fixture, stopLimitOrder2, trader)
 
+            const roundIdWhenTriggered2 = computeRoundId(1, 2) // 2800
             await expect(
-                limitOrderBook.connect(keeper).fillLimitOrder(stopLimitOrder2, signature2, computeRoundId(1, 2)),
+                limitOrderBook.connect(keeper).fillLimitOrder(stopLimitOrder2, signature2, roundIdWhenTriggered2),
             ).to.revertedWith("LOB_BSLOTPNM")
         })
 
         it("fill stop limit order: B2Q (short) exact input", async () => {
             // a limit order to short exact 0.1 ETH for a minimum of $290 at limit price $2900
             // fill price is guaranteed to be >= limit price
+            const triggerPrice = parseEther("3000")
             const stopLimitOrder = {
                 orderType: fixture.orderTypeStopLimitOrder,
                 salt: 1,
@@ -286,16 +290,17 @@ describe("LimitOrderBook fillLimitOrder advanced order types", function () {
                 referralCode: ethers.constants.HashZero,
                 reduceOnly: false,
                 roundIdWhenCreated: computeRoundId(1, 1),
-                triggerPrice: parseEther("3000").toString(),
+                triggerPrice: triggerPrice.toString(),
             }
 
             const signature = await getSignature(fixture, stopLimitOrder, trader)
             const orderHash = await getOrderHash(fixture, stopLimitOrder)
 
-            expect(await limitOrderBook.getPriceByRoundId(baseToken.address, computeRoundId(1, 3))).to.be.lte(
-                parseEther("3000"),
-            )
-            await expect(limitOrderBook.connect(keeper).fillLimitOrder(stopLimitOrder, signature, computeRoundId(1, 3)))
+            const roundIdWhenTriggered = computeRoundId(1, 3) // 2900
+            const triggeredPrice = await limitOrderBook.getPriceByRoundId(baseToken.address, roundIdWhenTriggered)
+            expect(triggeredPrice).to.be.lte(triggerPrice)
+
+            await expect(limitOrderBook.connect(keeper).fillLimitOrder(stopLimitOrder, signature, roundIdWhenTriggered))
                 .to.emit(limitOrderBook, "LimitOrderFilled")
                 .withArgs(
                     trader.address,
@@ -315,8 +320,9 @@ describe("LimitOrderBook fillLimitOrder advanced order types", function () {
             }
             const signature2 = await getSignature(fixture, stopLimitOrder2, trader)
 
+            const roundIdWhenTriggered2 = computeRoundId(2, 1) // 3100
             await expect(
-                limitOrderBook.connect(keeper).fillLimitOrder(stopLimitOrder2, signature2, computeRoundId(2, 1)),
+                limitOrderBook.connect(keeper).fillLimitOrder(stopLimitOrder2, signature2, roundIdWhenTriggered2),
             ).to.revertedWith("LOB_SSLOTPNM")
         })
     })
@@ -336,8 +342,116 @@ describe("LimitOrderBook fillLimitOrder advanced order types", function () {
             await setRoundData(mockedBaseAggregator, computeRoundId(2, 3), "3300", currentTime + 15 * 6)
         })
 
-        it("fill take profit limit order: Q2B (long) exact output", async () => {})
+        it("fill take profit limit order: Q2B (long) exact output", async () => {
+            // a limit order to long exact 0.1 ETH for a maximum of $300 at limit price $3000
+            // fill price is guaranteed to be <= limit price
+            const triggerPrice = parseEther("2900")
+            const takeProfitLimitOrder = {
+                orderType: fixture.orderTypeTakeProfitLimitOrder,
+                salt: 1,
+                trader: trader.address,
+                baseToken: baseToken.address,
+                isBaseToQuote: false,
+                isExactInput: false,
+                amount: parseEther("0.1").toString(),
+                oppositeAmountBound: parseEther("300").toString(),
+                deadline: ethers.constants.MaxUint256.toString(),
+                sqrtPriceLimitX96: 0,
+                referralCode: ethers.constants.HashZero,
+                reduceOnly: false,
+                roundIdWhenCreated: computeRoundId(1, 1),
+                triggerPrice: triggerPrice.toString(),
+            }
 
-        it("fill take profit limit order: B2Q (short) exact input", async () => {})
+            const signature = await getSignature(fixture, takeProfitLimitOrder, trader)
+            const orderHash = await getOrderHash(fixture, takeProfitLimitOrder)
+
+            const roundIdWhenTriggered = computeRoundId(1, 2) // 2800
+            const triggeredPrice = await limitOrderBook.getPriceByRoundId(baseToken.address, roundIdWhenTriggered)
+            expect(triggeredPrice).to.be.lte(triggerPrice)
+
+            await expect(
+                limitOrderBook.connect(keeper).fillLimitOrder(takeProfitLimitOrder, signature, roundIdWhenTriggered),
+            )
+                .to.emit(limitOrderBook, "LimitOrderFilled")
+                .withArgs(
+                    trader.address,
+                    baseToken.address,
+                    orderHash,
+                    keeper.address,
+                    fixture.rewardAmount,
+                    parseEther("0.1"), // exchangedPositionSize
+                    parseEther("-296.001564233989843681"), // exchangedPositionNotional
+                    parseEther("2.989914790242321654"), // fee
+                )
+
+            // trigger price is not matched
+            const takeProfitLimitOrder2 = {
+                ...takeProfitLimitOrder,
+                salt: 2,
+            }
+            const signature2 = await getSignature(fixture, takeProfitLimitOrder2, trader)
+
+            const roundIdWhenTriggered2 = computeRoundId(1, 4) // 3000
+            await expect(
+                limitOrderBook.connect(keeper).fillLimitOrder(takeProfitLimitOrder2, signature2, roundIdWhenTriggered2),
+            ).to.revertedWith("LOB_BTLOTPNM")
+        })
+
+        it("fill take profit limit order: B2Q (short) exact input", async () => {
+            // a limit order to short exact 0.1 ETH for a minimum of $290 at limit price $2900
+            // fill price is guaranteed to be >= limit price
+            const triggerPrice = parseEther("3000")
+            const takeProfitLimitOrder = {
+                orderType: fixture.orderTypeTakeProfitLimitOrder,
+                salt: 1,
+                trader: trader.address,
+                baseToken: baseToken.address,
+                isBaseToQuote: true,
+                isExactInput: true,
+                amount: parseEther("0.1").toString(),
+                oppositeAmountBound: parseEther("290").toString(), // lower bound of output quote
+                deadline: ethers.constants.MaxUint256.toString(),
+                sqrtPriceLimitX96: 0,
+                referralCode: ethers.constants.HashZero,
+                reduceOnly: false,
+                roundIdWhenCreated: computeRoundId(1, 1),
+                triggerPrice: triggerPrice.toString(),
+            }
+
+            const signature = await getSignature(fixture, takeProfitLimitOrder, trader)
+            const orderHash = await getOrderHash(fixture, takeProfitLimitOrder)
+
+            const roundIdWhenTriggered = computeRoundId(2, 1) // 3100
+            const triggeredPrice = await limitOrderBook.getPriceByRoundId(baseToken.address, roundIdWhenTriggered)
+            expect(triggeredPrice).to.be.gte(triggerPrice)
+
+            await expect(
+                limitOrderBook.connect(keeper).fillLimitOrder(takeProfitLimitOrder, signature, roundIdWhenTriggered),
+            )
+                .to.emit(limitOrderBook, "LimitOrderFilled")
+                .withArgs(
+                    trader.address,
+                    baseToken.address,
+                    orderHash,
+                    keeper.address,
+                    fixture.rewardAmount,
+                    parseEther("-0.1"), // exchangedPositionSize
+                    parseEther("295.998435782542603038"), // exchangedPositionNotional
+                    parseEther("2.959984357825426031"), // fee
+                )
+
+            // trigger price is not matched
+            const takeProfitLimitOrder2 = {
+                ...takeProfitLimitOrder,
+                salt: 2,
+            }
+            const signature2 = await getSignature(fixture, takeProfitLimitOrder2, trader)
+
+            const roundIdWhenTriggered2 = computeRoundId(1, 3) // 2900
+            await expect(
+                limitOrderBook.connect(keeper).fillLimitOrder(takeProfitLimitOrder2, signature2, roundIdWhenTriggered2),
+            ).to.revertedWith("LOB_STLOTPNM")
+        })
     })
 })

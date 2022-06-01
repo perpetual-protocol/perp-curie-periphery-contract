@@ -987,4 +987,29 @@ describe("LimitOrderBook fillLimitOrder", function () {
             parseEther("-298.991479024232165335"),
         )
     })
+
+    it("force error, invalid orderType", async () => {
+        const stopLimitOrder = {
+            orderType: fixture.orderTypeNotExisted,
+            salt: 1,
+            trader: trader.address,
+            baseToken: baseToken.address,
+            isBaseToQuote: false,
+            isExactInput: false,
+            amount: parseEther("0.1").toString(),
+            oppositeAmountBound: parseEther("300").toString(),
+            deadline: ethers.constants.MaxUint256.toString(),
+            sqrtPriceLimitX96: 0,
+            referralCode: ethers.constants.HashZero,
+            reduceOnly: false,
+            roundIdWhenCreated: "0",
+            triggerPrice: "0",
+        }
+
+        const signature = await getSignature(fixture, stopLimitOrder, trader)
+
+        await expect(
+            limitOrderBook.connect(keeper).fillLimitOrder(stopLimitOrder, signature, parseEther("0")),
+        ).to.revertedWith("function was called with incorrect parameters")
+    })
 })
