@@ -198,9 +198,31 @@ describe("LimitOrderBook fillLimitOrder advanced order types", function () {
             ).to.revertedWith("LOB_ITP")
         })
 
-        // TODO
-        it("force error, roundId isn't existed", async () => {})
-        it("force error, baseToken isn't using ChainlinkPriceFeed", async () => {})
+        it("force error, baseToken isn't using ChainlinkPriceFeed", async () => {
+            // baseToken3 is using BandPriceFeed which doesn't have getRoundData()
+            const stopLimitOrder = {
+                orderType: fixture.orderTypeStopLimitOrder,
+                salt: 1,
+                trader: trader.address,
+                baseToken: fixture.baseToken3.address,
+                isBaseToQuote: false,
+                isExactInput: false,
+                amount: parseEther("0.1").toString(),
+                oppositeAmountBound: parseEther("300").toString(),
+                deadline: ethers.constants.MaxUint256.toString(),
+                sqrtPriceLimitX96: 0,
+                referralCode: ethers.constants.HashZero,
+                reduceOnly: false,
+                roundIdWhenCreated: computeRoundId(1, 1),
+                triggerPrice: parseEther("2900").toString(),
+            }
+
+            const signature = await getSignature(fixture, stopLimitOrder, trader)
+
+            await expect(
+                limitOrderBook.connect(keeper).fillLimitOrder(stopLimitOrder, signature, computeRoundId(1, 2)),
+            ).to.revertedWith("function selector was not recognized and there's no fallback function")
+        })
     })
 
     describe("stop limit order", async () => {

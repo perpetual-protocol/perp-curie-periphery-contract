@@ -10,6 +10,9 @@ import {
     UniswapV3Pool,
     VirtualToken,
 } from "../../typechain-types"
+import { BandPriceFeed } from "../../typechain-types/@perp/perp-oracle-contract/contracts/BandPriceFeed"
+import { TestStdReference } from "../../typechain-types/contracts/test/TestStdReference"
+import { TestStdReference__factory } from "../../typechain-types/factories/contracts/test/TestStdReference__factory"
 import { isAscendingTokenOrder } from "./utilities"
 
 interface TokensFixture {
@@ -29,6 +32,11 @@ interface PoolFixture {
 interface BaseTokenFixture {
     baseToken: BaseToken
     mockedAggregator: MockContract<TestAggregatorV3>
+}
+
+interface BaseTokenWithBandPriceFeedFixture {
+    baseToken: BaseToken
+    mockedStdReference: MockContract<TestStdReference>
 }
 
 export function createQuoteTokenFixture(name: string, symbol: string): () => Promise<QuoteToken> {
@@ -58,6 +66,30 @@ export function createBaseTokenFixture(name: string, symbol: string): () => Prom
         await baseToken.initialize(name, symbol, chainlinkPriceFeed.address)
 
         return { baseToken, mockedAggregator }
+    }
+}
+
+export function createBaseTokenWithBandPriceFeedFixture(
+    name: string,
+    symbol: string,
+): () => Promise<BaseTokenWithBandPriceFeedFixture> {
+    return async (): Promise<BaseTokenWithBandPriceFeedFixture> => {
+        const mockedStdReferenceFactory = await smock.mock<TestStdReference__factory>("TestStdReference")
+        const mockedStdReference = await mockedStdReferenceFactory.deploy()
+
+        const baseAsset = symbol
+        const bandPriceFeedFactory = await ethers.getContractFactory("BandPriceFeed")
+        const bandPriceFeed = (await bandPriceFeedFactory.deploy(
+            mockedStdReference.address,
+            baseAsset,
+            900,
+        )) as BandPriceFeed
+
+        const baseTokenFactory = await ethers.getContractFactory("BaseToken")
+        const baseToken = (await baseTokenFactory.deploy()) as BaseToken
+        await baseToken.initialize(name, symbol, bandPriceFeed.address)
+
+        return { baseToken, mockedStdReference }
     }
 }
 
@@ -104,6 +136,14 @@ export async function token0Fixture(token1Addr: string): Promise<BaseTokenFixtur
     let token0Fixture: BaseTokenFixture
     while (!token0Fixture || !isAscendingTokenOrder(token0Fixture.baseToken.address, token1Addr)) {
         token0Fixture = await createBaseTokenFixture("RandomTestToken0", "randomToken0")()
+    }
+    return token0Fixture
+}
+
+export async function token0WithBandPriceFeedFixture(token1Addr: string): Promise<BaseTokenWithBandPriceFeedFixture> {
+    let token0Fixture: BaseTokenWithBandPriceFeedFixture
+    while (!token0Fixture || !isAscendingTokenOrder(token0Fixture.baseToken.address, token1Addr)) {
+        token0Fixture = await createBaseTokenWithBandPriceFeedFixture("RandomTestToken0", "randomToken0")()
     }
     return token0Fixture
 }

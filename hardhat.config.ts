@@ -31,6 +31,7 @@ const config: HardhatUserConfig = {
             "@uniswap/v3-core/contracts/UniswapV3Factory.sol",
             "@uniswap/v3-core/contracts/UniswapV3Pool.sol",
             "@perp/perp-oracle-contract/contracts/ChainlinkPriceFeed.sol",
+            "@perp/perp-oracle-contract/contracts/BandPriceFeed.sol",
             "@perp/curie-contract/contracts/AccountBalance.sol",
             "@perp/curie-contract/contracts/BaseToken.sol",
             "@perp/curie-contract/contracts/ClearingHouse.sol",
