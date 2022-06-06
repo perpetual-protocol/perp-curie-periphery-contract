@@ -233,23 +233,6 @@ contract LimitOrderBook is
         return signer;
     }
 
-    function _formatDecimals(
-        uint256 price,
-        uint8 fromDecimals,
-        uint8 toDecimals
-    ) internal pure returns (uint256) {
-        // LOB_ID: Invalid Decimals
-        require(fromDecimals <= toDecimals, "LOB_ID");
-
-        return price.mul(10**(toDecimals.sub(fromDecimals)));
-    }
-
-    function _getPriceByRoundId(address baseToken, uint80 roundId) internal view returns (uint256) {
-        ChainlinkPriceFeed chainlinkPriceFeed = ChainlinkPriceFeed(IBaseToken(baseToken).getPriceFeed());
-        (uint256 price, ) = chainlinkPriceFeed.getRoundData(roundId);
-        return _formatDecimals(price, chainlinkPriceFeed.decimals(), 18);
-    }
-
     function _verifyTriggerPrice(LimitOrder memory order, uint80 roundIdWhenTriggered) internal view {
         // NOTE: Chainlink proxy's roundId is always increased
         // https://docs.chain.link/docs/historical-price-data/
@@ -289,5 +272,22 @@ contract LimitOrderBook is
             // LOB_IOT: Invalid Order Type
             revert("LOB_IOT");
         }
+    }
+
+    function _getPriceByRoundId(address baseToken, uint80 roundId) internal view returns (uint256) {
+        ChainlinkPriceFeed chainlinkPriceFeed = ChainlinkPriceFeed(IBaseToken(baseToken).getPriceFeed());
+        (uint256 price, ) = chainlinkPriceFeed.getRoundData(roundId);
+        return _formatDecimals(price, chainlinkPriceFeed.decimals(), 18);
+    }
+
+    function _formatDecimals(
+        uint256 price,
+        uint8 fromDecimals,
+        uint8 toDecimals
+    ) internal pure returns (uint256) {
+        // LOB_ID: Invalid Decimals
+        require(fromDecimals <= toDecimals, "LOB_ID");
+
+        return price.mul(10**(toDecimals.sub(fromDecimals)));
     }
 }
