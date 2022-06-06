@@ -34,9 +34,9 @@ interface ILimitOrderBook {
     /// @param referralCode The referral code
     /// @param reduceOnly The order will only reduce/close positions if true
     /// @param roundIdWhenCreated Chainlink `roundId` when the limit order is created
-    // Only avaliable if orderType is StopLimitOrder/TakeProfitLimitOrder, otherwise set to 0
+    // Only available if orderType is StopLimitOrder/TakeProfitLimitOrder, otherwise set to 0
     /// @param triggerPrice The trigger price of the limit order
-    // Only avaliable if orderType is StopLimitOrder/TakeProfitLimitOrder, otherwise set to 0
+    // Only available if orderType is StopLimitOrder/TakeProfitLimitOrder, otherwise set to 0
     struct LimitOrder {
         OrderType orderType;
         uint256 salt;
@@ -99,7 +99,7 @@ interface ILimitOrderBook {
     /// @param order LimitOrder struct
     /// @param signature The EIP-712 signature of `order` generated from `eth_signTypedData_V4`
     /// @param roundIdWhenTriggered Chainlink `roundId` when triggerPrice is satisfied
-    // Only avaliable if orderType is StopLimitOrder/TakeProfitLimitOrder, otherwise set to 0
+    // Only available if orderType is StopLimitOrder/TakeProfitLimitOrder, otherwise set to 0
     function fillLimitOrder(
         LimitOrder memory order,
         bytes memory signature,
