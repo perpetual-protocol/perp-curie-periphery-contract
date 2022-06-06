@@ -215,7 +215,7 @@ contract LimitOrderBook is
     // PUBLIC VIEW
     //
 
-    function getOrderHash(LimitOrder memory order) public view returns (bytes32) {
+    function getOrderHash(LimitOrder memory order) public view override returns (bytes32) {
         return _hashTypedDataV4(keccak256(abi.encode(LIMIT_ORDER_TYPEHASH, order)));
     }
 

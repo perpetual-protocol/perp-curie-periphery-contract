@@ -108,4 +108,6 @@ interface ILimitOrderBook {
 
     /// @param order LimitOrder struct
     function cancelLimitOrder(LimitOrder memory order) external;
+
+    function getOrderHash(LimitOrder memory order) external view returns (bytes32);
 }
