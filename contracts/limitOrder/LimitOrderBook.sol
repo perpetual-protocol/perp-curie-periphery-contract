@@ -100,7 +100,7 @@ contract LimitOrderBook is
         uint80 roundIdWhenTriggered
     ) external override nonReentrant {
         bytes32 orderHash = getOrderHash(order);
-        verifySigner(order, signature);
+        _verifySigner(order, signature);
 
         // LOB_OMBU: Order Must Be Unfilled
         require(_ordersStatus[orderHash] == ILimitOrderBook.OrderStatus.Unfilled, "LOB_OMBU");
@@ -219,7 +219,11 @@ contract LimitOrderBook is
         return _hashTypedDataV4(keccak256(abi.encode(LIMIT_ORDER_TYPEHASH, order)));
     }
 
-    function verifySigner(LimitOrder memory order, bytes memory signature) public view returns (address) {
+    //
+    // INTERNAL VIEW
+    //
+
+    function _verifySigner(LimitOrder memory order, bytes memory signature) internal view returns (address) {
         bytes32 orderHash = getOrderHash(order);
         address signer = ECDSAUpgradeable.recover(orderHash, signature);
 
@@ -228,10 +232,6 @@ contract LimitOrderBook is
 
         return signer;
     }
-
-    //
-    // INTERNAL VIEW
-    //
 
     function _formatDecimals(
         uint256 price,

@@ -23,6 +23,10 @@ contract TestLimitOrderBook is LimitOrderBook {
         return _testBlockTimestamp;
     }
 
+    function verifySigner(LimitOrder memory order, bytes memory signature) external view returns (address) {
+        return _verifySigner(order, signature);
+    }
+
     function getPriceByRoundId(address baseToken, uint80 roundId) external view returns (uint256) {
         return _getPriceByRoundId(baseToken, roundId);
     }
