@@ -99,8 +99,9 @@ contract LimitOrderBook is
         bytes memory signature,
         uint80 roundIdWhenTriggered
     ) external override nonReentrant {
-        bytes32 orderHash = getOrderHash(order);
         _verifySigner(order, signature);
+
+        bytes32 orderHash = getOrderHash(order);
 
         // LOB_OMBU: Order Must Be Unfilled
         require(_ordersStatus[orderHash] == ILimitOrderBook.OrderStatus.Unfilled, "LOB_OMBU");
@@ -121,12 +122,7 @@ contract LimitOrderBook is
             // => oldTakerPositionSize < 0 != order.isBaseToQuote => false != true
         }
 
-        if (
-            order.orderType == ILimitOrderBook.OrderType.StopLimitOrder ||
-            order.orderType == ILimitOrderBook.OrderType.TakeProfitLimitOrder
-        ) {
-            _verifyTriggerPrice(order, roundIdWhenTriggered);
-        }
+        _verifyTriggerPrice(order, roundIdWhenTriggered);
 
         (uint256 base, uint256 quote, uint256 fee) = IClearingHouse(clearingHouse).openPositionFor(
             order.trader,
@@ -234,6 +230,10 @@ contract LimitOrderBook is
     }
 
     function _verifyTriggerPrice(LimitOrder memory order, uint80 roundIdWhenTriggered) internal view {
+        if (order.orderType == ILimitOrderBook.OrderType.LimitOrder) {
+            return;
+        }
+
         // NOTE: Chainlink proxy's roundId is always increased
         // https://docs.chain.link/docs/historical-price-data/
 
@@ -268,9 +268,6 @@ contract LimitOrderBook is
                 // LOB_BTLOTPNM: Buy Take-profit Limit Order Trigger Price Not Matched
                 require(triggeredPrice <= order.triggerPrice, "LOB_BTLOTPNM");
             }
-        } else {
-            // LOB_IOT: Invalid Order Type
-            revert("LOB_IOT");
         }
     }
 
