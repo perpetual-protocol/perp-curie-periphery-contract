@@ -111,17 +111,6 @@ contract LimitOrderBook is
             order.baseToken
         );
 
-        if (order.reduceOnly) {
-            // LOB_ROINS: ReduceOnly Is Not Satisfied
-            require((oldTakerPositionSize != 0) && (oldTakerPositionSize < 0 != order.isBaseToQuote), "LOB_ROINS");
-
-            // if trader has no position, order will get reverted
-            // if trader has short position, trader can only open a long position
-            // => oldTakerPositionSize < 0 != order.isBaseToQuote => true != false
-            // if trader has long position, trader can only open a short position
-            // => oldTakerPositionSize < 0 != order.isBaseToQuote => false != true
-        }
-
         _verifyTriggerPrice(order, roundIdWhenTriggered);
 
         (uint256 base, uint256 quote, uint256 fee) = IClearingHouse(clearingHouse).openPositionFor(
@@ -139,8 +128,19 @@ contract LimitOrderBook is
         );
 
         if (order.reduceOnly) {
-            // LOB_RSCBGTOS: Reduced Size Cannot Be Greater Than Old Size
-            require(base <= oldTakerPositionSize.abs(), "LOB_RSCBGTOS");
+            // LOB_ROINS: ReduceOnly Is Not Satisfied
+            require(
+                oldTakerPositionSize != 0 &&
+                    oldTakerPositionSize < 0 != order.isBaseToQuote &&
+                    base <= oldTakerPositionSize.abs(),
+                "LOB_ROINS"
+            );
+
+            // if trader has no position, order will get reverted
+            // if trader has short position, trader can only open a long position
+            // => oldTakerPositionSize < 0 != order.isBaseToQuote => true != false
+            // if trader has long position, trader can only open a short position
+            // => oldTakerPositionSize < 0 != order.isBaseToQuote => false != true
         }
 
         _ordersStatus[orderHash] = ILimitOrderBook.OrderStatus.Filled;

@@ -611,7 +611,7 @@ describe("LimitOrderBook fillLimitOrder", function () {
             const signature = await getSignature(fixture, limitOrder, trader)
 
             await expect(limitOrderBook.connect(keeper).fillLimitOrder(limitOrder, signature, "0")).to.be.revertedWith(
-                "LOB_RSCBGTOS",
+                "LOB_ROINS",
             )
         })
     })
@@ -733,7 +733,7 @@ describe("LimitOrderBook fillLimitOrder", function () {
                 isBaseToQuote: true,
                 isExactInput: true,
                 amount: parseEther("0.1"),
-                oppositeAmountBound: parseEther("300"),
+                oppositeAmountBound: parseEther("290"),
                 deadline: ethers.constants.MaxUint256,
                 sqrtPriceLimitX96: 0,
                 referralCode: ethers.constants.HashZero,
@@ -772,7 +772,7 @@ describe("LimitOrderBook fillLimitOrder", function () {
             const signature = await getSignature(fixture, limitOrder, trader)
 
             await expect(limitOrderBook.connect(keeper).fillLimitOrder(limitOrder, signature, "0")).to.be.revertedWith(
-                "LOB_RSCBGTOS",
+                "LOB_ROINS",
             )
         })
     })
