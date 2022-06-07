@@ -990,7 +990,7 @@ describe("LimitOrderBook fillLimitOrder", function () {
     })
 
     it("force error, invalid orderType", async () => {
-        const stopLimitOrder = {
+        const badLimitOrder = {
             orderType: fixture.orderTypeNotExisted,
             salt: 1,
             trader: trader.address,
@@ -1007,9 +1007,9 @@ describe("LimitOrderBook fillLimitOrder", function () {
             triggerPrice: "0",
         }
 
-        const signature = await getSignature(fixture, stopLimitOrder, trader)
+        const signature = await getSignature(fixture, badLimitOrder, trader)
 
-        await expect(limitOrderBook.connect(keeper).fillLimitOrder(stopLimitOrder, signature, "0")).to.revertedWith(
+        await expect(limitOrderBook.connect(keeper).fillLimitOrder(badLimitOrder, signature, "0")).to.revertedWith(
             "function was called with incorrect parameters",
         )
     })

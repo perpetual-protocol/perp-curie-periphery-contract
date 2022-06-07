@@ -252,7 +252,7 @@ contract LimitOrderBook is
 
         // rules of advanced order types
         // https://help.ftx.com/hc/en-us/articles/360031896592-Advanced-Order-Types
-        if (order.orderType == ILimitOrderBook.OrderType.StopLimitOrder) {
+        if (order.orderType == ILimitOrderBook.OrderType.StopLossLimitOrder) {
             if (order.isBaseToQuote) {
                 // LOB_SSLOTPNM: Sell Stop Limit Order Trigger Price Not Matched
                 require(triggeredPrice <= order.triggerPrice, "LOB_SSLOTPNM");

@@ -124,8 +124,8 @@ describe("LimitOrderBook fillLimitOrder advanced order types", function () {
 
     describe("verify trigger price", async () => {
         it("force error, missing roundIdWhenCreated", async () => {
-            const stopLimitOrder = {
-                orderType: fixture.orderTypeStopLimitOrder,
+            const stopLossLimitOrder = {
+                orderType: fixture.orderTypeStopLossLimitOrder,
                 salt: 1,
                 trader: trader.address,
                 baseToken: baseToken.address,
@@ -141,16 +141,16 @@ describe("LimitOrderBook fillLimitOrder advanced order types", function () {
                 triggerPrice: "0",
             }
 
-            const signature = await getSignature(fixture, stopLimitOrder, trader)
+            const signature = await getSignature(fixture, stopLossLimitOrder, trader)
 
             await expect(
-                limitOrderBook.connect(keeper).fillLimitOrder(stopLimitOrder, signature, computeRoundId(1, 1)),
+                limitOrderBook.connect(keeper).fillLimitOrder(stopLossLimitOrder, signature, computeRoundId(1, 1)),
             ).to.revertedWith("LOB_IRI")
         })
 
         it("force error, roundIdWhenTriggered is earlier than roundIdWhenCreated", async () => {
-            const stopLimitOrder = {
-                orderType: fixture.orderTypeStopLimitOrder,
+            const stopLossLimitOrder = {
+                orderType: fixture.orderTypeStopLossLimitOrder,
                 salt: 1,
                 trader: trader.address,
                 baseToken: baseToken.address,
@@ -166,16 +166,16 @@ describe("LimitOrderBook fillLimitOrder advanced order types", function () {
                 triggerPrice: "0",
             }
 
-            const signature = await getSignature(fixture, stopLimitOrder, trader)
+            const signature = await getSignature(fixture, stopLossLimitOrder, trader)
 
             await expect(
-                limitOrderBook.connect(keeper).fillLimitOrder(stopLimitOrder, signature, computeRoundId(1, 1)),
+                limitOrderBook.connect(keeper).fillLimitOrder(stopLossLimitOrder, signature, computeRoundId(1, 1)),
             ).to.revertedWith("LOB_IRI")
         })
 
         it("force error, triggerPrice is 0", async () => {
-            const stopLimitOrder = {
-                orderType: fixture.orderTypeStopLimitOrder,
+            const stopLossLimitOrder = {
+                orderType: fixture.orderTypeStopLossLimitOrder,
                 salt: 1,
                 trader: trader.address,
                 baseToken: baseToken.address,
@@ -191,17 +191,17 @@ describe("LimitOrderBook fillLimitOrder advanced order types", function () {
                 triggerPrice: "0",
             }
 
-            const signature = await getSignature(fixture, stopLimitOrder, trader)
+            const signature = await getSignature(fixture, stopLossLimitOrder, trader)
 
             await expect(
-                limitOrderBook.connect(keeper).fillLimitOrder(stopLimitOrder, signature, computeRoundId(1, 2)),
+                limitOrderBook.connect(keeper).fillLimitOrder(stopLossLimitOrder, signature, computeRoundId(1, 2)),
             ).to.revertedWith("LOB_ITP")
         })
 
         it("force error, baseToken isn't using ChainlinkPriceFeed", async () => {
             // baseToken3 is using BandPriceFeed which doesn't have getRoundData()
-            const stopLimitOrder = {
-                orderType: fixture.orderTypeStopLimitOrder,
+            const stopLossLimitOrder = {
+                orderType: fixture.orderTypeStopLossLimitOrder,
                 salt: 1,
                 trader: trader.address,
                 baseToken: fixture.baseToken3.address,
@@ -217,10 +217,10 @@ describe("LimitOrderBook fillLimitOrder advanced order types", function () {
                 triggerPrice: parseEther("2900").toString(),
             }
 
-            const signature = await getSignature(fixture, stopLimitOrder, trader)
+            const signature = await getSignature(fixture, stopLossLimitOrder, trader)
 
             await expect(
-                limitOrderBook.connect(keeper).fillLimitOrder(stopLimitOrder, signature, computeRoundId(1, 2)),
+                limitOrderBook.connect(keeper).fillLimitOrder(stopLossLimitOrder, signature, computeRoundId(1, 2)),
             ).to.revertedWith("function selector was not recognized and there's no fallback function")
         })
     })
@@ -244,8 +244,8 @@ describe("LimitOrderBook fillLimitOrder advanced order types", function () {
             // a limit order to long exact 0.1 ETH for a maximum of $300 at limit price $3000
             // fill price is guaranteed to be <= limit price
             const triggerPrice = parseEther("2900")
-            const stopLimitOrder = {
-                orderType: fixture.orderTypeStopLimitOrder,
+            const stopLossLimitOrder = {
+                orderType: fixture.orderTypeStopLossLimitOrder,
                 salt: 1,
                 trader: trader.address,
                 baseToken: baseToken.address,
@@ -261,14 +261,16 @@ describe("LimitOrderBook fillLimitOrder advanced order types", function () {
                 triggerPrice: triggerPrice.toString(),
             }
 
-            const signature = await getSignature(fixture, stopLimitOrder, trader)
-            const orderHash = await getOrderHash(fixture, stopLimitOrder)
+            const signature = await getSignature(fixture, stopLossLimitOrder, trader)
+            const orderHash = await getOrderHash(fixture, stopLossLimitOrder)
 
             const roundIdWhenTriggered = computeRoundId(1, 4) // 3000
             const triggeredPrice = await limitOrderBook.getPriceByRoundId(baseToken.address, roundIdWhenTriggered)
             expect(triggeredPrice).to.be.gte(triggerPrice)
 
-            await expect(limitOrderBook.connect(keeper).fillLimitOrder(stopLimitOrder, signature, roundIdWhenTriggered))
+            await expect(
+                limitOrderBook.connect(keeper).fillLimitOrder(stopLossLimitOrder, signature, roundIdWhenTriggered),
+            )
                 .to.emit(limitOrderBook, "LimitOrderFilled")
                 .withArgs(
                     trader.address,
@@ -282,15 +284,15 @@ describe("LimitOrderBook fillLimitOrder advanced order types", function () {
                 )
 
             // trigger price is not matched
-            const stopLimitOrder2 = {
-                ...stopLimitOrder,
+            const stopLossLimitOrder2 = {
+                ...stopLossLimitOrder,
                 salt: 2,
             }
-            const signature2 = await getSignature(fixture, stopLimitOrder2, trader)
+            const signature2 = await getSignature(fixture, stopLossLimitOrder2, trader)
 
             const roundIdWhenTriggered2 = computeRoundId(1, 2) // 2800
             await expect(
-                limitOrderBook.connect(keeper).fillLimitOrder(stopLimitOrder2, signature2, roundIdWhenTriggered2),
+                limitOrderBook.connect(keeper).fillLimitOrder(stopLossLimitOrder2, signature2, roundIdWhenTriggered2),
             ).to.revertedWith("LOB_BSLOTPNM")
         })
 
@@ -298,8 +300,8 @@ describe("LimitOrderBook fillLimitOrder advanced order types", function () {
             // a limit order to short exact 0.1 ETH for a minimum of $290 at limit price $2900
             // fill price is guaranteed to be >= limit price
             const triggerPrice = parseEther("3000")
-            const stopLimitOrder = {
-                orderType: fixture.orderTypeStopLimitOrder,
+            const stopLossLimitOrder = {
+                orderType: fixture.orderTypeStopLossLimitOrder,
                 salt: 1,
                 trader: trader.address,
                 baseToken: baseToken.address,
@@ -315,14 +317,16 @@ describe("LimitOrderBook fillLimitOrder advanced order types", function () {
                 triggerPrice: triggerPrice.toString(),
             }
 
-            const signature = await getSignature(fixture, stopLimitOrder, trader)
-            const orderHash = await getOrderHash(fixture, stopLimitOrder)
+            const signature = await getSignature(fixture, stopLossLimitOrder, trader)
+            const orderHash = await getOrderHash(fixture, stopLossLimitOrder)
 
             const roundIdWhenTriggered = computeRoundId(1, 3) // 2900
             const triggeredPrice = await limitOrderBook.getPriceByRoundId(baseToken.address, roundIdWhenTriggered)
             expect(triggeredPrice).to.be.lte(triggerPrice)
 
-            await expect(limitOrderBook.connect(keeper).fillLimitOrder(stopLimitOrder, signature, roundIdWhenTriggered))
+            await expect(
+                limitOrderBook.connect(keeper).fillLimitOrder(stopLossLimitOrder, signature, roundIdWhenTriggered),
+            )
                 .to.emit(limitOrderBook, "LimitOrderFilled")
                 .withArgs(
                     trader.address,
@@ -336,15 +340,15 @@ describe("LimitOrderBook fillLimitOrder advanced order types", function () {
                 )
 
             // trigger price is not matched
-            const stopLimitOrder2 = {
-                ...stopLimitOrder,
+            const stopLossLimitOrder2 = {
+                ...stopLossLimitOrder,
                 salt: 2,
             }
-            const signature2 = await getSignature(fixture, stopLimitOrder2, trader)
+            const signature2 = await getSignature(fixture, stopLossLimitOrder2, trader)
 
             const roundIdWhenTriggered2 = computeRoundId(2, 1) // 3100
             await expect(
-                limitOrderBook.connect(keeper).fillLimitOrder(stopLimitOrder2, signature2, roundIdWhenTriggered2),
+                limitOrderBook.connect(keeper).fillLimitOrder(stopLossLimitOrder2, signature2, roundIdWhenTriggered2),
             ).to.revertedWith("LOB_SSLOTPNM")
         })
     })
