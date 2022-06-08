@@ -238,7 +238,7 @@ contract LimitOrderBook is
         // https://docs.chain.link/docs/historical-price-data/
 
         // LOB_IRI: Invalid RoundId
-        require(order.roundIdWhenCreated > 0 && roundIdWhenTriggered > order.roundIdWhenCreated, "LOB_IRI");
+        require(order.roundIdWhenCreated > 0 && roundIdWhenTriggered >= order.roundIdWhenCreated, "LOB_IRI");
 
         // LOB_ITP: Invalid Trigger Price
         require(order.triggerPrice > 0, "LOB_ITP");

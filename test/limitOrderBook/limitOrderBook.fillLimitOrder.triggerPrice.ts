@@ -66,6 +66,7 @@ describe("LimitOrderBook fillLimitOrder advanced order types", function () {
     let limitOrderRewardVault: LimitOrderRewardVault
     let rewardToken: TestERC20
     let priceFeedDecimals: number
+    let currentTime: number
 
     beforeEach(async () => {
         fixture = await loadFixture(createLimitOrderFixture())
@@ -120,6 +121,15 @@ describe("LimitOrderBook fillLimitOrder advanced order types", function () {
 
         // trader allows limitOrderBook to open position
         await delegateApproval.connect(trader).approve(limitOrderBook.address, fixture.clearingHouseOpenPositionAction)
+
+        currentTime = (await waffle.provider.getBlock("latest")).timestamp
+        await setRoundData(mockedBaseAggregator, computeRoundId(1, 1), "2700", currentTime)
+        await setRoundData(mockedBaseAggregator, computeRoundId(1, 2), "2800", currentTime + 15 * 1)
+        await setRoundData(mockedBaseAggregator, computeRoundId(1, 3), "2900", currentTime + 15 * 2)
+        await setRoundData(mockedBaseAggregator, computeRoundId(1, 4), "3000", currentTime + 15 * 3)
+        await setRoundData(mockedBaseAggregator, computeRoundId(2, 1), "3100", currentTime + 15 * 4)
+        await setRoundData(mockedBaseAggregator, computeRoundId(2, 2), "3200", currentTime + 15 * 5)
+        await setRoundData(mockedBaseAggregator, computeRoundId(2, 3), "3300", currentTime + 15 * 6)
     })
 
     describe("verify trigger price", async () => {
@@ -223,23 +233,55 @@ describe("LimitOrderBook fillLimitOrder advanced order types", function () {
                 limitOrderBook.connect(keeper).fillLimitOrder(stopLossLimitOrder, signature, computeRoundId(1, 2)),
             ).to.revertedWith("function selector was not recognized and there's no fallback function")
         })
+
+        it("roundIdWhenCreated = roundIdWhenTriggered", async () => {
+            const roundIdWhenCreated = computeRoundId(1, 4) // 3000
+            const roundIdWhenTriggered = roundIdWhenCreated
+
+            // a limit order to long exact 0.1 ETH for a maximum of $300 at limit price $3000
+            // fill price is guaranteed to be <= limit price
+            const triggerPrice = parseEther("2900")
+            const stopLossLimitOrder = {
+                orderType: fixture.orderTypeStopLossLimitOrder,
+                salt: 1,
+                trader: trader.address,
+                baseToken: baseToken.address,
+                isBaseToQuote: false,
+                isExactInput: false,
+                amount: parseEther("0.1").toString(),
+                oppositeAmountBound: parseEther("300").toString(),
+                deadline: ethers.constants.MaxUint256.toString(),
+                sqrtPriceLimitX96: 0,
+                referralCode: ethers.constants.HashZero,
+                reduceOnly: false,
+                roundIdWhenCreated: roundIdWhenCreated,
+                triggerPrice: triggerPrice.toString(),
+            }
+
+            const signature = await getSignature(fixture, stopLossLimitOrder, trader)
+            const orderHash = await getOrderHash(fixture, stopLossLimitOrder)
+
+            const triggeredPrice = await limitOrderBook.getPriceByRoundId(baseToken.address, roundIdWhenTriggered)
+            expect(triggeredPrice).to.be.gte(triggerPrice)
+
+            await expect(
+                limitOrderBook.connect(keeper).fillLimitOrder(stopLossLimitOrder, signature, roundIdWhenTriggered),
+            )
+                .to.emit(limitOrderBook, "LimitOrderFilled")
+                .withArgs(
+                    trader.address,
+                    baseToken.address,
+                    orderHash,
+                    keeper.address,
+                    fixture.rewardAmount,
+                    parseEther("0.1"), // exchangedPositionSize
+                    parseEther("-296.001564233989843681"), // exchangedPositionNotional
+                    parseEther("2.989914790242321654"), // fee
+                )
+        })
     })
 
     describe("stop limit order", async () => {
-        let currentTime: number
-
-        beforeEach(async () => {
-            currentTime = (await waffle.provider.getBlock("latest")).timestamp
-
-            await setRoundData(mockedBaseAggregator, computeRoundId(1, 1), "2700", currentTime)
-            await setRoundData(mockedBaseAggregator, computeRoundId(1, 2), "2800", currentTime + 15 * 1)
-            await setRoundData(mockedBaseAggregator, computeRoundId(1, 3), "2900", currentTime + 15 * 2)
-            await setRoundData(mockedBaseAggregator, computeRoundId(1, 4), "3000", currentTime + 15 * 3)
-            await setRoundData(mockedBaseAggregator, computeRoundId(2, 1), "3100", currentTime + 15 * 4)
-            await setRoundData(mockedBaseAggregator, computeRoundId(2, 2), "3200", currentTime + 15 * 5)
-            await setRoundData(mockedBaseAggregator, computeRoundId(2, 3), "3300", currentTime + 15 * 6)
-        })
-
         it("fill stop limit order: Q2B (long) exact output", async () => {
             // a limit order to long exact 0.1 ETH for a maximum of $300 at limit price $3000
             // fill price is guaranteed to be <= limit price
@@ -354,20 +396,6 @@ describe("LimitOrderBook fillLimitOrder advanced order types", function () {
     })
 
     describe("take profit limit order", async () => {
-        let currentTime: number
-
-        beforeEach(async () => {
-            currentTime = (await waffle.provider.getBlock("latest")).timestamp
-
-            await setRoundData(mockedBaseAggregator, computeRoundId(1, 1), "2700", currentTime)
-            await setRoundData(mockedBaseAggregator, computeRoundId(1, 2), "2800", currentTime + 15 * 1)
-            await setRoundData(mockedBaseAggregator, computeRoundId(1, 3), "2900", currentTime + 15 * 2)
-            await setRoundData(mockedBaseAggregator, computeRoundId(1, 4), "3000", currentTime + 15 * 3)
-            await setRoundData(mockedBaseAggregator, computeRoundId(2, 1), "3100", currentTime + 15 * 4)
-            await setRoundData(mockedBaseAggregator, computeRoundId(2, 2), "3200", currentTime + 15 * 5)
-            await setRoundData(mockedBaseAggregator, computeRoundId(2, 3), "3300", currentTime + 15 * 6)
-        })
-
         it("fill take profit limit order: Q2B (long) exact output", async () => {
             // a limit order to long exact 0.1 ETH for a maximum of $300 at limit price $3000
             // fill price is guaranteed to be <= limit price
