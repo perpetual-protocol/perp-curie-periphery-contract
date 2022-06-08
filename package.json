@@ -1,6 +1,6 @@
 {
   "name": "@perp/curie-periphery-contract",
-  "version": "1.4.0",
+  "version": "1.4.0-rc4",
   "description": "Perpetual Protocol Curie (v2) periphery contracts",
   "license": "GPL-3.0-or-later",
   "author": {
@@ -47,9 +47,9 @@
     "@nomiclabs/hardhat-waffle": "2.0.3",
     "@openzeppelin/contracts": "3.4.0",
     "@openzeppelin/contracts-upgradeable": "3.4.2",
-    "@perp/curie-contract": "git+ssh://git@github.com:perpetual-protocol/perp-lushan.git#e57b29a6c848d013e540359037e05b113c314b5c",
+    "@perp/curie-contract": "git+ssh://git@github.com:perpetual-protocol/perp-lushan.git#f6eec3de0eae84e34a99cdce7729e2ad4f345276",
     "@perp/curie-liquidity-mining": "0.3.2",
-    "@perp/perp-oracle-contract": "git+ssh://git@github.com:perpetual-protocol/perp-oracle-contract.git#79783c48653feac65f866e9944c48bf4ea943b08",
+    "@perp/perp-oracle-contract": "0.4.2",
     "@typechain/ethers-v5": "10.0.0",
     "@typechain/hardhat": "6.0.0",
     "@types/chai": "4.3.0",
