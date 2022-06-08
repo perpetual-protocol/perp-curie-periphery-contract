@@ -724,7 +724,7 @@ describe("LimitOrderBook fillLimitOrder", function () {
         })
 
         it("force error, reduceOnly is not satisfied when increasing short position", async () => {
-            // short 0.1 ETH with $300 (limit price $3000)
+            // short 0.1 ETH with $290 (limit price $2900)
             const limitOrder = {
                 orderType: fixture.orderTypeLimitOrder,
                 salt: 1,
