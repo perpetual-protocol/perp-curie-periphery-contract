@@ -36,13 +36,13 @@ contract LimitOrderBook is
     using SafeMathUpgradeable for uint256;
     using SafeMathUpgradeable for uint8;
 
-    // NOTE: cannot use `OrderType orderType` here, use `uint8 orderType` instead
+    // NOTE: remember to update typehash if you change LimitOrder struct
+    // NOTE: cannot use `OrderType orderType` here, use `uint8 orderType` for enum instead
+    // solhint-disable-next-line max-line-length
+    // keccak256("LimitOrder(uint8 orderType,uint256 salt,address trader,address baseToken,bool isBaseToQuote,bool isExactInput,uint256 amount,uint256 oppositeAmountBound,uint256 deadline,uint160 sqrtPriceLimitX96,bytes32 referralCode,bool reduceOnly,uint80 roundIdWhenCreated,uint256 triggerPrice)");
+
     // solhint-disable-next-line func-name-mixedcase
-    bytes32 public constant LIMIT_ORDER_TYPEHASH =
-        keccak256(
-            // solhint-disable-next-line max-line-length
-            "LimitOrder(uint8 orderType,uint256 salt,address trader,address baseToken,bool isBaseToQuote,bool isExactInput,uint256 amount,uint256 oppositeAmountBound,uint256 deadline,uint160 sqrtPriceLimitX96,bytes32 referralCode,bool reduceOnly,uint80 roundIdWhenCreated,uint256 triggerPrice)"
-        );
+    bytes32 public constant LIMIT_ORDER_TYPEHASH = 0x54ea8c184890b5a7f7321f45a2ae952f0af50e3467b2216418a683566bf57c30;
 
     //
     // EXTERNAL NON-VIEW
