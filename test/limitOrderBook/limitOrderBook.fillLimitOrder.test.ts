@@ -23,7 +23,7 @@ import { mintAndDeposit, withdraw } from "../helper/token"
 import { forwardTimestamp } from "../shared/time"
 import { encodePriceSqrt, getMarketTwap, syncIndexToMarketPrice } from "../shared/utilities"
 import { createLimitOrderFixture, LimitOrderFixture } from "./fixtures"
-import { getOrderHash, getSignature } from "./orderUtils"
+import { getOrderHash, getSignature, OrderStatus, OrderType } from "./orderUtils"
 
 describe("LimitOrderBook fillLimitOrder", function () {
     const [admin, trader, keeper, maker, alice] = waffle.provider.getWallets()
@@ -104,7 +104,7 @@ describe("LimitOrderBook fillLimitOrder", function () {
         // a limit order to long exact 0.1 ETH for a maximum of $300 at limit price $3000
         // fill price is guaranteed to be <= limit price
         const limitOrder = {
-            orderType: fixture.orderTypeLimitOrder,
+            orderType: OrderType.LimitOrder,
             salt: 1,
             trader: trader.address,
             baseToken: baseToken.address,
@@ -122,6 +122,7 @@ describe("LimitOrderBook fillLimitOrder", function () {
 
         const signature = await getSignature(fixture, limitOrder, trader)
         const orderHash = await getOrderHash(fixture, limitOrder)
+        expect(await limitOrderBook.getOrderStatus(orderHash)).to.be.eq(OrderStatus.Unfilled)
 
         const oldRewardBalance = await rewardToken.balanceOf(keeper.address)
 
@@ -148,6 +149,8 @@ describe("LimitOrderBook fillLimitOrder", function () {
         )
         await expect(tx).to.emit(limitOrderRewardVault, "Disbursed").withArgs(keeper.address, fixture.rewardAmount)
 
+        expect(await limitOrderBook.getOrderStatus(orderHash)).to.be.eq(OrderStatus.Filled)
+
         expect(await rewardToken.balanceOf(keeper.address)).to.be.eq(oldRewardBalance.add(fixture.rewardAmount))
 
         expect(await accountBalance.getTakerPositionSize(trader.address, baseToken.address)).to.be.eq(parseEther("0.1"))
@@ -160,7 +163,7 @@ describe("LimitOrderBook fillLimitOrder", function () {
         // a limit order to short exact 0.1 ETH for a minimum of $290 at limit price $2900
         // fill price is guaranteed to be >= limit price
         const limitOrder = {
-            orderType: fixture.orderTypeLimitOrder,
+            orderType: OrderType.LimitOrder,
             salt: 1,
             trader: trader.address,
             baseToken: baseToken.address,
@@ -178,6 +181,7 @@ describe("LimitOrderBook fillLimitOrder", function () {
 
         const signature = await getSignature(fixture, limitOrder, trader)
         const orderHash = await getOrderHash(fixture, limitOrder)
+        expect(await limitOrderBook.getOrderStatus(orderHash)).to.be.eq(OrderStatus.Unfilled)
 
         const oldRewardBalance = await rewardToken.balanceOf(keeper.address)
 
@@ -204,6 +208,8 @@ describe("LimitOrderBook fillLimitOrder", function () {
         )
         await expect(tx).to.emit(limitOrderRewardVault, "Disbursed").withArgs(keeper.address, fixture.rewardAmount)
 
+        expect(await limitOrderBook.getOrderStatus(orderHash)).to.be.eq(OrderStatus.Filled)
+
         expect(await rewardToken.balanceOf(keeper.address)).to.be.eq(oldRewardBalance.add(fixture.rewardAmount))
 
         expect(await accountBalance.getTakerPositionSize(trader.address, baseToken.address)).to.be.eq(
@@ -218,7 +224,7 @@ describe("LimitOrderBook fillLimitOrder", function () {
         // a limit order to long a minimum of 0.1 ETH for exact $300 at limit price $3000
         // fill price is guaranteed to be <= limit price
         const limitOrder = {
-            orderType: fixture.orderTypeLimitOrder,
+            orderType: OrderType.LimitOrder,
             salt: 1,
             trader: trader.address,
             baseToken: baseToken.address,
@@ -276,7 +282,7 @@ describe("LimitOrderBook fillLimitOrder", function () {
         // a limit order to short a maximum of 0.1 ETH for exact $290 at limit price $2900
         // fill price is guaranteed to be >= limit price
         const limitOrder = {
-            orderType: fixture.orderTypeLimitOrder,
+            orderType: OrderType.LimitOrder,
             salt: 1,
             trader: trader.address,
             baseToken: baseToken.address,
@@ -331,7 +337,7 @@ describe("LimitOrderBook fillLimitOrder", function () {
     it("fill two orders with the same values but different salt", async () => {
         // long 0.1 ETH with $300 (limit price $3000)
         const limitOrder1 = {
-            orderType: fixture.orderTypeLimitOrder,
+            orderType: OrderType.LimitOrder,
             salt: 1,
             trader: trader.address,
             baseToken: baseToken.address,
@@ -366,7 +372,7 @@ describe("LimitOrderBook fillLimitOrder", function () {
     it("force error, when order is already filled", async () => {
         // long 0.1 ETH with $300 (limit price $3000)
         const limitOrder = {
-            orderType: fixture.orderTypeLimitOrder,
+            orderType: OrderType.LimitOrder,
             salt: 1,
             trader: trader.address,
             baseToken: baseToken.address,
@@ -397,7 +403,7 @@ describe("LimitOrderBook fillLimitOrder", function () {
     it("force error, when order is already cancelled", async () => {
         // long 0.1 ETH with $300 (limit price $3000)
         const limitOrder = {
-            orderType: fixture.orderTypeLimitOrder,
+            orderType: OrderType.LimitOrder,
             salt: 1,
             trader: trader.address,
             baseToken: baseToken.address,
@@ -430,7 +436,7 @@ describe("LimitOrderBook fillLimitOrder", function () {
 
         // long 0.1 ETH with $300 (limit price $3000)
         const limitOrder = {
-            orderType: fixture.orderTypeLimitOrder,
+            orderType: OrderType.LimitOrder,
             salt: 1,
             trader: trader.address,
             baseToken: baseToken.address,
@@ -475,7 +481,7 @@ describe("LimitOrderBook fillLimitOrder", function () {
         it("fill order when partial reduce", async () => {
             // short 0.05 ETH with $150 (limit price $2800)
             const limitOrder = {
-                orderType: fixture.orderTypeLimitOrder,
+                orderType: OrderType.LimitOrder,
                 salt: 1,
                 trader: trader.address,
                 baseToken: baseToken.address,
@@ -522,7 +528,7 @@ describe("LimitOrderBook fillLimitOrder", function () {
 
             // short (close) the entire ETH position with $280 (limit price $2800)
             const limitOrder = {
-                orderType: fixture.orderTypeLimitOrder,
+                orderType: OrderType.LimitOrder,
                 salt: 1,
                 trader: trader.address,
                 baseToken: baseToken.address,
@@ -565,7 +571,7 @@ describe("LimitOrderBook fillLimitOrder", function () {
         it("force error, reduceOnly is not satisfied when increasing long position", async () => {
             // long 0.1 ETH with $300 (limit price $3000)
             const limitOrder = {
-                orderType: fixture.orderTypeLimitOrder,
+                orderType: OrderType.LimitOrder,
                 salt: 1,
                 trader: trader.address,
                 baseToken: baseToken.address,
@@ -592,7 +598,7 @@ describe("LimitOrderBook fillLimitOrder", function () {
             // short 0.2 ETH with $560 (limit price $2800)
             // more than the old long position size
             const limitOrder = {
-                orderType: fixture.orderTypeLimitOrder,
+                orderType: OrderType.LimitOrder,
                 salt: 1,
                 trader: trader.address,
                 baseToken: baseToken.address,
@@ -638,7 +644,7 @@ describe("LimitOrderBook fillLimitOrder", function () {
         it("fill order when partial reduce", async () => {
             // long 0.05 ETH with $150 (limit price $3000)
             const limitOrder = {
-                orderType: fixture.orderTypeLimitOrder,
+                orderType: OrderType.LimitOrder,
                 salt: 1,
                 trader: trader.address,
                 baseToken: baseToken.address,
@@ -683,7 +689,7 @@ describe("LimitOrderBook fillLimitOrder", function () {
 
             // long (close) the entire ETH position (limit price $3000)
             const limitOrder = {
-                orderType: fixture.orderTypeLimitOrder,
+                orderType: OrderType.LimitOrder,
                 salt: 1,
                 trader: trader.address,
                 baseToken: baseToken.address,
@@ -726,7 +732,7 @@ describe("LimitOrderBook fillLimitOrder", function () {
         it("force error, reduceOnly is not satisfied when increasing short position", async () => {
             // short 0.1 ETH with $290 (limit price $2900)
             const limitOrder = {
-                orderType: fixture.orderTypeLimitOrder,
+                orderType: OrderType.LimitOrder,
                 salt: 1,
                 trader: trader.address,
                 baseToken: baseToken.address,
@@ -753,7 +759,7 @@ describe("LimitOrderBook fillLimitOrder", function () {
             // long 0.2 ETH with $600 (limit price $3000)
             // more than the old short position size
             const limitOrder = {
-                orderType: fixture.orderTypeLimitOrder,
+                orderType: OrderType.LimitOrder,
                 salt: 1,
                 trader: trader.address,
                 baseToken: baseToken.address,
@@ -784,7 +790,7 @@ describe("LimitOrderBook fillLimitOrder", function () {
 
             // long 0.1 ETH with $300 (limit price $3000)
             const limitOrder = {
-                orderType: fixture.orderTypeLimitOrder,
+                orderType: OrderType.LimitOrder,
                 salt: 1,
                 trader: trader.address,
                 baseToken: baseToken.address,
@@ -831,7 +837,7 @@ describe("LimitOrderBook fillLimitOrder", function () {
 
             // long 0.1 ETH with $300 (limit price $3000)
             const limitOrder = {
-                orderType: fixture.orderTypeLimitOrder,
+                orderType: OrderType.LimitOrder,
                 salt: 1,
                 trader: trader.address,
                 baseToken: baseToken.address,
@@ -860,7 +866,7 @@ describe("LimitOrderBook fillLimitOrder", function () {
     it("force error, user's balance is not enough when fill limit order ", async () => {
         // long 0.1 ETH with $300 (limit price $3000)
         const limitOrder = {
-            orderType: fixture.orderTypeLimitOrder,
+            orderType: OrderType.LimitOrder,
             salt: 1,
             trader: trader.address,
             baseToken: baseToken.address,
@@ -888,7 +894,7 @@ describe("LimitOrderBook fillLimitOrder", function () {
     it("force error, fill order failed after user revoke his/her approval", async () => {
         // long 0.1 ETH with $300 (limit price $3000)
         const limitOrder = {
-            orderType: fixture.orderTypeLimitOrder,
+            orderType: OrderType.LimitOrder,
             salt: 1,
             trader: trader.address,
             baseToken: baseToken.address,
@@ -916,7 +922,7 @@ describe("LimitOrderBook fillLimitOrder", function () {
     it("keeper keep trying to fill limit orders in a row", async () => {
         // long 0.1 ETH with $300 (limit price $3000)
         const limitOrder = {
-            orderType: fixture.orderTypeLimitOrder,
+            orderType: OrderType.LimitOrder,
             salt: 1,
             trader: trader.address,
             baseToken: baseToken.address,
@@ -991,7 +997,7 @@ describe("LimitOrderBook fillLimitOrder", function () {
 
     it("force error, invalid orderType", async () => {
         const badLimitOrder = {
-            orderType: fixture.orderTypeNotExisted,
+            orderType: fixture.notExistedOrderType,
             salt: 1,
             trader: trader.address,
             baseToken: baseToken.address,

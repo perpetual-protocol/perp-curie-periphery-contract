@@ -21,7 +21,7 @@ import { getMaxTickRange, priceToTick } from "../helper/number"
 import { mintAndDeposit } from "../helper/token"
 import { encodePriceSqrt, syncIndexToMarketPrice } from "../shared/utilities"
 import { createLimitOrderFixture, LimitOrderFixture } from "./fixtures"
-import { getOrderHash, getSignature } from "./orderUtils"
+import { getOrderHash, getSignature, OrderStatus, OrderType } from "./orderUtils"
 
 describe("LimitOrderBook cancelLimitOrder", function () {
     const [admin, trader, keeper, maker, alice] = waffle.provider.getWallets()
@@ -95,7 +95,7 @@ describe("LimitOrderBook cancelLimitOrder", function () {
     it("cancel order: Q2B exact output", async () => {
         // long 0.1 ETH with $300 (limit price $3000)
         const limitOrder = {
-            orderType: fixture.orderTypeLimitOrder,
+            orderType: OrderType.LimitOrder,
             salt: 1,
             trader: trader.address,
             baseToken: baseToken.address,
@@ -112,6 +112,7 @@ describe("LimitOrderBook cancelLimitOrder", function () {
         }
 
         const orderHash = await getOrderHash(fixture, limitOrder)
+        expect(await limitOrderBook.getOrderStatus(orderHash)).to.be.eq(OrderStatus.Unfilled)
 
         await expect(await limitOrderBook.connect(trader).cancelLimitOrder(limitOrder))
             .to.emit(limitOrderBook, "LimitOrderCancelled")
@@ -122,12 +123,14 @@ describe("LimitOrderBook cancelLimitOrder", function () {
                 parseEther("0.1"), // positionSize
                 parseEther("-300"), // positionNotional
             )
+
+        expect(await limitOrderBook.getOrderStatus(orderHash)).to.be.eq(OrderStatus.Cancelled)
     })
 
     it("cancel order: B2Q exact input", async () => {
         // short 0.1 ETH with $290 (limit price $2000)
         const limitOrder = {
-            orderType: fixture.orderTypeLimitOrder,
+            orderType: OrderType.LimitOrder,
             salt: 1,
             trader: trader.address,
             baseToken: baseToken.address,
@@ -144,6 +147,7 @@ describe("LimitOrderBook cancelLimitOrder", function () {
         }
 
         const orderHash = await getOrderHash(fixture, limitOrder)
+        expect(await limitOrderBook.getOrderStatus(orderHash)).to.be.eq(OrderStatus.Unfilled)
 
         await expect(await limitOrderBook.connect(trader).cancelLimitOrder(limitOrder))
             .to.emit(limitOrderBook, "LimitOrderCancelled")
@@ -154,12 +158,14 @@ describe("LimitOrderBook cancelLimitOrder", function () {
                 parseEther("-0.1"), // positionSize
                 parseEther("290"), // positionNotional
             )
+
+        expect(await limitOrderBook.getOrderStatus(orderHash)).to.be.eq(OrderStatus.Cancelled)
     })
 
     it("force error, cancel order by the wrong person", async () => {
         // long 0.1 ETH with $300 (limit price $3000)
         const limitOrder = {
-            orderType: fixture.orderTypeLimitOrder,
+            orderType: OrderType.LimitOrder,
             salt: 1,
             trader: trader.address,
             baseToken: baseToken.address,
@@ -181,7 +187,7 @@ describe("LimitOrderBook cancelLimitOrder", function () {
     it("force error, cancel a cancelled order", async () => {
         // long 0.1 ETH with $300 (limit price $3000)
         const limitOrder = {
-            orderType: fixture.orderTypeLimitOrder,
+            orderType: OrderType.LimitOrder,
             salt: 1,
             trader: trader.address,
             baseToken: baseToken.address,
@@ -197,8 +203,6 @@ describe("LimitOrderBook cancelLimitOrder", function () {
             triggerPrice: parseEther("0").toString(),
         }
 
-        const orderHash = await getOrderHash(fixture, limitOrder)
-
         await expect(await limitOrderBook.connect(trader).cancelLimitOrder(limitOrder)).to.emit(
             limitOrderBook,
             "LimitOrderCancelled",
@@ -211,7 +215,7 @@ describe("LimitOrderBook cancelLimitOrder", function () {
     it("force error, cancel a filled order", async () => {
         // long 0.1 ETH at $3000 with $300
         const limitOrder = {
-            orderType: fixture.orderTypeLimitOrder,
+            orderType: OrderType.LimitOrder,
             salt: 1,
             trader: trader.address,
             baseToken: baseToken.address,

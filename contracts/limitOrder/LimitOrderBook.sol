@@ -211,6 +211,10 @@ contract LimitOrderBook is
     // PUBLIC VIEW
     //
 
+    function getOrderStatus(bytes32 orderHash) external view override returns (ILimitOrderBook.OrderStatus) {
+        return _ordersStatus[orderHash];
+    }
+
     function getOrderHash(LimitOrder memory order) public view override returns (bytes32) {
         return _hashTypedDataV4(keccak256(abi.encode(LIMIT_ORDER_TYPEHASH, order)));
     }
@@ -238,7 +242,7 @@ contract LimitOrderBook is
         // https://docs.chain.link/docs/historical-price-data/
 
         // LOB_IRI: Invalid RoundId
-        require(order.roundIdWhenCreated > 0 && roundIdWhenTriggered > order.roundIdWhenCreated, "LOB_IRI");
+        require(order.roundIdWhenCreated > 0 && roundIdWhenTriggered >= order.roundIdWhenCreated, "LOB_IRI");
 
         // LOB_ITP: Invalid Trigger Price
         require(order.triggerPrice > 0, "LOB_ITP");
