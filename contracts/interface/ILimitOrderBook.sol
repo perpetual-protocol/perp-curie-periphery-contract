@@ -6,7 +6,8 @@ interface ILimitOrderBook {
     // Do NOT change the order of enum values because it will break backwards compatibility
     enum OrderType {
         LimitOrder,
-        StopLimitOrder
+        StopLossLimitOrder,
+        TakeProfitLimitOrder
     }
 
     // Do NOT change the order of enum values because it will break backwards compatibility
@@ -16,7 +17,7 @@ interface ILimitOrderBook {
         Cancelled
     }
 
-    /// @param orderType The enum of order type (LimitOrder, StopLimitOrder, ...)
+    /// @param orderType The enum of order type (LimitOrder, StopLossLimitOrder, ...)
     /// @param salt An unique number for creating orders with the same parameters
     /// @param trader The address of trader who creates the order (must be signer)
     /// @param baseToken The address of baseToken (vETH, vBTC, ...)
@@ -32,12 +33,10 @@ interface ILimitOrderBook {
     /// @param sqrtPriceLimitX96 tx will fill until it reaches this price but WON'T REVERT
     /// @param referralCode The referral code
     /// @param reduceOnly The order will only reduce/close positions if true
-    /// @param roundIdWhenCreated The oracle `roundId` when the stop limit order is created
-    // Only avaliable if orderType is StopLimitOrder, otherwise set to 0
-    /// @param triggerPrice The trigger price of the stop limit order
-    // Only avaliable if orderType is StopLimitOrder, otherwise set to 0
-    // If Q2B (long), the order will be tradable when oracle price >= triggerPrice
-    // If B2Q (short), the order will be tradable when oracle price <= triggerPrice
+    /// @param roundIdWhenCreated Chainlink `roundId` when the limit order is created
+    // Only available if orderType is StopLossLimitOrder/TakeProfitLimitOrder, otherwise set to 0
+    /// @param triggerPrice The trigger price of the limit order
+    // Only available if orderType is StopLossLimitOrder/TakeProfitLimitOrder, otherwise set to 0
     struct LimitOrder {
         OrderType orderType;
         uint256 salt;
@@ -99,8 +98,8 @@ interface ILimitOrderBook {
 
     /// @param order LimitOrder struct
     /// @param signature The EIP-712 signature of `order` generated from `eth_signTypedData_V4`
-    /// @param roundIdWhenTriggered The oracle `roundId` when triggerPrice is satisfied
-    // Only avaliable if orderType is StopLimitOrder, otherwise set to 0
+    /// @param roundIdWhenTriggered Chainlink `roundId` when triggerPrice is satisfied
+    // Only available if orderType is StopLossLimitOrder/TakeProfitLimitOrder, otherwise set to 0
     function fillLimitOrder(
         LimitOrder memory order,
         bytes memory signature,
@@ -109,4 +108,8 @@ interface ILimitOrderBook {
 
     /// @param order LimitOrder struct
     function cancelLimitOrder(LimitOrder memory order) external;
+
+    function getOrderStatus(bytes32 orderHash) external view returns (ILimitOrderBook.OrderStatus);
+
+    function getOrderHash(LimitOrder memory order) external view returns (bytes32);
 }

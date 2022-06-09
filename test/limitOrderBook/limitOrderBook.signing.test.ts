@@ -3,9 +3,8 @@ import { parseEther } from "@ethersproject/units"
 import { expect } from "chai"
 import { ethers, waffle } from "hardhat"
 import { BaseToken, TestLimitOrderBook } from "../../typechain-types"
-import { generateTypedHash } from "./eip712Utils"
 import { createLimitOrderFixture, LimitOrderFixture } from "./fixtures"
-import { getOrderTypes } from "./orderUtils"
+import { getOrderHash, getOrderTypes, OrderStatus, OrderType } from "./orderUtils"
 
 describe("LimitOrderBook signing", function () {
     const [admin, trader, alice] = waffle.provider.getWallets()
@@ -19,17 +18,10 @@ describe("LimitOrderBook signing", function () {
         baseToken = fixture.baseToken
     })
 
-    it("get order hash", async () => {
-        const domain = {
-            name: fixture.EIP712Name,
-            version: fixture.EIP712Version,
-            chainId: (await waffle.provider.getNetwork()).chainId,
-            verifyingContract: limitOrderBook.address,
-        }
-
+    it("get order status", async () => {
         // long 1 ETH (base) at $3000 with $3000 (quote)
         const limitOrder = {
-            orderType: fixture.orderTypeLimitOrder,
+            orderType: OrderType.LimitOrder,
             salt: 1,
             trader: trader.address,
             baseToken: baseToken.address,
@@ -41,18 +33,35 @@ describe("LimitOrderBook signing", function () {
             sqrtPriceLimitX96: 0,
             referralCode: ethers.constants.HashZero,
             reduceOnly: false,
-            roundIdWhenCreated: parseEther("0").toString(),
+            roundIdWhenCreated: "0",
+            triggerPrice: parseEther("0").toString(),
+        }
+
+        const orderHash = await getOrderHash(fixture, limitOrder)
+        expect(await limitOrderBook.getOrderStatus(orderHash)).to.be.eq(OrderStatus.Unfilled)
+    })
+
+    it("get order hash", async () => {
+        // long 1 ETH (base) at $3000 with $3000 (quote)
+        const limitOrder = {
+            orderType: OrderType.LimitOrder,
+            salt: 1,
+            trader: trader.address,
+            baseToken: baseToken.address,
+            isBaseToQuote: false,
+            isExactInput: true,
+            amount: parseEther("3000").toString(),
+            oppositeAmountBound: parseEther("1").toString(),
+            deadline: ethers.constants.MaxUint256.toString(),
+            sqrtPriceLimitX96: 0,
+            referralCode: ethers.constants.HashZero,
+            reduceOnly: false,
+            roundIdWhenCreated: "0",
             triggerPrice: parseEther("0").toString(),
         }
 
         // generate order hash off-chain
-        const types = getOrderTypes()
-        const orderHashOffChain = generateTypedHash({
-            domain,
-            types,
-            message: limitOrder as any,
-            primaryType: fixture.EIP712PrimaryType,
-        })
+        const orderHashOffChain = await getOrderHash(fixture, limitOrder)
 
         // generate order hash on-chain
         const orderHashOnChain = await limitOrderBook.getOrderHash(limitOrder)
@@ -63,7 +72,7 @@ describe("LimitOrderBook signing", function () {
     it("get order hashes with the same parameters but different salt", async () => {
         // long 1 ETH (base) at $3000 with $3000 (quote)
         const limitOrder1 = {
-            orderType: fixture.orderTypeLimitOrder,
+            orderType: OrderType.LimitOrder,
             salt: 1,
             trader: trader.address,
             baseToken: baseToken.address,
@@ -75,7 +84,7 @@ describe("LimitOrderBook signing", function () {
             sqrtPriceLimitX96: 0,
             referralCode: ethers.constants.HashZero,
             reduceOnly: false,
-            roundIdWhenCreated: parseEther("0").toString(),
+            roundIdWhenCreated: "0",
             triggerPrice: parseEther("0").toString(),
         }
 
@@ -100,7 +109,7 @@ describe("LimitOrderBook signing", function () {
 
         // long 2 ETH (base) at $3000 with $6000 (quote)
         const limitOrder = {
-            orderType: fixture.orderTypeLimitOrder,
+            orderType: OrderType.LimitOrder,
             salt: 123,
             trader: trader.address,
             baseToken: baseToken.address,
@@ -112,7 +121,7 @@ describe("LimitOrderBook signing", function () {
             sqrtPriceLimitX96: 0,
             referralCode: ethers.constants.HashZero,
             reduceOnly: false,
-            roundIdWhenCreated: parseEther("0").toString(),
+            roundIdWhenCreated: "0",
             triggerPrice: parseEther("0").toString(),
         }
 
