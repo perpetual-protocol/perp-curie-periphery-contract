@@ -211,6 +211,10 @@ contract LimitOrderBook is
     // PUBLIC VIEW
     //
 
+    function getOrderStatus(bytes32 orderHash) external view override returns (ILimitOrderBook.OrderStatus) {
+        return _ordersStatus[orderHash];
+    }
+
     function getOrderHash(LimitOrder memory order) public view override returns (bytes32) {
         return _hashTypedDataV4(keccak256(abi.encode(LIMIT_ORDER_TYPEHASH, order)));
     }
