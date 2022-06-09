@@ -24,7 +24,7 @@ import { getMaxTickRange, priceToTick } from "../helper/number"
 import { mintAndDeposit } from "../helper/token"
 import { encodePriceSqrt, syncIndexToMarketPrice } from "../shared/utilities"
 import { createLimitOrderFixture, LimitOrderFixture } from "./fixtures"
-import { getOrderHash, getSignature } from "./orderUtils"
+import { getOrderHash, getSignature, OrderType } from "./orderUtils"
 
 function computeRoundId(phaseId: number, aggregatorRoundId: number): string {
     const roundId = (BigInt(phaseId) << BigInt("64")) | BigInt(aggregatorRoundId)
@@ -135,7 +135,7 @@ describe("LimitOrderBook fillLimitOrder advanced order types", function () {
     describe("verify trigger price", async () => {
         it("force error, missing roundIdWhenCreated", async () => {
             const stopLossLimitOrder = {
-                orderType: fixture.orderTypeStopLossLimitOrder,
+                orderType: OrderType.StopLossLimitOrder,
                 salt: 1,
                 trader: trader.address,
                 baseToken: baseToken.address,
@@ -160,7 +160,7 @@ describe("LimitOrderBook fillLimitOrder advanced order types", function () {
 
         it("force error, roundIdWhenTriggered is earlier than roundIdWhenCreated", async () => {
             const stopLossLimitOrder = {
-                orderType: fixture.orderTypeStopLossLimitOrder,
+                orderType: OrderType.StopLossLimitOrder,
                 salt: 1,
                 trader: trader.address,
                 baseToken: baseToken.address,
@@ -185,7 +185,7 @@ describe("LimitOrderBook fillLimitOrder advanced order types", function () {
 
         it("force error, triggerPrice is 0", async () => {
             const stopLossLimitOrder = {
-                orderType: fixture.orderTypeStopLossLimitOrder,
+                orderType: OrderType.StopLossLimitOrder,
                 salt: 1,
                 trader: trader.address,
                 baseToken: baseToken.address,
@@ -211,7 +211,7 @@ describe("LimitOrderBook fillLimitOrder advanced order types", function () {
         it("force error, baseToken isn't using ChainlinkPriceFeed", async () => {
             // baseToken3 is using BandPriceFeed which doesn't have getRoundData()
             const stopLossLimitOrder = {
-                orderType: fixture.orderTypeStopLossLimitOrder,
+                orderType: OrderType.StopLossLimitOrder,
                 salt: 1,
                 trader: trader.address,
                 baseToken: fixture.baseToken3.address,
@@ -242,7 +242,7 @@ describe("LimitOrderBook fillLimitOrder advanced order types", function () {
             // fill price is guaranteed to be <= limit price
             const triggerPrice = parseEther("2900")
             const stopLossLimitOrder = {
-                orderType: fixture.orderTypeStopLossLimitOrder,
+                orderType: OrderType.StopLossLimitOrder,
                 salt: 1,
                 trader: trader.address,
                 baseToken: baseToken.address,
@@ -287,7 +287,7 @@ describe("LimitOrderBook fillLimitOrder advanced order types", function () {
             // fill price is guaranteed to be <= limit price
             const triggerPrice = parseEther("2900")
             const stopLossLimitOrder = {
-                orderType: fixture.orderTypeStopLossLimitOrder,
+                orderType: OrderType.StopLossLimitOrder,
                 salt: 1,
                 trader: trader.address,
                 baseToken: baseToken.address,
@@ -343,7 +343,7 @@ describe("LimitOrderBook fillLimitOrder advanced order types", function () {
             // fill price is guaranteed to be >= limit price
             const triggerPrice = parseEther("3000")
             const stopLossLimitOrder = {
-                orderType: fixture.orderTypeStopLossLimitOrder,
+                orderType: OrderType.StopLossLimitOrder,
                 salt: 1,
                 trader: trader.address,
                 baseToken: baseToken.address,
@@ -401,7 +401,7 @@ describe("LimitOrderBook fillLimitOrder advanced order types", function () {
             // fill price is guaranteed to be <= limit price
             const triggerPrice = parseEther("2900")
             const takeProfitLimitOrder = {
-                orderType: fixture.orderTypeTakeProfitLimitOrder,
+                orderType: OrderType.TakeProfitLimitOrder,
                 salt: 1,
                 trader: trader.address,
                 baseToken: baseToken.address,
@@ -457,7 +457,7 @@ describe("LimitOrderBook fillLimitOrder advanced order types", function () {
             // fill price is guaranteed to be >= limit price
             const triggerPrice = parseEther("3000")
             const takeProfitLimitOrder = {
-                orderType: fixture.orderTypeTakeProfitLimitOrder,
+                orderType: OrderType.TakeProfitLimitOrder,
                 salt: 1,
                 trader: trader.address,
                 baseToken: baseToken.address,

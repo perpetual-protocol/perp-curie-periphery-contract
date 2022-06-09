@@ -4,6 +4,18 @@ import { waffle } from "hardhat"
 import { generateTypedHash } from "./eip712Utils"
 import { LimitOrderFixture } from "./fixtures"
 
+export enum OrderType {
+    LimitOrder,
+    StopLossLimitOrder,
+    TakeProfitLimitOrder,
+}
+
+export enum OrderStatus {
+    Unfilled,
+    Filled,
+    Cancelled,
+}
+
 export interface LimitOrder {
     orderType: number
     salt: number

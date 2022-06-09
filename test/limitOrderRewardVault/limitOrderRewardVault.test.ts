@@ -19,7 +19,7 @@ import { initAndAddPool } from "../helper/marketHelper"
 import { getMaxTickRange, priceToTick } from "../helper/number"
 import { mintAndDeposit } from "../helper/token"
 import { createLimitOrderFixture, LimitOrderFixture } from "../limitOrderBook/fixtures"
-import { getSignature } from "../limitOrderBook/orderUtils"
+import { getSignature, OrderType } from "../limitOrderBook/orderUtils"
 import { encodePriceSqrt, syncIndexToMarketPrice } from "../shared/utilities"
 
 describe("LimitOrderRewardVault", function () {
@@ -142,7 +142,7 @@ describe("LimitOrderRewardVault", function () {
 
     it("disburse", async () => {
         const limitOrder = {
-            orderType: fixture.orderTypeLimitOrder,
+            orderType: OrderType.LimitOrder,
             salt: 1,
             trader: trader.address,
             baseToken: baseToken.address,
@@ -171,7 +171,7 @@ describe("LimitOrderRewardVault", function () {
 
     it("force error, disburse without the enough balance", async () => {
         const limitOrder = {
-            orderType: fixture.orderTypeLimitOrder,
+            orderType: OrderType.LimitOrder,
             salt: 1,
             trader: trader.address,
             baseToken: baseToken.address,

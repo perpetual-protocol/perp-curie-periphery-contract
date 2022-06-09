@@ -9,7 +9,6 @@ export async function forward(seconds: number) {
 
 export async function forwardTimestamp(clearingHouse: TestClearingHouse, step: number = 1) {
     const now = await clearingHouse.getBlockTimestamp()
-    console.log('forwardTimestamp now', now)
     await clearingHouse.setBlockTimestamp(now.add(step))
 }
 
