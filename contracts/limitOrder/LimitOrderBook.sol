@@ -146,7 +146,6 @@ contract LimitOrderBook is
         _ordersStatus[orderHash] = ILimitOrderBook.OrderStatus.Filled;
 
         address keeper = _msgSender();
-        uint256 keeperReward = ILimitOrderRewardVault(limitOrderRewardVault).disburse(keeper);
 
         int256 exchangedPositionSize;
         int256 exchangedPositionNotional;
@@ -162,8 +161,10 @@ contract LimitOrderBook is
             order.trader,
             order.baseToken,
             orderHash,
+            uint8(order.orderType),
+            order.triggerPrice,
             keeper,
-            keeperReward,
+            ILimitOrderRewardVault(limitOrderRewardVault).disburse(keeper), // keeperReward
             exchangedPositionSize,
             exchangedPositionNotional,
             fee

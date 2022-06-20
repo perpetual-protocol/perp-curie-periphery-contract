@@ -272,6 +272,8 @@ describe("LimitOrderBook fillLimitOrder advanced order types", function () {
                     trader.address,
                     baseToken.address,
                     orderHash,
+                    stopLossLimitOrder.orderType,
+                    stopLossLimitOrder.triggerPrice,
                     keeper.address,
                     fixture.rewardAmount,
                     parseEther("0.1"), // exchangedPositionSize
@@ -318,6 +320,8 @@ describe("LimitOrderBook fillLimitOrder advanced order types", function () {
                     trader.address,
                     baseToken.address,
                     orderHash,
+                    stopLossLimitOrder.orderType,
+                    stopLossLimitOrder.triggerPrice,
                     keeper.address,
                     fixture.rewardAmount,
                     parseEther("0.1"), // exchangedPositionSize
@@ -374,6 +378,8 @@ describe("LimitOrderBook fillLimitOrder advanced order types", function () {
                     trader.address,
                     baseToken.address,
                     orderHash,
+                    stopLossLimitOrder.orderType,
+                    stopLossLimitOrder.triggerPrice,
                     keeper.address,
                     fixture.rewardAmount,
                     parseEther("-0.1"), // exchangedPositionSize
@@ -432,6 +438,8 @@ describe("LimitOrderBook fillLimitOrder advanced order types", function () {
                     trader.address,
                     baseToken.address,
                     orderHash,
+                    takeProfitLimitOrder.orderType,
+                    takeProfitLimitOrder.triggerPrice,
                     keeper.address,
                     fixture.rewardAmount,
                     parseEther("0.1"), // exchangedPositionSize
@@ -488,6 +496,8 @@ describe("LimitOrderBook fillLimitOrder advanced order types", function () {
                     trader.address,
                     baseToken.address,
                     orderHash,
+                    takeProfitLimitOrder.orderType,
+                    takeProfitLimitOrder.triggerPrice,
                     keeper.address,
                     fixture.rewardAmount,
                     parseEther("-0.1"), // exchangedPositionSize
