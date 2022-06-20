@@ -205,7 +205,15 @@ contract LimitOrderBook is
             }
         }
 
-        emit LimitOrderCancelled(order.trader, order.baseToken, orderHash, positionSize, positionNotional);
+        emit LimitOrderCancelled(
+            order.trader,
+            order.baseToken,
+            orderHash,
+            uint8(order.orderType),
+            order.triggerPrice,
+            positionSize,
+            positionNotional
+        );
     }
 
     //
