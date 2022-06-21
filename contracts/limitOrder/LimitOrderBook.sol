@@ -130,14 +130,14 @@ contract LimitOrderBook is
 
         _ordersStatus[orderHash] = ILimitOrderBook.OrderStatus.Filled;
 
+        ILimitOrderRewardVault(limitOrderRewardVault).disburse(sender, orderHash);
+
         emit LimitOrderFilled(
             order.trader,
             order.baseToken,
             orderHash,
             uint8(order.orderType),
-            order.triggerPrice,
-            sender,
-            ILimitOrderRewardVault(limitOrderRewardVault).disburse(sender), // keeperReward
+            sender, // keeper
             exchangedPositionSize,
             exchangedPositionNotional,
             fee
@@ -183,7 +183,6 @@ contract LimitOrderBook is
             order.baseToken,
             orderHash,
             uint8(order.orderType),
-            order.triggerPrice,
             positionSize,
             positionNotional
         );
