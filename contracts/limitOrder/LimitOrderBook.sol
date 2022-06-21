@@ -52,7 +52,8 @@ contract LimitOrderBook is
         string memory name,
         string memory version,
         address clearingHouseArg,
-        address limitOrderRewardVaultArg
+        address limitOrderRewardVaultArg,
+        uint256 minOrderValueArg
     ) external initializer {
         __ReentrancyGuard_init();
         __OwnerPausable_init();
@@ -70,6 +71,10 @@ contract LimitOrderBook is
         // LOB_LOFVINC: LimitOrderRewardVault Is Not Contract
         require(limitOrderRewardVaultArg.isContract(), "LOB_LOFVINC");
         limitOrderRewardVault = limitOrderRewardVaultArg;
+
+        // LOB_MOVMBGT0: MinOrderValue Must Be Greater Than Zero
+        require(minOrderValueArg > 0, "LOB_MOVMBGT0");
+        minOrderValue = minOrderValueArg;
     }
 
     function setClearingHouse(address clearingHouseArg) external onlyOwner {
@@ -83,6 +88,14 @@ contract LimitOrderBook is
         accountBalance = accountBalanceArg;
 
         emit ClearingHouseChanged(clearingHouseArg);
+    }
+
+    function setMinOrderValue(uint256 minOrderValueArg) external onlyOwner {
+        // LOB_MOVMBGT0: MinOrderValue Must Be Greater Than Zero
+        require(minOrderValueArg > 0, "LOB_MOVMBGT0");
+        minOrderValue = minOrderValueArg;
+
+        emit MinOrderValueChanged(minOrderValueArg);
     }
 
     function setLimitOrderRewardVault(address limitOrderRewardVaultArg) external onlyOwner {
@@ -132,6 +145,9 @@ contract LimitOrderBook is
                 referralCode: order.referralCode
             })
         );
+
+        // LOB_OVTS: Order Value Too Small
+        require(quote >= minOrderValue, "LOB_OVTS");
 
         if (order.reduceOnly) {
             // LOB_ROINS: ReduceOnly Is Not Satisfied

@@ -62,6 +62,10 @@ interface ILimitOrderBook {
     /// @param limitOrderRewardVaultArg The new address of limitOrderRewardVault
     event LimitOrderRewardVaultChanged(address indexed limitOrderRewardVaultArg);
 
+    /// @notice Emitted when minOrderValue is changed
+    /// @param minOrderValueArg The minimum limit order value in USD
+    event MinOrderValueChanged(uint256 minOrderValueArg);
+
     /// @notice Emitted when the limit order is filled
     /// @param trader The address of trader who created the limit order
     /// @param baseToken The address of baseToken (vETH, vBTC, ...)
