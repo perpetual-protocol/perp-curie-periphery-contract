@@ -118,66 +118,17 @@ contract LimitOrderBook is
         // LOB_SMBE: Sender Must Be EOA
         require(!sender.isContract(), "LOB_SMBE");
 
-        _verifySigner(order, signature);
-
-        bytes32 orderHash = getOrderHash(order);
+        (, bytes32 orderHash) = _verifySigner(order, signature);
 
         // LOB_OMBU: Order Must Be Unfilled
         require(_ordersStatus[orderHash] == ILimitOrderBook.OrderStatus.Unfilled, "LOB_OMBU");
 
-        int256 oldTakerPositionSize = IAccountBalance(accountBalance).getTakerPositionSize(
-            order.trader,
-            order.baseToken
+        (int256 exchangedPositionSize, int256 exchangedPositionNotional, uint256 fee) = _fillLimitOrder(
+            order,
+            roundIdWhenTriggered
         );
-
-        _verifyTriggerPrice(order, roundIdWhenTriggered);
-
-        (uint256 base, uint256 quote, uint256 fee) = IClearingHouse(clearingHouse).openPositionFor(
-            order.trader,
-            IClearingHouse.OpenPositionParams({
-                baseToken: order.baseToken,
-                isBaseToQuote: order.isBaseToQuote,
-                isExactInput: order.isExactInput,
-                amount: order.amount,
-                oppositeAmountBound: order.oppositeAmountBound,
-                deadline: order.deadline,
-                sqrtPriceLimitX96: order.sqrtPriceLimitX96,
-                referralCode: order.referralCode
-            })
-        );
-
-        // LOB_OVTS: Order Value Too Small
-        require(quote >= minOrderValue, "LOB_OVTS");
-
-        if (order.reduceOnly) {
-            // LOB_ROINS: ReduceOnly Is Not Satisfied
-            require(
-                oldTakerPositionSize != 0 &&
-                    oldTakerPositionSize < 0 != order.isBaseToQuote &&
-                    base <= oldTakerPositionSize.abs(),
-                "LOB_ROINS"
-            );
-
-            // if trader has no position, order will get reverted
-            // if trader has short position, trader can only open a long position
-            // => oldTakerPositionSize < 0 != order.isBaseToQuote => true != false
-            // if trader has long position, trader can only open a short position
-            // => oldTakerPositionSize < 0 != order.isBaseToQuote => false != true
-        }
 
         _ordersStatus[orderHash] = ILimitOrderBook.OrderStatus.Filled;
-
-        address keeper = _msgSender();
-
-        int256 exchangedPositionSize;
-        int256 exchangedPositionNotional;
-        if (order.isBaseToQuote) {
-            exchangedPositionSize = base.neg256();
-            exchangedPositionNotional = quote.toInt256().add(fee.toInt256());
-        } else {
-            exchangedPositionSize = base.toInt256();
-            exchangedPositionNotional = quote.neg256().add(fee.toInt256());
-        }
 
         emit LimitOrderFilled(
             order.trader,
@@ -185,8 +136,8 @@ contract LimitOrderBook is
             orderHash,
             uint8(order.orderType),
             order.triggerPrice,
-            keeper,
-            ILimitOrderRewardVault(limitOrderRewardVault).disburse(keeper), // keeperReward
+            sender,
+            ILimitOrderRewardVault(limitOrderRewardVault).disburse(sender), // keeperReward
             exchangedPositionSize,
             exchangedPositionNotional,
             fee
@@ -242,26 +193,91 @@ contract LimitOrderBook is
     // PUBLIC VIEW
     //
 
+    function getOrderHash(LimitOrder memory order) public view override returns (bytes32) {
+        return _hashTypedDataV4(keccak256(abi.encode(LIMIT_ORDER_TYPEHASH, order)));
+    }
+
     function getOrderStatus(bytes32 orderHash) external view override returns (ILimitOrderBook.OrderStatus) {
         return _ordersStatus[orderHash];
     }
 
-    function getOrderHash(LimitOrder memory order) public view override returns (bytes32) {
-        return _hashTypedDataV4(keccak256(abi.encode(LIMIT_ORDER_TYPEHASH, order)));
+    //
+    // INTERNAL NON-VIEW
+    //
+
+    function _fillLimitOrder(LimitOrder memory order, uint80 roundIdWhenTriggered)
+        internal
+        returns (
+            int256,
+            int256,
+            uint256
+        )
+    {
+        _verifyTriggerPrice(order, roundIdWhenTriggered);
+
+        int256 oldTakerPositionSize = IAccountBalance(accountBalance).getTakerPositionSize(
+            order.trader,
+            order.baseToken
+        );
+
+        (uint256 base, uint256 quote, uint256 fee) = IClearingHouse(clearingHouse).openPositionFor(
+            order.trader,
+            IClearingHouse.OpenPositionParams({
+                baseToken: order.baseToken,
+                isBaseToQuote: order.isBaseToQuote,
+                isExactInput: order.isExactInput,
+                amount: order.amount,
+                oppositeAmountBound: order.oppositeAmountBound,
+                deadline: order.deadline,
+                sqrtPriceLimitX96: order.sqrtPriceLimitX96,
+                referralCode: order.referralCode
+            })
+        );
+
+        // LOB_OVTS: Order Value Too Small
+        require(quote >= minOrderValue, "LOB_OVTS");
+
+        if (order.reduceOnly) {
+            // LOB_ROINS: ReduceOnly Is Not Satisfied
+            require(
+                oldTakerPositionSize != 0 &&
+                    oldTakerPositionSize < 0 != order.isBaseToQuote &&
+                    base <= oldTakerPositionSize.abs(),
+                "LOB_ROINS"
+            );
+
+            // if trader has no position, order will get reverted
+            // if trader has short position, trader can only open a long position
+            // => oldTakerPositionSize < 0 != order.isBaseToQuote => true != false
+            // if trader has long position, trader can only open a short position
+            // => oldTakerPositionSize < 0 != order.isBaseToQuote => false != true
+        }
+
+        int256 exchangedPositionSize;
+        int256 exchangedPositionNotional;
+        if (order.isBaseToQuote) {
+            exchangedPositionSize = base.neg256();
+            exchangedPositionNotional = quote.toInt256().add(fee.toInt256());
+        } else {
+            exchangedPositionSize = base.toInt256();
+            exchangedPositionNotional = quote.neg256().add(fee.toInt256());
+        }
+
+        return (exchangedPositionSize, exchangedPositionNotional, fee);
     }
 
     //
     // INTERNAL VIEW
     //
 
-    function _verifySigner(LimitOrder memory order, bytes memory signature) internal view returns (address) {
+    function _verifySigner(LimitOrder memory order, bytes memory signature) internal view returns (address, bytes32) {
         bytes32 orderHash = getOrderHash(order);
         address signer = ECDSAUpgradeable.recover(orderHash, signature);
 
         // LOB_SINT: Signer Is Not Trader
         require(signer == order.trader, "LOB_SINT");
 
-        return signer;
+        return (signer, orderHash);
     }
 
     function _verifyTriggerPrice(LimitOrder memory order, uint80 roundIdWhenTriggered) internal view {
