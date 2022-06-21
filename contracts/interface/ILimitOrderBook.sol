@@ -66,6 +66,8 @@ interface ILimitOrderBook {
     /// @param trader The address of trader who created the limit order
     /// @param baseToken The address of baseToken (vETH, vBTC, ...)
     /// @param orderHash The hash of the filled limit order
+    /// @param orderType The enum of order type (LimitOrder, StopLossLimitOrder, ...)
+    /// @param triggerPrice The trigger price of the limit order
     /// @param keeper The address of keeper
     /// @param keeperReward The reward to keeper
     /// @param exchangedPositionSize The exchanged position size
@@ -75,6 +77,8 @@ interface ILimitOrderBook {
         address indexed trader,
         address indexed baseToken,
         bytes32 orderHash,
+        uint8 orderType,
+        uint256 triggerPrice,
         address keeper,
         uint256 keeperReward,
         int256 exchangedPositionSize,
@@ -86,12 +90,16 @@ interface ILimitOrderBook {
     /// @param trader The address of trader who cancelled the limit order
     /// @param baseToken The address of baseToken (vETH, vBTC, ...)
     /// @param orderHash The hash of the cancelled limit order
+    /// @param orderType The enum of order type (LimitOrder, StopLossLimitOrder, ...)
+    /// @param triggerPrice The trigger price of the limit order
     /// @param positionSize The position size
     /// @param positionNotional The position notional
     event LimitOrderCancelled(
         address indexed trader,
         address indexed baseToken,
         bytes32 orderHash,
+        uint8 orderType,
+        uint256 triggerPrice,
         int256 positionSize,
         int256 positionNotional
     );

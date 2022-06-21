@@ -141,6 +141,8 @@ describe("LimitOrderBook fillLimitOrder", function () {
             trader.address,
             baseToken.address,
             orderHash,
+            limitOrder.orderType,
+            limitOrder.triggerPrice,
             keeper.address,
             fixture.rewardAmount,
             parseEther("0.1"), // exchangedPositionSize
@@ -200,6 +202,8 @@ describe("LimitOrderBook fillLimitOrder", function () {
             trader.address,
             baseToken.address,
             orderHash,
+            limitOrder.orderType,
+            limitOrder.triggerPrice,
             keeper.address,
             fixture.rewardAmount,
             parseEther("-0.1"), // exchangedPositionSize
@@ -260,6 +264,8 @@ describe("LimitOrderBook fillLimitOrder", function () {
             trader.address,
             baseToken.address,
             orderHash,
+            limitOrder.orderType,
+            limitOrder.triggerPrice,
             keeper.address,
             fixture.rewardAmount,
             parseEther("0.100337305809351601"), // exchangedPositionSize
@@ -318,6 +324,8 @@ describe("LimitOrderBook fillLimitOrder", function () {
             trader.address,
             baseToken.address,
             orderHash,
+            limitOrder.orderType,
+            limitOrder.triggerPrice,
             keeper.address,
             fixture.rewardAmount,
             parseEther("-0.098963116512426526"), // exchangedPositionSize
@@ -505,6 +513,8 @@ describe("LimitOrderBook fillLimitOrder", function () {
                 trader.address,
                 baseToken.address,
                 orderHash,
+                limitOrder.orderType,
+                limitOrder.triggerPrice,
                 keeper.address,
                 fixture.rewardAmount,
                 parseEther("-0.05"), // exchangedPositionSize
@@ -552,6 +562,8 @@ describe("LimitOrderBook fillLimitOrder", function () {
                 trader.address,
                 baseToken.address,
                 orderHash,
+                limitOrder.orderType,
+                limitOrder.triggerPrice,
                 keeper.address,
                 fixture.rewardAmount,
                 parseEther("-0.1"), // exchangedPositionSize
@@ -668,6 +680,8 @@ describe("LimitOrderBook fillLimitOrder", function () {
                 trader.address,
                 baseToken.address,
                 orderHash,
+                limitOrder.orderType,
+                limitOrder.triggerPrice,
                 keeper.address,
                 fixture.rewardAmount,
                 parseEther("0.05"), // exchangedPositionSize
@@ -713,6 +727,8 @@ describe("LimitOrderBook fillLimitOrder", function () {
                 trader.address,
                 baseToken.address,
                 orderHash,
+                limitOrder.orderType,
+                limitOrder.triggerPrice,
                 keeper.address,
                 fixture.rewardAmount,
                 parseEther("0.1"), // exchangedPositionSize
@@ -814,6 +830,8 @@ describe("LimitOrderBook fillLimitOrder", function () {
                 trader.address,
                 baseToken.address,
                 orderHash,
+                limitOrder.orderType,
+                limitOrder.triggerPrice,
                 keeper.address,
                 fixture.rewardAmount,
                 parseEther("0.1"), // exchangedPositionSize
@@ -980,6 +998,8 @@ describe("LimitOrderBook fillLimitOrder", function () {
             trader.address,
             baseToken.address,
             orderHash,
+            limitOrder.orderType,
+            limitOrder.triggerPrice,
             keeper.address,
             fixture.rewardAmount,
             parseEther("0.1"), // exchangedPositionSize
