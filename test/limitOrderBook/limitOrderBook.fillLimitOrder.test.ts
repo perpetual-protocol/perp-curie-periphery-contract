@@ -14,6 +14,7 @@ import {
     TestAggregatorV3,
     TestClearingHouse,
     TestERC20,
+    TestKeeper,
     UniswapV3Pool,
     Vault,
 } from "../../typechain-types"
@@ -142,14 +143,14 @@ describe("LimitOrderBook fillLimitOrder", function () {
             baseToken.address,
             orderHash,
             limitOrder.orderType,
-            limitOrder.triggerPrice,
             keeper.address,
-            fixture.rewardAmount,
             parseEther("0.1"), // exchangedPositionSize
             parseEther("-296.001564233989843681"), // exchangedPositionNotional
             parseEther("2.989914790242321654"), // fee
         )
-        await expect(tx).to.emit(limitOrderRewardVault, "Disbursed").withArgs(keeper.address, fixture.rewardAmount)
+        await expect(tx)
+            .to.emit(limitOrderRewardVault, "Disbursed")
+            .withArgs(orderHash, keeper.address, fixture.rewardAmount)
 
         expect(await limitOrderBook.getOrderStatus(orderHash)).to.be.eq(OrderStatus.Filled)
 
@@ -203,14 +204,14 @@ describe("LimitOrderBook fillLimitOrder", function () {
             baseToken.address,
             orderHash,
             limitOrder.orderType,
-            limitOrder.triggerPrice,
             keeper.address,
-            fixture.rewardAmount,
             parseEther("-0.1"), // exchangedPositionSize
             parseEther("295.998435782542603038"), // exchangedPositionNotional
             parseEther("2.959984357825426031"), // fee
         )
-        await expect(tx).to.emit(limitOrderRewardVault, "Disbursed").withArgs(keeper.address, fixture.rewardAmount)
+        await expect(tx)
+            .to.emit(limitOrderRewardVault, "Disbursed")
+            .withArgs(orderHash, keeper.address, fixture.rewardAmount)
 
         expect(await limitOrderBook.getOrderStatus(orderHash)).to.be.eq(OrderStatus.Filled)
 
@@ -265,14 +266,14 @@ describe("LimitOrderBook fillLimitOrder", function () {
             baseToken.address,
             orderHash,
             limitOrder.orderType,
-            limitOrder.triggerPrice,
             keeper.address,
-            fixture.rewardAmount,
             parseEther("0.100337305809351601"), // exchangedPositionSize
             parseEther("-297"), // exchangedPositionNotional
             parseEther("3"), // fee
         )
-        await expect(tx).to.emit(limitOrderRewardVault, "Disbursed").withArgs(keeper.address, fixture.rewardAmount)
+        await expect(tx)
+            .to.emit(limitOrderRewardVault, "Disbursed")
+            .withArgs(orderHash, keeper.address, fixture.rewardAmount)
 
         expect(await rewardToken.balanceOf(keeper.address)).to.be.eq(oldRewardBalance.add(fixture.rewardAmount))
 
@@ -325,14 +326,14 @@ describe("LimitOrderBook fillLimitOrder", function () {
             baseToken.address,
             orderHash,
             limitOrder.orderType,
-            limitOrder.triggerPrice,
             keeper.address,
-            fixture.rewardAmount,
             parseEther("-0.098963116512426526"), // exchangedPositionSize
             parseEther("292.929292929292929293"), // exchangedPositionNotional
             parseEther("2.929292929292929293"), // fee
         )
-        await expect(tx).to.emit(limitOrderRewardVault, "Disbursed").withArgs(keeper.address, fixture.rewardAmount)
+        await expect(tx)
+            .to.emit(limitOrderRewardVault, "Disbursed")
+            .withArgs(orderHash, keeper.address, fixture.rewardAmount)
 
         expect(await rewardToken.balanceOf(keeper.address)).to.be.eq(oldRewardBalance.add(fixture.rewardAmount))
 
@@ -375,6 +376,62 @@ describe("LimitOrderBook fillLimitOrder", function () {
 
         const tx2 = await limitOrderBook.connect(keeper).fillLimitOrder(limitOrder2, signature2, parseEther("0"))
         await expect(tx2).to.emit(limitOrderBook, "LimitOrderFilled")
+    })
+
+    it("force error, fillLimitOrder by non-EOA", async () => {
+        // long 0.1 ETH with $300 (limit price $3000)
+        const limitOrder = {
+            orderType: OrderType.LimitOrder,
+            salt: 1,
+            trader: trader.address,
+            baseToken: baseToken.address,
+            isBaseToQuote: false,
+            isExactInput: false,
+            amount: parseEther("0.1").toString(),
+            oppositeAmountBound: parseEther("300").toString(),
+            deadline: ethers.constants.MaxUint256,
+            sqrtPriceLimitX96: 0,
+            referralCode: ethers.constants.HashZero,
+            reduceOnly: false,
+            roundIdWhenCreated: "0",
+            triggerPrice: parseEther("0").toString(),
+        }
+
+        const signature = await getSignature(fixture, limitOrder, trader)
+
+        const testKeeperContractFactory = await ethers.getContractFactory("TestKeeper")
+        const testKeeperContract = (await testKeeperContractFactory.deploy(limitOrderBook.address)) as TestKeeper
+
+        // keeper (EOA) -> TestKeeper (contract) -> LimitOrderBook
+        await expect(testKeeperContract.connect(keeper).fillLimitOrder(limitOrder, signature, "0")).to.revertedWith(
+            "LOB_SMBE",
+        )
+    })
+
+    it("force error, order value is too small", async () => {
+        // long 0.01 ETH with $30 (limit price $3000)
+        const limitOrder = {
+            orderType: OrderType.LimitOrder,
+            salt: 1,
+            trader: trader.address,
+            baseToken: baseToken.address,
+            isBaseToQuote: false,
+            isExactInput: false,
+            amount: parseEther("0.01").toString(),
+            oppositeAmountBound: parseEther("30").toString(),
+            deadline: ethers.constants.MaxUint256,
+            sqrtPriceLimitX96: 0,
+            referralCode: ethers.constants.HashZero,
+            reduceOnly: false,
+            roundIdWhenCreated: "0",
+            triggerPrice: parseEther("0").toString(),
+        }
+
+        const signature = await getSignature(fixture, limitOrder, trader)
+
+        await expect(limitOrderBook.connect(keeper).fillLimitOrder(limitOrder, signature, "0")).to.revertedWith(
+            "LOB_OVTS",
+        )
     })
 
     it("force error, when order is already filled", async () => {
@@ -514,15 +571,15 @@ describe("LimitOrderBook fillLimitOrder", function () {
                 baseToken.address,
                 orderHash,
                 limitOrder.orderType,
-                limitOrder.triggerPrice,
                 keeper.address,
-                fixture.rewardAmount,
                 parseEther("-0.05"), // exchangedPositionSize
                 parseEther("148.001173176525668870"), // exchangedPositionNotional
                 parseEther("1.480011731765256689"), // fee
             )
 
-            await expect(tx).to.emit(limitOrderRewardVault, "Disbursed").withArgs(keeper.address, fixture.rewardAmount)
+            await expect(tx)
+                .to.emit(limitOrderRewardVault, "Disbursed")
+                .withArgs(orderHash, keeper.address, fixture.rewardAmount)
 
             expect(await accountBalance.getTakerPositionSize(trader.address, baseToken.address)).to.be.eq(
                 parseEther("0.05"),
@@ -563,9 +620,7 @@ describe("LimitOrderBook fillLimitOrder", function () {
                 baseToken.address,
                 orderHash,
                 limitOrder.orderType,
-                limitOrder.triggerPrice,
                 keeper.address,
-                fixture.rewardAmount,
                 parseEther("-0.1"), // exchangedPositionSize
                 parseEther("296.001564233989843680"), // exchangedPositionNotional
                 parseEther("2.960015642339898437"), // fee
@@ -681,9 +736,7 @@ describe("LimitOrderBook fillLimitOrder", function () {
                 baseToken.address,
                 orderHash,
                 limitOrder.orderType,
-                limitOrder.triggerPrice,
                 keeper.address,
-                fixture.rewardAmount,
                 parseEther("0.05"), // exchangedPositionSize
                 parseEther("-147.998826837940222009"), // exchangedPositionNotional
                 parseEther("1.494937644827679011"), // fee
@@ -728,9 +781,7 @@ describe("LimitOrderBook fillLimitOrder", function () {
                 baseToken.address,
                 orderHash,
                 limitOrder.orderType,
-                limitOrder.triggerPrice,
                 keeper.address,
-                fixture.rewardAmount,
                 parseEther("0.1"), // exchangedPositionSize
                 parseEther("-295.998435782542603039"), // exchangedPositionNotional
                 parseEther("2.989883189722652556"), // fee
@@ -831,15 +882,15 @@ describe("LimitOrderBook fillLimitOrder", function () {
                 baseToken.address,
                 orderHash,
                 limitOrder.orderType,
-                limitOrder.triggerPrice,
                 keeper.address,
-                fixture.rewardAmount,
                 parseEther("0.1"), // exchangedPositionSize
                 parseEther("-296.001564233989843681"), // exchangedPositionNotional
                 parseEther("2.989914790242321654"), // fee
             )
 
-            await expect(tx).to.emit(limitOrderRewardVault, "Disbursed").withArgs(keeper.address, fixture.rewardAmount)
+            await expect(tx)
+                .to.emit(limitOrderRewardVault, "Disbursed")
+                .withArgs(orderHash, keeper.address, fixture.rewardAmount)
 
             expect(await accountBalance.getTakerPositionSize(trader.address, baseToken.address)).to.be.eq(
                 parseEther("0.1"),
@@ -999,15 +1050,15 @@ describe("LimitOrderBook fillLimitOrder", function () {
             baseToken.address,
             orderHash,
             limitOrder.orderType,
-            limitOrder.triggerPrice,
             keeper.address,
-            fixture.rewardAmount,
             parseEther("0.1"), // exchangedPositionSize
             parseEther("-296.001564233989843681"), // exchangedPositionNotional
             parseEther("2.989914790242321654"), // fee
         )
 
-        await expect(tx).to.emit(limitOrderRewardVault, "Disbursed").withArgs(keeper.address, fixture.rewardAmount)
+        await expect(tx)
+            .to.emit(limitOrderRewardVault, "Disbursed")
+            .withArgs(orderHash, keeper.address, fixture.rewardAmount)
 
         expect(await accountBalance.getTakerPositionSize(trader.address, baseToken.address)).to.be.eq(parseEther("0.1"))
         expect(await accountBalance.getTakerOpenNotional(trader.address, baseToken.address)).to.be.eq(
