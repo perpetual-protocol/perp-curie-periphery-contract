@@ -99,6 +99,12 @@ contract LimitOrderBook is
         bytes memory signature,
         uint80 roundIdWhenTriggered
     ) external override nonReentrant {
+        address sender = _msgSender();
+
+        // short term solution: mitigate that attacker can drain LimitOrderRewardVault
+        // LOB_SMBE: Sender Must Be EOA
+        require(!sender.isContract(), "LOB_SMBE");
+
         _verifySigner(order, signature);
 
         bytes32 orderHash = getOrderHash(order);
