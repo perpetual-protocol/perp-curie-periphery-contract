@@ -15,9 +15,11 @@ interface ILimitOrderRewardVault {
     event RewardAmountChanged(uint256 rewardAmount);
 
     /// @notice Emitted when keeper reward is disbursed
+    /// @param orderHash The hash of the limit order
     /// @param keeper The address of keeper
+    /// @param token The rewardToken
     /// @param amount The reward to keeper
-    event Disbursed(address keeper, uint256 amount);
+    event Disbursed(bytes32 orderHash, address keeper, address token, uint256 amount);
 
     /// @notice Emitted when token is withdrawn
     /// @param to The address of who withdrawn the token
@@ -26,7 +28,7 @@ interface ILimitOrderRewardVault {
     event Withdrawn(address to, address token, uint256 amount);
 
     /// @param keeper The address of keeper
-    function disburse(address keeper) external returns (uint256);
+    function disburse(address keeper, bytes32 orderHash) external returns (uint256);
 
     /// @param amount The amount of rewardToken to withdraw
     function withdraw(uint256 amount) external;

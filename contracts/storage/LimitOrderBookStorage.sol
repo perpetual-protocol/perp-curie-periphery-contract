@@ -12,4 +12,5 @@ abstract contract LimitOrderBookStorageV1 {
     address public clearingHouse;
     address public accountBalance;
     address public limitOrderRewardVault;
+    uint256 public minOrderValue;
 }

@@ -19,7 +19,7 @@ import { initAndAddPool } from "../helper/marketHelper"
 import { getMaxTickRange, priceToTick } from "../helper/number"
 import { mintAndDeposit } from "../helper/token"
 import { createLimitOrderFixture, LimitOrderFixture } from "../limitOrderBook/fixtures"
-import { getSignature, OrderType } from "../limitOrderBook/orderUtils"
+import { getOrderHash, getSignature, OrderType } from "../limitOrderBook/orderUtils"
 import { encodePriceSqrt, syncIndexToMarketPrice } from "../shared/utilities"
 
 describe("LimitOrderRewardVault", function () {
@@ -113,6 +113,7 @@ describe("LimitOrderRewardVault", function () {
             fixture.EIP712Version,
             clearingHouse.address,
             limitOrderRewardVault.address,
+            parseUnits("100", 18),
         )
 
         await expect(limitOrderRewardVault.setLimitOrderBook(limitOrderBook2.address))
@@ -147,23 +148,26 @@ describe("LimitOrderRewardVault", function () {
             trader: trader.address,
             baseToken: baseToken.address,
             isBaseToQuote: false,
-            isExactInput: true,
-            amount: parseEther("300"),
-            oppositeAmountBound: parseEther("0.1"),
-            deadline: ethers.constants.MaxUint256,
+            isExactInput: false,
+            amount: parseEther("0.1").toString(),
+            oppositeAmountBound: parseEther("300").toString(), // upper bound of input quote
+            deadline: ethers.constants.MaxUint256.toString(),
             sqrtPriceLimitX96: 0,
             referralCode: ethers.constants.HashZero,
             reduceOnly: false,
-            roundIdWhenCreated: parseEther("0").toString(),
+            roundIdWhenCreated: "0",
             triggerPrice: parseEther("0").toString(),
         }
 
         // sign limit order
         const signature = await getSignature(fixture, limitOrder, trader)
+        const orderHash = await getOrderHash(fixture, limitOrder)
         const oldKeeperBalance = await rewardToken.balanceOf(keeper.address)
         const rewardAmount = await limitOrderRewardVault.rewardAmount()
         const tx = await limitOrderBook.connect(keeper).fillLimitOrder(limitOrder, signature, parseEther("0"))
-        await expect(tx).to.emit(limitOrderRewardVault, "Disbursed").withArgs(keeper.address, fixture.rewardAmount)
+        await expect(tx)
+            .to.emit(limitOrderRewardVault, "Disbursed")
+            .withArgs(orderHash, keeper.address, rewardToken.address, fixture.rewardAmount)
 
         const newKeeperBalance = await rewardToken.balanceOf(keeper.address)
         expect(newKeeperBalance.sub(oldKeeperBalance)).to.be.eq(rewardAmount)
@@ -196,7 +200,9 @@ describe("LimitOrderRewardVault", function () {
     })
 
     it("force error, disburse is limitOrderBook only", async () => {
-        await expect(limitOrderRewardVault.connect(alice).disburse(keeper.address)).to.be.revertedWith("LOFV_SMBLOB")
+        await expect(
+            limitOrderRewardVault.connect(alice).disburse(keeper.address, ethers.constants.HashZero),
+        ).to.be.revertedWith("LOFV_SMBLOB")
     })
 
     it("withdraw", async () => {
