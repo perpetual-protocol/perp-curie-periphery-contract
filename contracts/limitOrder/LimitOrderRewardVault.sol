@@ -39,16 +39,19 @@ contract LimitOrderRewardVault is
         require(rewardTokenArg.isContract(), "LOFV_RTINC");
         rewardToken = rewardTokenArg;
 
-        // LOFV_RAMBGT0: RewardAmount Must Be Greater Than 0
-        require(rewardAmountArg > 0, "LOFV_RAMBGT0");
         rewardAmount = rewardAmountArg;
     }
 
-    function setRewardToken(address rewardTokenArg) external onlyOwner {
+    // TODO: any better way to verify the rewardAmount is correct?
+    // to prevent something like sending 1 ETH as reward
+    function setRewardTokenAndAmount(address rewardTokenArg, uint256 rewardAmountArg) external onlyOwner {
         // LOFV_RTINC: RewardToken Is Not a Contract
         require(rewardTokenArg.isContract(), "LOFV_RTINC");
         rewardToken = rewardTokenArg;
-        emit RewardTokenChanged(rewardTokenArg);
+
+        rewardAmount = rewardAmountArg;
+
+        emit RewardTokenAndAmountChanged(rewardTokenArg, rewardAmountArg);
     }
 
     /// @dev limitOrderBook cannot be set in initializer since LimitOrderBook also depends on LimitOrderRewardVault
@@ -59,14 +62,6 @@ contract LimitOrderRewardVault is
         emit LimitOrderBookChanged(limitOrderBookArg);
     }
 
-    function setRewardAmount(uint256 rewardAmountArg) external onlyOwner {
-        // LOFV_RAMBGT0: RewardAmount Must Be Greater Than 0
-        require(rewardAmountArg > 0, "LOFV_RAMBGT0");
-        rewardAmount = rewardAmountArg;
-        emit RewardAmountChanged(rewardAmountArg);
-    }
-
-    // TODO: handle decimal issue if we use different rewardTokens (PERP or USDC)
     function disburse(address keeper, bytes32 orderHash)
         external
         override
@@ -74,8 +69,17 @@ contract LimitOrderRewardVault is
         nonReentrant
         returns (uint256)
     {
-        // LOFV_NEBTD: Not Enough Balance to Disburse
-        require(IERC20Upgradeable(rewardToken).balanceOf(address(this)) >= rewardAmount, "LOFV_NEBTD");
+        if (rewardAmount == 0) {
+            return 0;
+        }
+
+        // NOTE: we don't revert if rewardToken balance is not enough to disburse
+        // instead, log event then we can send the reward afterwards
+        // so it won't block filling limit orders
+        if (IERC20Upgradeable(rewardToken).balanceOf(address(this)) < rewardAmount) {
+            emit Undisbursed(orderHash, keeper, rewardAmount);
+            return 0;
+        }
 
         SafeERC20Upgradeable.safeTransfer(IERC20Upgradeable(rewardToken), keeper, rewardAmount);
 
