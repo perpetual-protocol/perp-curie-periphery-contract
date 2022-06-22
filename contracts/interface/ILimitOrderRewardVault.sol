@@ -21,8 +21,9 @@ interface ILimitOrderRewardVault {
     /// @notice Emitted when rewardToken balance is not enough to disburse
     /// @param orderHash The hash of the limit order
     /// @param keeper The address of keeper
+    /// @param token The rewardToken
     /// @param amount The reward to keeper
-    event Undisbursed(bytes32 orderHash, address keeper, uint256 amount);
+    event Undisbursed(bytes32 orderHash, address keeper, address token, uint256 amount);
 
     /// @notice Emitted when token is withdrawn
     /// @param to The address of who withdrawn the token
