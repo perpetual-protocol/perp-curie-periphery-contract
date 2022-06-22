@@ -101,6 +101,43 @@ describe("LimitOrderRewardVault", function () {
 
         expect(await limitOrderRewardVault.rewardToken()).to.be.eq(rewardToken2.address)
         expect(await limitOrderRewardVault.rewardAmount()).to.be.eq(rewardAmount2)
+
+        // mint token to limitOrderRewardVault
+        const rewardToken2Decimals = await rewardToken2.decimals()
+        const mintedRewardToken2Amount = parseUnits("10", rewardToken2Decimals)
+        await rewardToken2.mint(limitOrderRewardVault.address, mintedRewardToken2Amount)
+
+        const limitOrder = {
+            orderType: OrderType.LimitOrder,
+            salt: 1,
+            trader: trader.address,
+            baseToken: baseToken.address,
+            isBaseToQuote: false,
+            isExactInput: false,
+            amount: parseEther("0.1").toString(),
+            oppositeAmountBound: parseEther("300").toString(),
+            deadline: ethers.constants.MaxUint256.toString(),
+            sqrtPriceLimitX96: 0,
+            referralCode: ethers.constants.HashZero,
+            reduceOnly: false,
+            roundIdWhenCreated: "0",
+            triggerPrice: parseEther("0").toString(),
+        }
+
+        const oldKeeperBalance = await rewardToken2.balanceOf(keeper.address)
+        const rewardAmount = await limitOrderRewardVault.rewardAmount()
+
+        const signature = await getSignature(fixture, limitOrder, trader)
+        const orderHash = await getOrderHash(fixture, limitOrder)
+
+        const tx = await limitOrderBook.connect(keeper).fillLimitOrder(limitOrder, signature, parseEther("0"))
+        await expect(tx).not.to.emit(limitOrderRewardVault, "Undisbursed")
+        await expect(tx)
+            .to.emit(limitOrderRewardVault, "Disbursed")
+            .withArgs(orderHash, keeper.address, rewardToken2.address, rewardAmount2)
+
+        const newKeeperBalance = await rewardToken2.balanceOf(keeper.address)
+        expect(newKeeperBalance.sub(oldKeeperBalance)).to.be.eq(rewardAmount)
     })
 
     it("force error, setRewardTokenAndAmount", async () => {
@@ -163,7 +200,7 @@ describe("LimitOrderRewardVault", function () {
         await expect(tx).not.to.emit(limitOrderRewardVault, "Undisbursed")
         await expect(tx)
             .to.emit(limitOrderRewardVault, "Disbursed")
-            .withArgs(orderHash, keeper.address, fixture.rewardAmount)
+            .withArgs(orderHash, keeper.address, rewardToken.address, fixture.rewardAmount)
 
         const newKeeperBalance = await rewardToken.balanceOf(keeper.address)
         expect(newKeeperBalance.sub(oldKeeperBalance)).to.be.eq(rewardAmount)
@@ -193,7 +230,6 @@ describe("LimitOrderRewardVault", function () {
         const oldKeeperBalance = await rewardToken.balanceOf(keeper.address)
 
         const signature = await getSignature(fixture, limitOrder, trader)
-        const orderHash = await getOrderHash(fixture, limitOrder)
 
         const tx = await limitOrderBook.connect(keeper).fillLimitOrder(limitOrder, signature, parseEther("0"))
         await expect(tx).not.to.emit(limitOrderRewardVault, "Undisbursed")
@@ -232,7 +268,7 @@ describe("LimitOrderRewardVault", function () {
         const tx = await limitOrderBook.connect(keeper).fillLimitOrder(limitOrder, signature, parseEther("0"))
         await expect(tx)
             .to.emit(limitOrderRewardVault, "Undisbursed")
-            .withArgs(orderHash, keeper.address, newRewardAmount)
+            .withArgs(orderHash, keeper.address, rewardToken.address, newRewardAmount)
         await expect(tx).not.to.emit(limitOrderRewardVault, "Disbursed")
 
         const newKeeperBalance = await rewardToken.balanceOf(keeper.address)

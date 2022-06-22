@@ -77,7 +77,7 @@ contract LimitOrderRewardVault is
         // instead, log event then we can send the reward afterwards
         // so it won't block filling limit orders
         if (IERC20Upgradeable(rewardToken).balanceOf(address(this)) < rewardAmount) {
-            emit Undisbursed(orderHash, keeper, rewardAmount);
+            emit Undisbursed(orderHash, keeper, rewardToken, rewardAmount);
             return 0;
         }
 
