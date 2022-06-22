@@ -150,7 +150,7 @@ describe("LimitOrderBook fillLimitOrder", function () {
         )
         await expect(tx)
             .to.emit(limitOrderRewardVault, "Disbursed")
-            .withArgs(orderHash, keeper.address, fixture.rewardAmount)
+            .withArgs(orderHash, keeper.address, rewardToken.address, fixture.rewardAmount)
 
         expect(await limitOrderBook.getOrderStatus(orderHash)).to.be.eq(OrderStatus.Filled)
 
@@ -211,7 +211,7 @@ describe("LimitOrderBook fillLimitOrder", function () {
         )
         await expect(tx)
             .to.emit(limitOrderRewardVault, "Disbursed")
-            .withArgs(orderHash, keeper.address, fixture.rewardAmount)
+            .withArgs(orderHash, keeper.address, rewardToken.address, fixture.rewardAmount)
 
         expect(await limitOrderBook.getOrderStatus(orderHash)).to.be.eq(OrderStatus.Filled)
 
@@ -273,7 +273,7 @@ describe("LimitOrderBook fillLimitOrder", function () {
         )
         await expect(tx)
             .to.emit(limitOrderRewardVault, "Disbursed")
-            .withArgs(orderHash, keeper.address, fixture.rewardAmount)
+            .withArgs(orderHash, keeper.address, rewardToken.address, fixture.rewardAmount)
 
         expect(await rewardToken.balanceOf(keeper.address)).to.be.eq(oldRewardBalance.add(fixture.rewardAmount))
 
@@ -333,7 +333,7 @@ describe("LimitOrderBook fillLimitOrder", function () {
         )
         await expect(tx)
             .to.emit(limitOrderRewardVault, "Disbursed")
-            .withArgs(orderHash, keeper.address, fixture.rewardAmount)
+            .withArgs(orderHash, keeper.address, rewardToken.address, fixture.rewardAmount)
 
         expect(await rewardToken.balanceOf(keeper.address)).to.be.eq(oldRewardBalance.add(fixture.rewardAmount))
 
@@ -579,7 +579,7 @@ describe("LimitOrderBook fillLimitOrder", function () {
 
             await expect(tx)
                 .to.emit(limitOrderRewardVault, "Disbursed")
-                .withArgs(orderHash, keeper.address, fixture.rewardAmount)
+                .withArgs(orderHash, keeper.address, rewardToken.address, fixture.rewardAmount)
 
             expect(await accountBalance.getTakerPositionSize(trader.address, baseToken.address)).to.be.eq(
                 parseEther("0.05"),
@@ -890,7 +890,7 @@ describe("LimitOrderBook fillLimitOrder", function () {
 
             await expect(tx)
                 .to.emit(limitOrderRewardVault, "Disbursed")
-                .withArgs(orderHash, keeper.address, fixture.rewardAmount)
+                .withArgs(orderHash, keeper.address, rewardToken.address, fixture.rewardAmount)
 
             expect(await accountBalance.getTakerPositionSize(trader.address, baseToken.address)).to.be.eq(
                 parseEther("0.1"),
@@ -1058,7 +1058,7 @@ describe("LimitOrderBook fillLimitOrder", function () {
 
         await expect(tx)
             .to.emit(limitOrderRewardVault, "Disbursed")
-            .withArgs(orderHash, keeper.address, fixture.rewardAmount)
+            .withArgs(orderHash, keeper.address, rewardToken.address, fixture.rewardAmount)
 
         expect(await accountBalance.getTakerPositionSize(trader.address, baseToken.address)).to.be.eq(parseEther("0.1"))
         expect(await accountBalance.getTakerOpenNotional(trader.address, baseToken.address)).to.be.eq(

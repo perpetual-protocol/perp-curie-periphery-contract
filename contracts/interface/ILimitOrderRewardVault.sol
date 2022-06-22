@@ -17,8 +17,9 @@ interface ILimitOrderRewardVault {
     /// @notice Emitted when keeper reward is disbursed
     /// @param orderHash The hash of the limit order
     /// @param keeper The address of keeper
+    /// @param token The rewardToken
     /// @param amount The reward to keeper
-    event Disbursed(bytes32 orderHash, address keeper, uint256 amount);
+    event Disbursed(bytes32 orderHash, address keeper, address token, uint256 amount);
 
     /// @notice Emitted when token is withdrawn
     /// @param to The address of who withdrawn the token

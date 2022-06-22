@@ -167,7 +167,7 @@ describe("LimitOrderRewardVault", function () {
         const tx = await limitOrderBook.connect(keeper).fillLimitOrder(limitOrder, signature, parseEther("0"))
         await expect(tx)
             .to.emit(limitOrderRewardVault, "Disbursed")
-            .withArgs(orderHash, keeper.address, fixture.rewardAmount)
+            .withArgs(orderHash, keeper.address, rewardToken.address, fixture.rewardAmount)
 
         const newKeeperBalance = await rewardToken.balanceOf(keeper.address)
         expect(newKeeperBalance.sub(oldKeeperBalance)).to.be.eq(rewardAmount)

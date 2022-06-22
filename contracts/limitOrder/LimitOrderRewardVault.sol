@@ -79,7 +79,7 @@ contract LimitOrderRewardVault is
 
         SafeERC20Upgradeable.safeTransfer(IERC20Upgradeable(rewardToken), keeper, rewardAmount);
 
-        emit Disbursed(orderHash, keeper, rewardAmount);
+        emit Disbursed(orderHash, keeper, rewardToken, rewardAmount);
 
         return rewardAmount;
     }
