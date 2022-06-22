@@ -273,9 +273,7 @@ describe("LimitOrderBook fillLimitOrder advanced order types", function () {
                     baseToken.address,
                     orderHash,
                     stopLossLimitOrder.orderType,
-                    stopLossLimitOrder.triggerPrice,
                     keeper.address,
-                    fixture.rewardAmount,
                     parseEther("0.1"), // exchangedPositionSize
                     parseEther("-296.001564233989843681"), // exchangedPositionNotional
                     parseEther("2.989914790242321654"), // fee
@@ -321,9 +319,7 @@ describe("LimitOrderBook fillLimitOrder advanced order types", function () {
                     baseToken.address,
                     orderHash,
                     stopLossLimitOrder.orderType,
-                    stopLossLimitOrder.triggerPrice,
                     keeper.address,
-                    fixture.rewardAmount,
                     parseEther("0.1"), // exchangedPositionSize
                     parseEther("-296.001564233989843681"), // exchangedPositionNotional
                     parseEther("2.989914790242321654"), // fee
@@ -379,9 +375,7 @@ describe("LimitOrderBook fillLimitOrder advanced order types", function () {
                     baseToken.address,
                     orderHash,
                     stopLossLimitOrder.orderType,
-                    stopLossLimitOrder.triggerPrice,
                     keeper.address,
-                    fixture.rewardAmount,
                     parseEther("-0.1"), // exchangedPositionSize
                     parseEther("295.998435782542603038"), // exchangedPositionNotional
                     parseEther("2.959984357825426031"), // fee
@@ -439,9 +433,7 @@ describe("LimitOrderBook fillLimitOrder advanced order types", function () {
                     baseToken.address,
                     orderHash,
                     takeProfitLimitOrder.orderType,
-                    takeProfitLimitOrder.triggerPrice,
                     keeper.address,
-                    fixture.rewardAmount,
                     parseEther("0.1"), // exchangedPositionSize
                     parseEther("-296.001564233989843681"), // exchangedPositionNotional
                     parseEther("2.989914790242321654"), // fee
@@ -497,9 +489,7 @@ describe("LimitOrderBook fillLimitOrder advanced order types", function () {
                     baseToken.address,
                     orderHash,
                     takeProfitLimitOrder.orderType,
-                    takeProfitLimitOrder.triggerPrice,
                     keeper.address,
-                    fixture.rewardAmount,
                     parseEther("-0.1"), // exchangedPositionSize
                     parseEther("295.998435782542603038"), // exchangedPositionNotional
                     parseEther("2.959984357825426031"), // fee

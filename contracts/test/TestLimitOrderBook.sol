@@ -24,7 +24,8 @@ contract TestLimitOrderBook is LimitOrderBook {
     }
 
     function verifySigner(LimitOrder memory order, bytes memory signature) external view returns (address) {
-        return _verifySigner(order, signature);
+        (address signer, ) = _verifySigner(order, signature);
+        return signer;
     }
 
     function getPriceByRoundId(address baseToken, uint80 roundId) external view returns (uint256) {

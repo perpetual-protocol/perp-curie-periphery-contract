@@ -10,6 +10,7 @@ export interface LimitOrderFixture extends ClearingHouseFixture {
     EIP712Version: string
     EIP712PrimaryType: string
     limitOrderBook: TestLimitOrderBook
+    minOrderValue: BigNumber
     delegateApproval: DelegateApproval
     rewardToken: TestERC20
     rewardAmount: BigNumber
@@ -42,9 +43,18 @@ export function createLimitOrderFixture(): () => Promise<LimitOrderFixture> {
         const EIP712Version = "1"
         const EIP712PrimaryType = "LimitOrder"
 
+        // $100 USD since our quote is 18 decimals
+        const minOrderValue = parseUnits("100", 18)
+
         const limitOrderBookFactory = await ethers.getContractFactory("TestLimitOrderBook")
         const limitOrderBook = (await limitOrderBookFactory.deploy()) as TestLimitOrderBook
-        await limitOrderBook.initialize(EIP712Name, EIP712Version, clearingHouse.address, limitOrderRewardVault.address)
+        await limitOrderBook.initialize(
+            EIP712Name,
+            EIP712Version,
+            clearingHouse.address,
+            limitOrderRewardVault.address,
+            minOrderValue,
+        )
 
         const tokenDecimals = await rewardToken.decimals()
         const mintedTokenAmount = parseUnits("1000", tokenDecimals)
@@ -59,6 +69,7 @@ export function createLimitOrderFixture(): () => Promise<LimitOrderFixture> {
             EIP712Version,
             EIP712PrimaryType,
             limitOrderBook,
+            minOrderValue,
             delegateApproval,
             clearingHouse,
             rewardToken,

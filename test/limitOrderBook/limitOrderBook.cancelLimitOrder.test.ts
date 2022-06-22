@@ -121,7 +121,6 @@ describe("LimitOrderBook cancelLimitOrder", function () {
                 baseToken.address,
                 orderHash,
                 limitOrder.orderType,
-                limitOrder.triggerPrice,
                 parseEther("0.1"), // positionSize
                 parseEther("-300"), // positionNotional
             )
@@ -158,7 +157,6 @@ describe("LimitOrderBook cancelLimitOrder", function () {
                 baseToken.address,
                 orderHash,
                 limitOrder.orderType,
-                limitOrder.triggerPrice,
                 parseEther("-0.1"), // positionSize
                 parseEther("290"), // positionNotional
             )
