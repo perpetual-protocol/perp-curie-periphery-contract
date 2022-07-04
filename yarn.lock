@@ -829,9 +829,9 @@
   resolved "https://registry.yarnpkg.com/@openzeppelin/contracts/-/contracts-3.4.1-solc-0.7-2.tgz#371c67ebffe50f551c3146a9eec5fe6ffe862e92"
   integrity sha512-tAG9LWg8+M2CMu7hIsqHPaTyG4uDzjr6mhvH96LvOpLZZj6tgzTluBt+LsCf1/QaYrlis6pITvpIaIhE+iZB+Q==
 
-"@perp/curie-contract@git+ssh://git@github.com:perpetual-protocol/perp-lushan.git#f6eec3de0eae84e34a99cdce7729e2ad4f345276":
-  version "1.4.0-dev3"
-  resolved "git+ssh://git@github.com:perpetual-protocol/perp-lushan.git#f6eec3de0eae84e34a99cdce7729e2ad4f345276"
+"@perp/curie-contract@git+ssh://git@github.com:perpetual-protocol/perp-lushan.git#aa8ac0266631b8d93edc73fd0fd42a0db813bdea":
+  version "1.4.0"
+  resolved "git+ssh://git@github.com:perpetual-protocol/perp-lushan.git#aa8ac0266631b8d93edc73fd0fd42a0db813bdea"
 
 "@perp/curie-liquidity-mining@0.3.2":
   version "0.3.2"
