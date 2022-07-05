@@ -1,3 +1,4 @@
+import { MockContract } from "@defi-wonderland/smock"
 import { BigNumber } from "@ethersproject/bignumber"
 import { expect } from "chai"
 import { parseEther, parseUnits } from "ethers/lib/utils"
@@ -6,9 +7,11 @@ import {
     AccountBalance,
     BaseToken,
     DelegatableVault,
+    Exchange,
     MarketRegistry,
     OrderBook,
     QuoteToken,
+    TestAggregatorV3,
     TestClearingHouse,
     TestERC20,
     UniswapV3Pool,
@@ -16,7 +19,7 @@ import {
 } from "../../typechain-types"
 import { createClearingHouseFixture } from "../clearingHouse/fixtures"
 import { deposit } from "../helper/token"
-import { encodePriceSqrt } from "../shared/utilities"
+import { encodePriceSqrt, syncIndexToMarketPrice } from "../shared/utilities"
 import { createDelegatableVaultFixture, DelegatableVaultFixture } from "./fixtures"
 
 describe("DelegatableVault test", () => {
@@ -33,9 +36,11 @@ describe("DelegatableVault test", () => {
     let baseToken: BaseToken
     let quoteToken: QuoteToken
     let pool: UniswapV3Pool
+    let mockedBaseAggregator: MockContract<TestAggregatorV3>
     let orderBook: OrderBook
     let delegatableVault: DelegatableVault
     let fixture: DelegatableVaultFixture
+    let exchange: Exchange
     let depositAmount
     let usdcDecimals
 
@@ -49,7 +54,9 @@ describe("DelegatableVault test", () => {
         baseToken = _clearingHouseFixture.baseToken
         quoteToken = _clearingHouseFixture.quoteToken
         pool = _clearingHouseFixture.pool
+        mockedBaseAggregator = _clearingHouseFixture.mockedBaseAggregator
         orderBook = _clearingHouseFixture.orderBook
+        exchange = _clearingHouseFixture.exchange
 
         fixture = await loadFixture(
             createDelegatableVaultFixture(_clearingHouseFixture, fundOwner.address, fundManager.address),
@@ -59,10 +66,13 @@ describe("DelegatableVault test", () => {
         await pool.initialize(encodePriceSqrt("151.373306858723226652", "1")) // tick = 50200 (1.0001^50200 = 151.373306858723226652)
         // the initial number of oracle can be recorded is 1; thus, have to expand it
         await pool.increaseObservationCardinalityNext((2 ^ 16) - 1)
+        await syncIndexToMarketPrice(mockedBaseAggregator, pool)
 
         // add pool after it's initialized
         await marketRegistry.addPool(baseToken.address, 10000)
         await marketRegistry.setFeeRatio(baseToken.address, 10000)
+
+        await exchange.setMaxTickCrossedWithinBlock(baseToken.address, "1000")
 
         usdcDecimals = await usdc.decimals()
 

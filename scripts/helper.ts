@@ -2,7 +2,7 @@ import { ExecOptions } from "child_process"
 import { resolve } from "path"
 import { exec, test } from "shelljs"
 
-export function getNpmBin(cwd?: string) {
+export function getNpmBin(cwd?: string | URL) {
     const options: { [key: string]: any } = { silent: true }
     if (cwd) {
         options.cwd = cwd

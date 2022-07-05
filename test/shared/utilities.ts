@@ -1,6 +1,10 @@
+import { FakeContract } from "@defi-wonderland/smock"
+import { LogDescription } from "@ethersproject/abi"
+import { TransactionReceipt } from "@ethersproject/abstract-provider"
 import bn from "bignumber.js"
-import { BigNumber, BigNumberish } from "ethers"
-import { VirtualToken } from "../../typechain-types"
+import { BaseContract, BigNumber, BigNumberish } from "ethers"
+import { parseUnits } from "ethers/lib/utils"
+import { BaseToken, Exchange, TestAggregatorV3, UniswapV3Pool, VirtualToken } from "../../typechain-types"
 
 bn.config({ EXPONENTIAL_AT: 999999, DECIMAL_PLACES: 40 })
 
@@ -40,4 +44,23 @@ export interface BaseQuoteAmountPair {
 
 export function isAscendingTokenOrder(addr0: string, addr1: string): boolean {
     return addr0.toLowerCase() < addr1.toLowerCase()
+}
+
+export function filterLogs(receipt: TransactionReceipt, topic: string, baseContract: BaseContract): LogDescription[] {
+    return receipt.logs.filter(log => log.topics[0] === topic).map(log => baseContract.interface.parseLog(log))
+}
+
+export async function syncIndexToMarketPrice(aggregator: FakeContract<TestAggregatorV3>, pool: UniswapV3Pool) {
+    const oracleDecimals = 6
+    const slot0 = await pool.slot0()
+    const sqrtPrice = slot0.sqrtPriceX96
+    const price = formatSqrtPriceX96ToPrice(sqrtPrice, oracleDecimals)
+    aggregator.latestRoundData.returns(async () => {
+        return [0, parseUnits(price, oracleDecimals), 0, 0, 0]
+    })
+}
+
+export async function getMarketTwap(exchange: Exchange, baseToken: BaseToken, interval: number) {
+    const sqrtPrice = await exchange.getSqrtMarkTwapX96(baseToken.address, interval)
+    return formatSqrtPriceX96ToPrice(sqrtPrice, 18)
 }

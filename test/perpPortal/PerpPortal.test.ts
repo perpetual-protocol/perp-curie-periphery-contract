@@ -20,6 +20,7 @@ import {
     Vault,
 } from "../../typechain-types"
 import { createClearingHouseFixture } from "../clearingHouse/fixtures"
+import { getMaxTickRange } from "../helper/number"
 import { deposit } from "../helper/token"
 import { encodePriceSqrt, formatSqrtPriceX96ToPrice } from "../shared/utilities"
 
@@ -41,6 +42,7 @@ describe("PerpPortal test", () => {
     let pool: UniswapV3Pool
     let pool2: UniswapV3Pool
     let mockedBaseAggregator: FakeContract<TestAggregatorV3>
+    let mockedBaseAggregator2: FakeContract<TestAggregatorV3>
     let collateralDecimals: number
     let quoter: Quoter
     let lowerTick: number
@@ -74,6 +76,7 @@ describe("PerpPortal test", () => {
         pool = _clearingHouseFixture.pool
         pool2 = _clearingHouseFixture.pool2
         mockedBaseAggregator = _clearingHouseFixture.mockedBaseAggregator
+        mockedBaseAggregator2 = _clearingHouseFixture.mockedBaseAggregator2
         collateralDecimals = await collateral.decimals()
 
         await pool.initialize(encodePriceSqrt(151.3733069, 1))
@@ -81,8 +84,11 @@ describe("PerpPortal test", () => {
         await marketRegistry.addPool(baseToken.address, "10000")
 
         await pool2.initialize(encodePriceSqrt(151.3733069, 1))
-        await syncIndexToMarketPrice(mockedBaseAggregator, pool2)
+        await syncIndexToMarketPrice(mockedBaseAggregator2, pool2)
         await marketRegistry.addPool(baseToken2.address, "10000")
+
+        await exchange.setMaxTickCrossedWithinBlock(baseToken.address, getMaxTickRange())
+        await exchange.setMaxTickCrossedWithinBlock(baseToken2.address, getMaxTickRange())
 
         const quoterFactory = await ethers.getContractFactory("Quoter")
         quoter = (await quoterFactory.deploy(marketRegistry.address)) as Quoter
@@ -310,7 +316,7 @@ describe("PerpPortal test", () => {
             // total position value: 296.38873205
             expect(await clearingHouse.getAccountValue(bob.address)).to.be.gt("300")
             // get account leverage: 296.38873205 / 996.38873205 = 0.29746295
-            expect(await perpPortal.getAccountLeverage(bob.address)).to.be.eq(parseEther("0.297462950472651860"))
+            expect(await perpPortal.getAccountLeverage(bob.address)).to.be.eq(parseEther("0.297462950190439130"))
         })
 
         it("0 < account value < total position value", async () => {
@@ -334,7 +340,7 @@ describe("PerpPortal test", () => {
             expect(bobAccountValue).to.be.lt(bobPositionValue)
 
             // account leverage: 5704.69430511 / 704.69430511 = 8.09527516
-            expect(await perpPortal.getAccountLeverage(bob.address)).to.be.eq(parseEther("8.095275162167099216"))
+            expect(await perpPortal.getAccountLeverage(bob.address)).to.be.eq(parseEther("8.095275151995577945"))
         })
 
         it("no position value", async () => {

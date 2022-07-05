@@ -1,4 +1,4 @@
-import { FakeContract } from "@defi-wonderland/smock"
+import { MockContract } from "@defi-wonderland/smock"
 import { ethers } from "hardhat"
 import {
     AccountBalance,
@@ -19,7 +19,8 @@ import {
     UniswapV3Pool,
     Vault,
 } from "../../typechain-types"
-import { token0Fixture, tokensFixture } from "../shared/fixtures"
+import { TestStdReference } from "../../typechain-types/contracts/test/TestStdReference"
+import { token0Fixture, token0WithBandPriceFeedFixture, tokensFixture } from "../shared/fixtures"
 
 export interface ClearingHouseFixture {
     clearingHouse: TestClearingHouse | ClearingHouse
@@ -36,10 +37,13 @@ export interface ClearingHouseFixture {
     USDC: TestERC20
     quoteToken: QuoteToken
     baseToken: BaseToken
-    mockedBaseAggregator: FakeContract<TestAggregatorV3>
+    mockedBaseAggregator: MockContract<TestAggregatorV3>
     baseToken2: BaseToken
-    mockedBaseAggregator2: FakeContract<TestAggregatorV3>
+    mockedBaseAggregator2: MockContract<TestAggregatorV3>
     pool2: UniswapV3Pool
+    baseToken3: BaseToken
+    mockedStdReference3: MockContract<TestStdReference>
+    pool3: UniswapV3Pool
 }
 
 export enum BaseQuoteOrdering {
@@ -58,7 +62,7 @@ export function createClearingHouseFixture(
         const USDC = (await tokenFactory.deploy()) as TestERC20
         await USDC.__TestERC20_init("TestUSDC", "USDC", 6)
 
-        let baseToken: BaseToken, quoteToken: QuoteToken, mockedBaseAggregator: FakeContract<TestAggregatorV3>
+        let baseToken: BaseToken, quoteToken: QuoteToken, mockedBaseAggregator: MockContract<TestAggregatorV3>
         const { token0, mockedAggregator0, token1 } = await tokensFixture()
 
         // we assume (base, quote) == (token0, token1)
@@ -108,7 +112,7 @@ export function createClearingHouseFixture(
 
         // deploy exchange
         await exchange.initialize(marketRegistry.address, orderBook.address, clearingHouseConfig.address)
-        exchange.setAccountBalance(accountBalance.address)
+        await exchange.setAccountBalance(accountBalance.address)
 
         await orderBook.setExchange(exchange.address)
 
@@ -131,16 +135,25 @@ export function createClearingHouseFixture(
         await baseToken.addWhitelist(pool.address)
         await quoteToken.addWhitelist(pool.address)
 
-        // deploy another pool
-        const _token0Fixture = await token0Fixture(quoteToken.address)
-        const baseToken2 = _token0Fixture.baseToken
-        const mockedBaseAggregator2 = _token0Fixture.mockedAggregator
+        // deploy 2nd pool
+        const _token0Fixture2 = await token0Fixture(quoteToken.address)
+        const baseToken2 = _token0Fixture2.baseToken
+        const mockedBaseAggregator2 = _token0Fixture2.mockedAggregator
         await uniV3Factory.createPool(baseToken2.address, quoteToken.address, uniFeeTier)
         const pool2Addr = await uniV3Factory.getPool(baseToken2.address, quoteToken.address, uniFeeTier)
         const pool2 = poolFactory.attach(pool2Addr) as UniswapV3Pool
-
         await baseToken2.addWhitelist(pool2.address)
         await quoteToken.addWhitelist(pool2.address)
+
+        // deploy 3rd pool
+        const _token0Fixture3 = await token0WithBandPriceFeedFixture(quoteToken.address)
+        const baseToken3 = _token0Fixture3.baseToken
+        const mockedStdReference3 = _token0Fixture3.mockedStdReference
+        await uniV3Factory.createPool(baseToken3.address, quoteToken.address, uniFeeTier)
+        const pool3Addr = await uniV3Factory.getPool(baseToken3.address, quoteToken.address, uniFeeTier)
+        const pool3 = poolFactory.attach(pool3Addr) as UniswapV3Pool
+        await baseToken3.addWhitelist(pool3.address)
+        await quoteToken.addWhitelist(pool3.address)
 
         // deploy clearingHouse
         let clearingHouse: ClearingHouse | TestClearingHouse
@@ -175,9 +188,13 @@ export function createClearingHouseFixture(
         await quoteToken.mintMaximumTo(clearingHouse.address)
         await baseToken.mintMaximumTo(clearingHouse.address)
         await baseToken2.mintMaximumTo(clearingHouse.address)
+        await baseToken3.mintMaximumTo(clearingHouse.address)
+
         await quoteToken.addWhitelist(clearingHouse.address)
         await baseToken.addWhitelist(clearingHouse.address)
         await baseToken2.addWhitelist(clearingHouse.address)
+        await baseToken3.addWhitelist(clearingHouse.address)
+
         await marketRegistry.setClearingHouse(clearingHouse.address)
         await orderBook.setClearingHouse(clearingHouse.address)
         await exchange.setClearingHouse(clearingHouse.address)
@@ -203,6 +220,9 @@ export function createClearingHouseFixture(
             baseToken2,
             mockedBaseAggregator2,
             pool2,
+            baseToken3,
+            mockedStdReference3,
+            pool3,
         }
     }
 }

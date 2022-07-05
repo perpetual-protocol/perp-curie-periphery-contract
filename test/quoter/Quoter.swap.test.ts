@@ -1,3 +1,4 @@
+import { MockContract } from "@defi-wonderland/smock"
 import { expect } from "chai"
 import { defaultAbiCoder, parseEther, parseUnits } from "ethers/lib/utils"
 import { ethers, waffle } from "hardhat"
@@ -8,14 +9,16 @@ import {
     OrderBook,
     Quoter,
     QuoteToken,
+    TestAggregatorV3,
     TestClearingHouse,
     TestERC20,
     UniswapV3Pool,
     Vault,
 } from "../../typechain-types"
 import { createClearingHouseFixture } from "../clearingHouse/fixtures"
+import { getMaxTickRange } from "../helper/number"
 import { deposit } from "../helper/token"
-import { encodePriceSqrt } from "../shared/utilities"
+import { encodePriceSqrt, syncIndexToMarketPrice } from "../shared/utilities"
 
 describe("Quoter.swap", () => {
     const [admin, alice, bob] = waffle.provider.getWallets()
@@ -29,6 +32,7 @@ describe("Quoter.swap", () => {
     let baseToken: BaseToken
     let quoteToken: QuoteToken
     let pool: UniswapV3Pool
+    let mockedBaseAggregator: MockContract<TestAggregatorV3>
     let collateralDecimals: number
     let quoter: Quoter
     let lowerTick
@@ -45,9 +49,13 @@ describe("Quoter.swap", () => {
         baseToken = _clearingHouseFixture.baseToken
         quoteToken = _clearingHouseFixture.quoteToken
         pool = _clearingHouseFixture.pool
+        mockedBaseAggregator = _clearingHouseFixture.mockedBaseAggregator
         collateralDecimals = await collateral.decimals()
         await pool.initialize(encodePriceSqrt(151.3733069, 1))
         await marketRegistry.addPool(baseToken.address, "10000")
+
+        await exchange.setMaxTickCrossedWithinBlock(baseToken.address, getMaxTickRange())
+        await syncIndexToMarketPrice(mockedBaseAggregator, pool)
 
         const quoterFactory = await ethers.getContractFactory("Quoter")
         quoter = (await quoterFactory.deploy(marketRegistry.address)) as Quoter
