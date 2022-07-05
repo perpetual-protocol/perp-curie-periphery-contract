@@ -1,61 +1,51 @@
 name: Publish NPM package
 on:
-    push:
-        tags:
-            - v*
+  push:
+    tags:
+        - v*
 
 jobs:
-    publish-npm-package:
-        runs-on: ubuntu-latest
-        steps:
-            - uses: actions/checkout@v2
-              with:
-                persist-credentials: false
+  publish-npm-package:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          persist-credentials: false
 
-            - uses: webfactory/ssh-agent@v0.5.4
-              with:
-            # https://github.com/marketplace/actions/webfactory-ssh-agent#using-multiple-keys
-                ssh-private-key: ${{ secrets.PERP_LUSHAN_DEPLOY_PRIVATE_KEY }}
+      - uses: webfactory/ssh-agent@v0.5.4
+        with:
+          # https://github.com/marketplace/actions/webfactory-ssh-agent#using-multiple-keys
+          ssh-private-key: ${{ secrets.PERP_LUSHAN_DEPLOY_PRIVATE_KEY }}
 
-            - name: Get npm cache directory
-              id: npm-cache
-              run: |
-                  echo "::set-output name=dir::$(npm config get cache)"
-            - uses: actions/cache@v2
-              with:
-                  path: |
-                      ${{ steps.npm-cache.outputs.dir }}
-                      **/node_modules
-                  key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
-                  restore-keys: |
-                      ${{ runner.os }}-node-
+      # See: https://github.com/actions/cache/blob/main/examples.md#node---yarn
+      - name: Get Yarn cache directory
+        id: yarn-cache-dir-path
+        run: echo "::set-output name=dir::$(yarn cache dir)"
 
-            - name: Use Node.js 16.x
-              uses: actions/setup-node@v1
-              with:
-                  node-version: 16.x
-                  registry-url: 'https://registry.npmjs.org'
+      - name: Use Yarn cache
+        uses: actions/cache@v2
+        id: yarn-cache
+        with:
+            path: ${{ steps.yarn-cache-dir-path.outputs.dir }}
+            key: ${{ runner.os }}-yarn-${{ matrix.node-version }}-${{ hashFiles('**/yarn.lock') }}
 
-            - name: Install contract dependencies
-              run: npm ci
-              env:
-                CI: true
+      - name: Install package dependencies
+        run: yarn install --prefer-offline --frozen-lockfile --network-concurrency 1
 
-            - name: Build contract package
-              run: npm run build
-              env:
-                CI: true
+      - name: Publish npm package
+        run: yarn release
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
-            - name: Publish npm package
-              run: |
-                npm config set //registry.npmjs.org/:_authToken ${NPM_TOKEN}
-                npm publish --access public
-              env:
-                NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+      - name: Extract version from package.json
+        uses: sergeysova/jq-action@v2
+        id: version
+        with:
+          cmd: 'jq .version output/package.json -r'
 
-            - name: Discord notification
-              env:
-                  DISCORD_WEBHOOK: ${{ secrets.DISCORD_RELEASE_WEBHOOK }}
-              uses: Ilshidur/action-discord@master
-              with:
-                  args: "npm package @perp/curie-periphery-contract ${{github.ref}} released"
+      - name: Discord notification
+        env:
+            DISCORD_WEBHOOK: ${{ secrets.DISCORD_RELEASE_WEBHOOK }}
+        uses: Ilshidur/action-discord@master
+        with:
+            args: "npm package @perp/curie-periphery-contract ${{ steps.version.outputs.value }} released"
