@@ -42,6 +42,7 @@ describe("PerpPortal test", () => {
     let pool: UniswapV3Pool
     let pool2: UniswapV3Pool
     let mockedBaseAggregator: FakeContract<TestAggregatorV3>
+    let mockedBaseAggregator2: FakeContract<TestAggregatorV3>
     let collateralDecimals: number
     let quoter: Quoter
     let lowerTick: number
@@ -75,6 +76,7 @@ describe("PerpPortal test", () => {
         pool = _clearingHouseFixture.pool
         pool2 = _clearingHouseFixture.pool2
         mockedBaseAggregator = _clearingHouseFixture.mockedBaseAggregator
+        mockedBaseAggregator2 = _clearingHouseFixture.mockedBaseAggregator2
         collateralDecimals = await collateral.decimals()
 
         await pool.initialize(encodePriceSqrt(151.3733069, 1))
@@ -82,7 +84,7 @@ describe("PerpPortal test", () => {
         await marketRegistry.addPool(baseToken.address, "10000")
 
         await pool2.initialize(encodePriceSqrt(151.3733069, 1))
-        await syncIndexToMarketPrice(mockedBaseAggregator, pool2)
+        await syncIndexToMarketPrice(mockedBaseAggregator2, pool2)
         await marketRegistry.addPool(baseToken2.address, "10000")
 
         await exchange.setMaxTickCrossedWithinBlock(baseToken.address, getMaxTickRange())
