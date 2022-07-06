@@ -51,7 +51,7 @@ jobs:
         uses: sergeysova/jq-action@v2
         id: version
         with:
-          cmd: 'jq .version output/package.json -r'
+          cmd: 'jq .version package.json -r'
 
       - name: Discord notification
         env:
