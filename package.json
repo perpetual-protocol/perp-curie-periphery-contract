@@ -40,23 +40,14 @@
     "prepack": "ts-node --files scripts/prepack.ts"
   },
   "dependencies": {
-    "@chainlink/contracts": "0.1.7",
-    "@openzeppelin/contracts-upgradeable": "3.4.2",
-    "@openzeppelin/contracts": "3.4.0",
-    "@perp/curie-contract": "1.4.0",
-    "@perp/perp-oracle-contract": "0.4.3",
-    "@uniswap/v3-core": "https://github.com/Uniswap/uniswap-v3-core/tarball/v1.0.0",
-    "@uniswap/v3-periphery": "1.0.1"
+    "@perp/curie-contract": "git+ssh://git@github.com:perpetual-protocol/perp-lushan.git#c11c3094e79ecedce7eb9935a87a3b08a4d73b31",
+    "@perp/perp-oracle-contract": "0.4.3"
   },
   "devDependencies": {
     "@defi-wonderland/smock": "2.0.7",
     "@metamask/eth-sig-util": "4.0.1",
     "@nomiclabs/hardhat-ethers": "2.0.5",
     "@nomiclabs/hardhat-waffle": "2.0.3",
-    "@openzeppelin/contracts-upgradeable": "3.4.2",
-    "@openzeppelin/contracts": "3.4.0",
-    "@perp/curie-contract": "1.4.0",
-    "@perp/perp-oracle-contract": "0.4.3",
     "@typechain/ethers-v5": "10.0.0",
     "@typechain/hardhat": "6.0.0",
     "@types/chai": "4.3.0",
