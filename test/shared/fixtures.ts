@@ -1,5 +1,5 @@
 import { MockContract, smock } from "@defi-wonderland/smock"
-import { strict as assert } from "assert"
+import assert from "assert"
 import { ethers, waffle } from "hardhat"
 import {
     BaseToken,
@@ -148,37 +148,31 @@ export async function deployBaseToken(
 ): Promise<BaseToken> {
     const deployer = (await ethers.getSigners())[0]
 
-    // We use deployer's address and nonce to compute a contract's address which deployed with that nonce,
+    // we use deployer's address and nonce to compute a contract's address which deployed with that nonce,
     // to find the nonce that matches the condition
     let nonce = await deployer.getTransactionCount()
-    console.log(`Next nonce: ${nonce}`)
-
     let computedAddress = "0x0"
     while (true) {
         computedAddress = ethers.utils.getContractAddress({
             from: deployer.address,
             nonce: nonce,
         })
-        console.log(`Computed address: ${nonce}, ${computedAddress}`)
 
         if (computedAddress.toLowerCase() < quoteTokenAddr.toLowerCase()) {
-            // Increase the nonce until we find a contract address that matches the condition
             break
         } else {
+            // increase the nonce until we find a contract address that matches the condition
             nonce += 1
         }
     }
 
-    console.log(`Final nonce: ${nonce}`)
     await waffle.provider.send("hardhat_setNonce", [deployer.address, `0x${nonce.toString(16)}`])
 
     const baseTokenFactory = await ethers.getContractFactory("BaseToken")
     const baseToken = (await baseTokenFactory.deploy()) as BaseToken
     await baseToken.initialize(name, symbol, priceFeedAddr)
 
-    console.log(`quoteTokenAddr: ${quoteTokenAddr}`)
-    console.log(`baseTokenAddr: ${baseToken.address}`)
-    assert.equal(baseToken.address.toLowerCase() < quoteTokenAddr.toLowerCase(), true)
+    assert.strictEqual(baseToken.address.toLowerCase() < quoteTokenAddr.toLowerCase(), true)
 
     return baseToken
 }
