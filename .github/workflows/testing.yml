@@ -27,7 +27,7 @@ jobs:
         run: yarn build
 
       - name: Run tests
-        run: yarn test
+        run: yarn test-parallel
         env:
           # to solve problem of memory leak https://stackoverflow.com/a/59572966
           NODE_OPTIONS: "--max-old-space-size=4096"

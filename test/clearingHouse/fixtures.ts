@@ -20,7 +20,7 @@ import {
     Vault,
 } from "../../typechain-types"
 import { TestStdReference } from "../../typechain-types/contracts/test/TestStdReference"
-import { token0Fixture, token0WithBandPriceFeedFixture, tokensFixture } from "../shared/fixtures"
+import { fastToken0Fixture, fastToken0WithBandPriceFeedFixture, tokensFixture } from "../shared/fixtures"
 
 export interface ClearingHouseFixture {
     clearingHouse: TestClearingHouse | ClearingHouse
@@ -136,7 +136,7 @@ export function createClearingHouseFixture(
         await quoteToken.addWhitelist(pool.address)
 
         // deploy 2nd pool
-        const _token0Fixture2 = await token0Fixture(quoteToken.address)
+        const _token0Fixture2 = await fastToken0Fixture(quoteToken.address)
         const baseToken2 = _token0Fixture2.baseToken
         const mockedBaseAggregator2 = _token0Fixture2.mockedAggregator
         await uniV3Factory.createPool(baseToken2.address, quoteToken.address, uniFeeTier)
@@ -146,7 +146,7 @@ export function createClearingHouseFixture(
         await quoteToken.addWhitelist(pool2.address)
 
         // deploy 3rd pool
-        const _token0Fixture3 = await token0WithBandPriceFeedFixture(quoteToken.address)
+        const _token0Fixture3 = await fastToken0WithBandPriceFeedFixture(quoteToken.address)
         const baseToken3 = _token0Fixture3.baseToken
         const mockedStdReference3 = _token0Fixture3.mockedStdReference
         await uniV3Factory.createPool(baseToken3.address, quoteToken.address, uniFeeTier)
