@@ -216,14 +216,6 @@ export async function tokensFixture(): Promise<TokensFixture> {
     }
 }
 
-export async function token0Fixture(token1Addr: string): Promise<BaseTokenFixture> {
-    let token0Fixture: BaseTokenFixture
-    while (!token0Fixture || !isAscendingTokenOrder(token0Fixture.baseToken.address, token1Addr)) {
-        token0Fixture = await createBaseTokenFixture("RandomTestToken0", "randomToken0")()
-    }
-    return token0Fixture
-}
-
 export async function fastToken0Fixture(token1Addr: string): Promise<BaseTokenFixture> {
     return await fastCreateBaseTokenFixture("RandomTestToken0", "randomToken0", token1Addr)()
 }
