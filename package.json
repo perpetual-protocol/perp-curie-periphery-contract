@@ -27,7 +27,6 @@
     "contracts/"
   ],
   "scripts": {
-    "prepare": "husky install",
     "clean": "rm -rf artifacts/ && rm -rf cache/ && rm -rf typechain-types/ && npm run clean-dbg",
     "clean-dbg": "find node_modules/@perp/curie-contract/artifacts/contracts -name '*.dbg.json' -delete",
     "compile-watch": "nodemon -w contracts -e sol -x hardhat compile",
