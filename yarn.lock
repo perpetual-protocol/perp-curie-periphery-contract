@@ -851,9 +851,9 @@
   resolved "https://registry.yarnpkg.com/@openzeppelin/contracts/-/contracts-3.4.1-solc-0.7-2.tgz#371c67ebffe50f551c3146a9eec5fe6ffe862e92"
   integrity sha512-tAG9LWg8+M2CMu7hIsqHPaTyG4uDzjr6mhvH96LvOpLZZj6tgzTluBt+LsCf1/QaYrlis6pITvpIaIhE+iZB+Q==
 
-"@perp/curie-contract@git+ssh://git@github.com:perpetual-protocol/perp-lushan.git#c11c3094e79ecedce7eb9935a87a3b08a4d73b31":
-  version "1.4.0"
-  resolved "git+ssh://git@github.com:perpetual-protocol/perp-lushan.git#c11c3094e79ecedce7eb9935a87a3b08a4d73b31"
+"@perp/curie-contract@git+ssh://git@github.com:perpetual-protocol/perp-lushan.git#4f26eb4b14f1c507109b80559e7be203806ad3a8":
+  version "1.4.1"
+  resolved "git+ssh://git@github.com:perpetual-protocol/perp-lushan.git#4f26eb4b14f1c507109b80559e7be203806ad3a8"
   dependencies:
     "@chainlink/contracts" "0.1.7"
     "@openzeppelin/contracts" "3.4.0"
