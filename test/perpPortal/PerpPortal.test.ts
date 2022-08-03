@@ -343,6 +343,10 @@ describe("PerpPortal test", () => {
             expect(await perpPortal.getAccountLeverage(bob.address)).to.be.eq(parseEther("8.095275151995577945"))
         })
 
+        it("account add liquidity but with no position")
+
+        it("account add liquidity and has taker position")
+
         it("no position value", async () => {
             expect(await perpPortal.getAccountLeverage(bob.address)).to.be.eq(0)
         })

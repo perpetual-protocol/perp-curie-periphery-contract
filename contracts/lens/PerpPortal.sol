@@ -2,6 +2,7 @@
 pragma solidity 0.7.6;
 pragma abicoder v2;
 
+import { Math } from "@openzeppelin/contracts/math/Math.sol";
 import { IClearingHouse } from "@perp/curie-contract/contracts/interface/IClearingHouse.sol";
 import { IClearingHouseConfig } from "@perp/curie-contract/contracts/interface/IClearingHouseConfig.sol";
 import { IAccountBalance } from "@perp/curie-contract/contracts/interface/IAccountBalance.sol";
@@ -340,10 +341,11 @@ contract PerpPortal {
 
     function getAccountLeverage(address trader) external view returns (int256) {
         int256 accountValue = IClearingHouse(_clearingHouse).getAccountValue(trader);
-        uint256 totalPositionValue = IAccountBalance(_accountBalance).getTotalAbsPositionValue(trader);
+        uint256 totalAbsPositionValue = IAccountBalance(_accountBalance).getTotalAbsPositionValue(trader);
+        uint256 totalDebtValue = IAccountBalance(_accountBalance).getTotalDebtValue(trader);
 
         // no collateral & no position
-        if (accountValue == 0 && totalPositionValue == 0) {
+        if (accountValue == 0 && totalAbsPositionValue == 0 && totalDebtValue == 0) {
             return 0;
         }
 
@@ -352,7 +354,7 @@ contract PerpPortal {
             return -1;
         }
 
-        return totalPositionValue.toInt256().mulDiv(1e18, accountValue.toUint256());
+        return Math.max(totalAbsPositionValue, totalDebtValue).toInt256().mulDiv(1e18, accountValue.toUint256());
     }
 
     // perpPortal view functions
