@@ -1,5 +1,6 @@
 import { MockContract, smock } from "@defi-wonderland/smock"
-import { ethers } from "hardhat"
+import assert from "assert"
+import { ethers, waffle } from "hardhat"
 import {
     BaseToken,
     ChainlinkPriceFeed,
@@ -93,6 +94,89 @@ export function createBaseTokenWithBandPriceFeedFixture(
     }
 }
 
+export function fastCreateBaseTokenFixture(
+    name: string,
+    symbol: string,
+    quoteTokenAddr: string,
+): () => Promise<BaseTokenFixture> {
+    return async (): Promise<BaseTokenFixture> => {
+        const aggregatorFactory = await smock.mock<TestAggregatorV3__factory>("TestAggregatorV3")
+        const mockedAggregator = await aggregatorFactory.deploy()
+        mockedAggregator.decimals.returns(() => {
+            return 6
+        })
+
+        const chainlinkPriceFeedFactory = await ethers.getContractFactory("ChainlinkPriceFeed")
+        const chainlinkPriceFeed = (await chainlinkPriceFeedFactory.deploy(
+            mockedAggregator.address,
+        )) as ChainlinkPriceFeed
+
+        const baseToken = await deployBaseToken(name, symbol, chainlinkPriceFeed.address, quoteTokenAddr)
+
+        return { baseToken, mockedAggregator }
+    }
+}
+
+export function fastCreateBaseTokenWithBandPriceFeedFixture(
+    name: string,
+    symbol: string,
+    quoteTokenAddr: string,
+): () => Promise<BaseTokenWithBandPriceFeedFixture> {
+    return async (): Promise<BaseTokenWithBandPriceFeedFixture> => {
+        const mockedStdReferenceFactory = await smock.mock<TestStdReference__factory>("TestStdReference")
+        const mockedStdReference = await mockedStdReferenceFactory.deploy()
+
+        const baseAsset = symbol
+        const bandPriceFeedFactory = await ethers.getContractFactory("BandPriceFeed")
+        const bandPriceFeed = (await bandPriceFeedFactory.deploy(
+            mockedStdReference.address,
+            baseAsset,
+            900,
+        )) as BandPriceFeed
+
+        const baseToken = await deployBaseToken(name, symbol, bandPriceFeed.address, quoteTokenAddr)
+
+        return { baseToken, mockedStdReference }
+    }
+}
+
+export async function deployBaseToken(
+    name: string,
+    symbol: string,
+    priceFeedAddr: string,
+    quoteTokenAddr: string,
+): Promise<BaseToken> {
+    const deployer = (await ethers.getSigners())[0]
+
+    // we use deployer's address and nonce to compute a contract's address which deployed with that nonce,
+    // to find the nonce that matches the condition
+    let nonce = await deployer.getTransactionCount()
+    let computedAddress = "0x0"
+    while (true) {
+        computedAddress = ethers.utils.getContractAddress({
+            from: deployer.address,
+            nonce: nonce,
+        })
+
+        if (computedAddress.toLowerCase() < quoteTokenAddr.toLowerCase()) {
+            break
+        } else {
+            // increase the nonce until we find a contract address that matches the condition
+            nonce += 1
+        }
+    }
+
+    await waffle.provider.send("hardhat_setNonce", [deployer.address, `0x${nonce.toString(16)}`])
+
+    const baseTokenFactory = await ethers.getContractFactory("BaseToken")
+    const baseToken = (await baseTokenFactory.deploy()) as BaseToken
+    await baseToken.initialize(name, symbol, priceFeedAddr)
+
+    assert.strictEqual(baseToken.address.toLowerCase() < quoteTokenAddr.toLowerCase(), true)
+
+    return baseToken
+}
+
 export async function uniswapV3FactoryFixture(): Promise<UniswapV3Factory> {
     const factoryFactory = await ethers.getContractFactory("UniswapV3Factory")
     return (await factoryFactory.deploy()) as UniswapV3Factory
@@ -132,20 +216,14 @@ export async function tokensFixture(): Promise<TokensFixture> {
     }
 }
 
-export async function token0Fixture(token1Addr: string): Promise<BaseTokenFixture> {
-    let token0Fixture: BaseTokenFixture
-    while (!token0Fixture || !isAscendingTokenOrder(token0Fixture.baseToken.address, token1Addr)) {
-        token0Fixture = await createBaseTokenFixture("RandomTestToken0", "randomToken0")()
-    }
-    return token0Fixture
+export async function fastToken0Fixture(token1Addr: string): Promise<BaseTokenFixture> {
+    return await fastCreateBaseTokenFixture("RandomTestToken0", "randomToken0", token1Addr)()
 }
 
-export async function token0WithBandPriceFeedFixture(token1Addr: string): Promise<BaseTokenWithBandPriceFeedFixture> {
-    let token0Fixture: BaseTokenWithBandPriceFeedFixture
-    while (!token0Fixture || !isAscendingTokenOrder(token0Fixture.baseToken.address, token1Addr)) {
-        token0Fixture = await createBaseTokenWithBandPriceFeedFixture("RandomTestToken0", "randomToken0")()
-    }
-    return token0Fixture
+export async function fastToken0WithBandPriceFeedFixture(
+    token1Addr: string,
+): Promise<BaseTokenWithBandPriceFeedFixture> {
+    return await fastCreateBaseTokenWithBandPriceFeedFixture("RandomTestToken0", "randomToken0", token1Addr)()
 }
 
 export async function base0Quote1PoolFixture(): Promise<PoolFixture> {
