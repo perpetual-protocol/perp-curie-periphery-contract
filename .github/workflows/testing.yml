@@ -62,6 +62,11 @@ jobs:
       - uses: actions/checkout@v3
         with:
           submodules: recursive
+          
+      # https://github.com/marketplace/actions/webfactory-ssh-agent#using-multiple-keys
+      - uses: webfactory/ssh-agent@v0.5.4
+        with:
+          ssh-private-key: ${{ secrets.PERP_LUSHAN_DEPLOY_PRIVATE_KEY }}
 
       - name: Use Node.js 16
         uses: actions/setup-node@v3
