@@ -8,10 +8,13 @@ import "../../contracts/test/TestLimitOrderBook.sol";
 contract LimitOrderRewardVaultTest is Test {
     LimitOrderRewardVault limitOrderRewardVault;
     address constant nonOwnerAddress = address(0x1234);
+
     event RewardTokenChanged(address rewardToken);
     event LimitOrderBookChanged(address limitOrderBook);
     event RewardAmountChanged(uint256 rewardAmount);
     event Withdrawn(address to, address token, uint256 amount);
+    event Disbursed(bytes32 orderHash, address keeper, address token, uint256 amount);
+
     TestERC20 rewardToken1;
 
     function setUp() public {
@@ -19,8 +22,9 @@ contract LimitOrderRewardVaultTest is Test {
         rewardToken1.__TestERC20_init("TestPERP-1", "PERP-1", 18);
 
         limitOrderRewardVault = new LimitOrderRewardVault();
-        limitOrderRewardVault.initialize(address(rewardToken1), 10**18);
+        limitOrderRewardVault.initialize(address(rewardToken1), 10 ** 18);
     }
+
     function testSetRewardToken_should_set_reward_token() public {
         TestERC20 rewardToken2 = new TestERC20();
         rewardToken2.__TestERC20_init("TestPERP-2", "PERP-2", 18);
@@ -103,6 +107,56 @@ contract LimitOrderRewardVaultTest is Test {
         limitOrderRewardVault.setRewardAmount(newRewardAmount);
     }
 
+    function testDisburse_should_disburse_reward_to_keeper() public {
+        (address limitOrderBookAddr,) = prepareForDisbursing();
+
+        uint256 rewardAmount = 100 * 10 ** rewardToken1.decimals();
+        limitOrderRewardVault.setRewardAmount(rewardAmount);
+
+        address keeper = address(0x1111);
+        bytes32 anyOrderHash = keccak256(abi.encodePacked("0"));
+
+        vm.prank(limitOrderBookAddr);
+        limitOrderRewardVault.disburse(keeper, anyOrderHash);
+    }
+
+    function testDisburse_should_emit_event() public {
+        (address limitOrderBookAddr,) = prepareForDisbursing();
+
+        uint256 rewardAmount = 100 * 10 ** rewardToken1.decimals();
+        limitOrderRewardVault.setRewardAmount(rewardAmount);
+
+        address keeper = address(0x1111);
+        bytes32 orderHash = keccak256(abi.encodePacked("0"));
+
+        vm.expectEmit(false, false, false, true);
+        emit Disbursed(orderHash, keeper, address(rewardToken1), rewardAmount);
+        vm.prank(limitOrderBookAddr);
+        limitOrderRewardVault.disburse(keeper, orderHash);
+    }
+
+    function testDisburse_should_be_reverted_if_balance_is_not_enough() public {
+        (address limitOrderBookAddr, uint256 vaultBalance) = prepareForDisbursing();
+
+        uint256 rewardAmount = vaultBalance + 1;
+        limitOrderRewardVault.setRewardAmount(rewardAmount);
+
+        address anyKeeper = address(0x1111);
+        bytes32 anyOrderHash = keccak256(abi.encodePacked("0"));
+
+        vm.expectRevert(bytes("LOFV_NEBTD"));
+        vm.prank(limitOrderBookAddr);
+        limitOrderRewardVault.disburse(anyKeeper, anyOrderHash);
+    }
+
+    function testDisburse_should_only_be_called_by_limitOrderBook() public {
+        address anyKeeper = address(0x1111);
+        bytes32 anyOrderHash = keccak256(abi.encodePacked("0"));
+        vm.expectRevert(bytes("LOFV_SMBLOB"));
+        vm.prank(nonOwnerAddress);
+        limitOrderRewardVault.disburse(anyKeeper, anyOrderHash);
+    }
+
     function testWithdraw_should_transfer_amount_to_admin() public {
         address admin = address(this);
         address vault = address(limitOrderRewardVault);
@@ -148,4 +202,16 @@ contract LimitOrderRewardVaultTest is Test {
         vm.prank(nonOwnerAddress);
         limitOrderRewardVault.withdraw(1);
     }
+
+    function prepareForDisbursing() private returns (address limitOrderBookAddr, uint256 vaultBalance){
+        address vaultAddr = address(limitOrderRewardVault);
+        address limitOrderBookAddr = address(new TestLimitOrderBook());
+        limitOrderRewardVault.setLimitOrderBook(limitOrderBookAddr);
+
+        uint256 vaultBalance = 1000 * 10 ** rewardToken1.decimals();
+        rewardToken1.mint(vaultAddr, vaultBalance);
+
+        return (limitOrderBookAddr, vaultBalance);
+    }
+
 }
