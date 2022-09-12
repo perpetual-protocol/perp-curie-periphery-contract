@@ -1,9 +1,9 @@
 pragma solidity 0.7.6;
 
-import "../../contracts/test/TestERC20.sol";
-import "../../contracts/limitOrder/LimitOrderRewardVault.sol";
+import "../../../contracts/test/TestERC20.sol";
+import "../../../contracts/limitOrder/LimitOrderRewardVault.sol";
 import "forge-std/Test.sol";
-import "../../contracts/test/TestLimitOrderBook.sol";
+import "../../../contracts/test/TestLimitOrderBook.sol";
 
 contract LimitOrderRewardVaultTest is Test {
     LimitOrderRewardVault limitOrderRewardVault;
