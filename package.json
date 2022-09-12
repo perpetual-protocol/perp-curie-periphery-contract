@@ -41,7 +41,7 @@
     "prepack": "ts-node --files scripts/prepack.ts"
   },
   "dependencies": {
-    "@perp/curie-contract": "git+ssh://git@github.com:perpetual-protocol/perp-lushan.git#cf7284f1575a4e46011d62de5b3597da60c82846",
+    "@perp/curie-contract": "2.1.0",
     "@perp/perp-oracle-contract": "0.4.3"
   },
   "devDependencies": {
