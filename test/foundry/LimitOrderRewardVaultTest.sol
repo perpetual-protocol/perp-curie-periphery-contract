@@ -6,6 +6,8 @@ import "forge-std/Test.sol";
 
 contract LimitOrderRewardVaultTest is Test {
     LimitOrderRewardVault limitOrderRewardVault;
+    event RewardTokenChanged(address rewardToken);
+
     function setUp() public {
         TestERC20 rewardToken1 = new TestERC20();
         rewardToken1.__TestERC20_init("TestPERP-1", "PERP-1", 18);
@@ -23,13 +25,12 @@ contract LimitOrderRewardVaultTest is Test {
     }
 
     function testSetRewardToken_should_emit_event() public {
-        // WIP
-        //        TestERC20 rewardToken2 = new TestERC20();
-        //        rewardToken2.__TestERC20_init("TestPERP-2", "PERP-2", 18);
-        //
-        //        vm.expectEmit(false, false, false, true);
-        //        emit RewardTokenChanged(address(rewardToken2));
-        //        limitOrderRewardVault.setRewardToken(address(rewardToken2));
+        TestERC20 rewardToken2 = new TestERC20();
+        rewardToken2.__TestERC20_init("TestPERP-2", "PERP-2", 18);
+
+        vm.expectEmit(false, false, false, true);
+        emit RewardTokenChanged(address(rewardToken2));
+        limitOrderRewardVault.setRewardToken(address(rewardToken2));
     }
 
     function testSetRewardToken_unable_to_set_non_contract_address() public {
