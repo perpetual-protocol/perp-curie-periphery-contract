@@ -10,11 +10,6 @@ jobs:
         with:
           persist-credentials: false
 
-      # https://github.com/marketplace/actions/webfactory-ssh-agent#using-multiple-keys
-      - uses: webfactory/ssh-agent@v0.5.4
-        with:
-          ssh-private-key: ${{ secrets.PERP_LUSHAN_DEPLOY_PRIVATE_KEY }}
-
       - name: Use Node.js 16
         uses: actions/setup-node@v3
         with:
@@ -39,11 +34,6 @@ jobs:
         with:
           persist-credentials: false
 
-      # https://github.com/marketplace/actions/webfactory-ssh-agent#using-multiple-keys
-      - uses: webfactory/ssh-agent@v0.5.4
-        with:
-          ssh-private-key: ${{ secrets.PERP_LUSHAN_DEPLOY_PRIVATE_KEY }}
-
       - name: Use Node.js 16
         uses: actions/setup-node@v3
         with:
@@ -63,11 +53,6 @@ jobs:
         with:
           submodules: recursive
           
-      # https://github.com/marketplace/actions/webfactory-ssh-agent#using-multiple-keys
-      - uses: webfactory/ssh-agent@v0.5.4
-        with:
-          ssh-private-key: ${{ secrets.PERP_LUSHAN_DEPLOY_PRIVATE_KEY }}
-
       - name: Use Node.js 16
         uses: actions/setup-node@v3
         with:
