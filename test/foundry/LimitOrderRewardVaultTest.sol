@@ -10,6 +10,7 @@ contract LimitOrderRewardVaultTest is Test {
     address constant nonOwnerAddress = address(0x1234);
     event RewardTokenChanged(address rewardToken);
     event LimitOrderBookChanged(address limitOrderBook);
+    event RewardAmountChanged(uint256 rewardAmount);
 
     function setUp() public {
         TestERC20 rewardToken1 = new TestERC20();
@@ -71,5 +72,32 @@ contract LimitOrderRewardVaultTest is Test {
         vm.expectRevert(bytes("SO_CNO"));
         vm.prank(nonOwnerAddress);
         limitOrderRewardVault.setLimitOrderBook(address(0));
+    }
+
+    function testSetRewardAmount_able_to_set_reward_amount() public {
+        uint256 newRewardAmount = 2e18;
+        limitOrderRewardVault.setRewardAmount(newRewardAmount);
+        assertEq(newRewardAmount, limitOrderRewardVault.rewardAmount());
+    }
+
+    function testSetRewardAmount_should_emit_event() public {
+        uint256 newRewardAmount = 2e18;
+
+        vm.expectEmit(false, false, false, true);
+        emit RewardAmountChanged(newRewardAmount);
+        limitOrderRewardVault.setRewardAmount(newRewardAmount);
+    }
+
+    function testSetRewardAmount_rewardAmount_must_be_greater_than_0() public {
+        uint256 newRewardAmount = 0;
+        vm.expectRevert(bytes("LOFV_RAMBGT0"));
+        limitOrderRewardVault.setRewardAmount(newRewardAmount);
+    }
+
+    function testSetRewardAmount_only_able_to_set_by_owner() public {
+        uint256 newRewardAmount = 2e18;
+        vm.expectRevert(bytes("SO_CNO"));
+        vm.prank(nonOwnerAddress);
+        limitOrderRewardVault.setRewardAmount(newRewardAmount);
     }
 }
