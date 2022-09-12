@@ -11,9 +11,11 @@ contract LimitOrderRewardVaultTest is Test {
     event RewardTokenChanged(address rewardToken);
     event LimitOrderBookChanged(address limitOrderBook);
     event RewardAmountChanged(uint256 rewardAmount);
+    event Withdrawn(address to, address token, uint256 amount);
+    TestERC20 rewardToken1;
 
     function setUp() public {
-        TestERC20 rewardToken1 = new TestERC20();
+        rewardToken1 = new TestERC20();
         rewardToken1.__TestERC20_init("TestPERP-1", "PERP-1", 18);
 
         limitOrderRewardVault = new LimitOrderRewardVault();
@@ -99,5 +101,51 @@ contract LimitOrderRewardVaultTest is Test {
         vm.expectRevert(bytes("SO_CNO"));
         vm.prank(nonOwnerAddress);
         limitOrderRewardVault.setRewardAmount(newRewardAmount);
+    }
+
+    function testWithdraw_should_transfer_amount_to_admin() public {
+        address admin = address(this);
+        address vault = address(limitOrderRewardVault);
+
+        assertEq(0, rewardToken1.balanceOf(admin));
+
+        uint256 vaultBalance = 1000 * 10 ** rewardToken1.decimals();
+
+        rewardToken1.mint(vault, vaultBalance);
+        limitOrderRewardVault.withdraw(vaultBalance);
+
+        assertEq(vaultBalance, rewardToken1.balanceOf(admin));
+        assertEq(0, rewardToken1.balanceOf(vault));
+    }
+
+    function testWithdraw_should_emit_event() public {
+        address admin = address(this);
+        address vault = address(limitOrderRewardVault);
+
+        uint256 vaultBalance = 1000 * 10 ** rewardToken1.decimals();
+
+        rewardToken1.mint(vault, vaultBalance);
+
+        vm.expectEmit(false, false, false, true);
+        emit Withdrawn(admin, address(rewardToken1), vaultBalance);
+        limitOrderRewardVault.withdraw(vaultBalance);
+    }
+
+    function testWithdraw_should_revert_if_balance_not_enough() public {
+        address admin = address(this);
+        address vault = address(limitOrderRewardVault);
+
+        uint256 vaultBalance = 1000 * 10 ** rewardToken1.decimals();
+
+        rewardToken1.mint(vault, vaultBalance);
+
+        vm.expectRevert(bytes("LOFV_NEBTW"));
+        limitOrderRewardVault.withdraw(vaultBalance + 1);
+    }
+
+    function testWithdraw_should_only_called_by_owner() public {
+        vm.expectRevert(bytes("SO_CNO"));
+        vm.prank(nonOwnerAddress);
+        limitOrderRewardVault.withdraw(1);
     }
 }
