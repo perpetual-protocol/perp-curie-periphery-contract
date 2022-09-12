@@ -21,7 +21,7 @@ contract LimitOrderRewardVaultTest is Test {
         limitOrderRewardVault = new LimitOrderRewardVault();
         limitOrderRewardVault.initialize(address(rewardToken1), 10**18);
     }
-    function testSetRewardToken_able_to_set_reward_token() public {
+    function testSetRewardToken_should_set_reward_token() public {
         TestERC20 rewardToken2 = new TestERC20();
         rewardToken2.__TestERC20_init("TestPERP-2", "PERP-2", 18);
 
@@ -39,18 +39,18 @@ contract LimitOrderRewardVaultTest is Test {
         limitOrderRewardVault.setRewardToken(address(rewardToken2));
     }
 
-    function testSetRewardToken_unable_to_set_non_contract_address() public {
+    function testSetRewardToken_should_not_set_non_contract_address() public {
         vm.expectRevert(bytes("LOFV_RTINC"));
         limitOrderRewardVault.setRewardToken(address(0));
     }
 
-    function testSetRewardToken_only_able_to_set_by_owner() public {
+    function testSetRewardToken_should_only_be_called_by_owner() public {
         vm.expectRevert(bytes("SO_CNO"));
         vm.prank(nonOwnerAddress);
         limitOrderRewardVault.setRewardToken(address(0));
     }
 
-    function testSetLimitOrderBook_able_to_set_limitOrderBook() public {
+    function testSetLimitOrderBook_should_set_limitOrderBook() public {
         LimitOrderBook limitOrderBook = new TestLimitOrderBook();
         limitOrderRewardVault.setLimitOrderBook(address(limitOrderBook));
         assertEq(address(limitOrderBook), limitOrderRewardVault.limitOrderBook());
@@ -65,18 +65,18 @@ contract LimitOrderRewardVaultTest is Test {
         limitOrderRewardVault.setLimitOrderBook(address(limitOrderBook));
     }
 
-    function testSetLimitOrderBook_unable_to_set_non_contract_address() public {
+    function testSetLimitOrderBook_should_not_set_non_contract_address() public {
         vm.expectRevert(bytes("LOFV_LOBINC"));
         limitOrderRewardVault.setLimitOrderBook(address(0));
     }
 
-    function testSetLimitOrderBook_only_able_to_set_by_owner() public {
+    function testSetLimitOrderBook_should_only_be_called_by_owner() public {
         vm.expectRevert(bytes("SO_CNO"));
         vm.prank(nonOwnerAddress);
         limitOrderRewardVault.setLimitOrderBook(address(0));
     }
 
-    function testSetRewardAmount_able_to_set_reward_amount() public {
+    function testSetRewardAmount_should_set_reward_amount() public {
         uint256 newRewardAmount = 2e18;
         limitOrderRewardVault.setRewardAmount(newRewardAmount);
         assertEq(newRewardAmount, limitOrderRewardVault.rewardAmount());
@@ -96,7 +96,7 @@ contract LimitOrderRewardVaultTest is Test {
         limitOrderRewardVault.setRewardAmount(newRewardAmount);
     }
 
-    function testSetRewardAmount_only_able_to_set_by_owner() public {
+    function testSetRewardAmount_should_only_be_called_by_owner() public {
         uint256 newRewardAmount = 2e18;
         vm.expectRevert(bytes("SO_CNO"));
         vm.prank(nonOwnerAddress);
@@ -143,7 +143,7 @@ contract LimitOrderRewardVaultTest is Test {
         limitOrderRewardVault.withdraw(vaultBalance + 1);
     }
 
-    function testWithdraw_should_only_called_by_owner() public {
+    function testWithdraw_should_only_be_called_by_owner() public {
         vm.expectRevert(bytes("SO_CNO"));
         vm.prank(nonOwnerAddress);
         limitOrderRewardVault.withdraw(1);
