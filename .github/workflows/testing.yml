@@ -10,11 +10,6 @@ jobs:
         with:
           persist-credentials: false
 
-      # https://github.com/marketplace/actions/webfactory-ssh-agent#using-multiple-keys
-      - uses: webfactory/ssh-agent@v0.5.4
-        with:
-          ssh-private-key: ${{ secrets.PERP_LUSHAN_DEPLOY_PRIVATE_KEY }}
-
       - name: Use Node.js 16
         uses: actions/setup-node@v3
         with:
@@ -39,11 +34,6 @@ jobs:
         with:
           persist-credentials: false
 
-      # https://github.com/marketplace/actions/webfactory-ssh-agent#using-multiple-keys
-      - uses: webfactory/ssh-agent@v0.5.4
-        with:
-          ssh-private-key: ${{ secrets.PERP_LUSHAN_DEPLOY_PRIVATE_KEY }}
-
       - name: Use Node.js 16
         uses: actions/setup-node@v3
         with:
@@ -54,3 +44,31 @@ jobs:
 
       - name: Run lint
         run: yarn lint
+
+  foundry-test:
+    name: Foundry Test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          submodules: recursive
+          
+      - name: Use Node.js 16
+        uses: actions/setup-node@v3
+        with:
+          node-version: 16
+
+      - name: Install dependencies
+        run: yarn install --prefer-offline --frozen-lockfile --network-concurrency 1
+
+      - name: Install Foundry
+        uses: foundry-rs/foundry-toolchain@v1
+        with:
+          version: nightly
+
+      - name: Run tests
+        run: yarn foundry-test
+
+      - name: Run snapshot
+        run: forge snapshot
+

@@ -116,3 +116,7 @@ typechain/
 typechain-types/
 
 .env*
+
+# foundry
+out/
+forge-cache/
