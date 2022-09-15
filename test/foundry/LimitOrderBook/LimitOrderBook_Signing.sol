@@ -18,7 +18,7 @@ contract LimitOrderBook_Signing is Test {
         assertEq(uint(ILimitOrderBook.OrderStatus.Unfilled), uint(orderStatus));
     }
 
-    function testGetOrderHash_hash_bar() public {
+    function testGetOrderHash_verify_hash_of_a_limit_order() public {
         address trader = address(0x70997970C51812dc3A010C7d01b50e0d17dc79C8);
         address baseToken = address(0x2279B7A0a67DB372996a5FaB50D91eAA73d2eBe6);
         ILimitOrderBook.LimitOrder memory limitOrder = ILimitOrderBook.LimitOrder({
