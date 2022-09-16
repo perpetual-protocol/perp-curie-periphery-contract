@@ -18,29 +18,6 @@ describe("LimitOrderBook signing", function () {
         baseToken = fixture.baseToken
     })
 
-    it("get order status", async () => {
-        // long 1 ETH (base) at $3000 with $3000 (quote)
-        const limitOrder = {
-            orderType: OrderType.LimitOrder,
-            salt: 1,
-            trader: trader.address,
-            baseToken: baseToken.address,
-            isBaseToQuote: false,
-            isExactInput: true,
-            amount: parseEther("3000").toString(),
-            oppositeAmountBound: parseEther("1").toString(),
-            deadline: ethers.constants.MaxUint256.toString(),
-            sqrtPriceLimitX96: 0,
-            referralCode: ethers.constants.HashZero,
-            reduceOnly: false,
-            roundIdWhenCreated: "0",
-            triggerPrice: parseEther("0").toString(),
-        }
-
-        const orderHash = await getOrderHash(fixture, limitOrder)
-        expect(await limitOrderBook.getOrderStatus(orderHash)).to.be.eq(OrderStatus.Unfilled)
-    })
-
     it("get order hash", async () => {
         // long 1 ETH (base) at $3000 with $3000 (quote)
         const limitOrder = {
@@ -67,36 +44,6 @@ describe("LimitOrderBook signing", function () {
         const orderHashOnChain = await limitOrderBook.getOrderHash(limitOrder)
 
         expect(orderHashOffChain).to.be.eq(orderHashOnChain)
-    })
-
-    it("get order hashes with the same parameters but different salt", async () => {
-        // long 1 ETH (base) at $3000 with $3000 (quote)
-        const limitOrder1 = {
-            orderType: OrderType.LimitOrder,
-            salt: 1,
-            trader: trader.address,
-            baseToken: baseToken.address,
-            isBaseToQuote: false,
-            isExactInput: true,
-            amount: parseEther("3000").toString(),
-            oppositeAmountBound: parseEther("1").toString(),
-            deadline: ethers.constants.MaxUint256.toString(),
-            sqrtPriceLimitX96: 0,
-            referralCode: ethers.constants.HashZero,
-            reduceOnly: false,
-            roundIdWhenCreated: "0",
-            triggerPrice: parseEther("0").toString(),
-        }
-
-        const limitOrder2 = {
-            ...limitOrder1,
-            salt: 2,
-        }
-
-        const orderHash1 = await limitOrderBook.getOrderHash(limitOrder1)
-        const orderHash2 = await limitOrderBook.getOrderHash(limitOrder2)
-
-        expect(orderHash1).to.not.eq(orderHash2)
     })
 
     it("sign limit order", async () => {
