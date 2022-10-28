@@ -146,6 +146,96 @@ contract DelegatableVault is SafeOwnable, LowLevelErrorMessage, DelegatableVault
         }
     }
 
+    // 4pm
+    function rollOver(uint256 newDeposit) external {
+        // input param:
+        // - uint256 newDeposit: new deposit amount
+        // - uint256 notional: notional amount
+        // - uint256 lmRewardAmount: LM reward amount
+        // - uint24 withdrawRatio: withdraw ratio
+        // alice: 8000
+        // bob: 2000
+        //
+        // BinaryVault init
+        // setBaseToken
+        //
+        // if it's epoch 0:
+        // lmRewardAmount: 0
+        // notional: 10000
+        // newDeposit: 9800 (exclude fixedAmount: 200)
+        // 1. deposit into vault with 9800 + 0 (newDeposit + lmRewardAmount)
+        // 2. add liquidity with notional, useTakerBalance: false
+        // base: 10 ETH
+        // quote: 5000
+        //
+        // if it's epoch 1:
+        // lmRewardAmount: 200
+        // notional: 12000
+        // newDeposit: 1800
+        // 1. deposit into vault with 1800 + 200 (newDeposit + lmRewardAmount)
+        // 2. removeLiquidity all
+        // base 10 ETH
+        // quote: 5000
+        // closePosition: 0
+        // 3. add liquidity with notional, useTakerBalance: true
+        // base: 12 ETH
+        // quote: 6000
+        //
+        // in sheet
+        // alice withdraw: 10%
+        // bob withdraw: 100%
+        // totalWithdrawRatio: (8000 * 10% + 2000 * 100%) / 10000 = 0.28
+        // if it's epoch 2:
+        // lmRewardAmount: 300
+        // notional: 9000
+        // newDeposit: 0
+        // 1. deposit into vault with 0 + 300 (newDeposit + lmRewardAmount)
+        // 2. removeLiquidity all
+        // base 12 ETH
+        // quote: 6000
+        // closePosition: 3 ETH (3 * 500 = 1500)
+        // 3. add liquidity with notional, useTakerBalance: true
+        // base: 9 ETH
+        // quote: 4500
+        // 4. withdraw 3000
+    }
+
+    function rollOver2(uint24 withdrawRatio) external {
+        // if epoch 0:
+        // withdrawRatio: 0%
+        // old quote balance = vault.balanceOf(this)
+        // new quote balance = old quote balance * (1 - withdrawRatio.div(2))
+        // new base to add = new quote balance / 2 / market price
+        // new quote to add = new quote balance / 2
+        //
+        // if epoch 1:
+        // withdrawRatio: 0%
+        // remove liquidity all
+        // old quote balance = vault.balanceOf(this)
+        // new quote balance = old quote balance * (1 - withdrawRatio.div(2))
+        // new notional = new quote balance + removedBase * market price
+        // add liquidity with new notional, useTakerBalance: true
+        // new base to add = new notional / 2 / market price
+        // new quote to add = new notional / 2
+        //
+        // if epoch 2:
+        // withdrawRatio: 50%
+        // remove liquidity all
+        // close position
+        // close position size = removedBase * withdrawRatio.div(2)
+        // base balance = removedBase - close position size
+        // old quote value = vault.balanceOf(this) - new deposit
+        // old base value = base balance * market price
+        // old notional = old quote value + old base value
+        // new quote value = old quote value * (1 - withdrawRatio.div(2)) + new deposit
+        // new base value = getTakerPositionSize() * market price
+        // new notional = new quote value + new base value
+        // add liquidity with new notional, useTakerBalance: true
+        // new base to add = new notional / 2 / market price
+        // new quote to add = new notional / 2
+        // withdraw balance = old notional * withdrawRatio
+    }
+
     function _getSelector(bytes memory data) private pure returns (bytes4) {
         return data[0] | (bytes4(data[1]) >> 8) | (bytes4(data[2]) >> 16) | (bytes4(data[3]) >> 24);
     }
