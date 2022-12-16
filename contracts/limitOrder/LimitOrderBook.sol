@@ -322,6 +322,8 @@ contract LimitOrderBook is
     }
 
     function _getPriceByRoundId(address baseToken, uint80 roundId) internal view returns (uint256) {
+        // It will revert with "function selector was not recognized and there's no fallback function"
+        // if the priceFeed doesn't have `getRoundData(roundId)`
         ChainlinkPriceFeed chainlinkPriceFeed = ChainlinkPriceFeed(IBaseToken(baseToken).getPriceFeed());
         (uint256 price, ) = chainlinkPriceFeed.getRoundData(roundId);
         return _formatDecimals(price, chainlinkPriceFeed.decimals(), 18);
