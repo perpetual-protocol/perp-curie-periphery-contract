@@ -322,6 +322,13 @@ contract LimitOrderBook is
     }
 
     function _getPriceByRoundId(address baseToken, uint80 roundId) internal view returns (uint256) {
+        // TODO: support perp-curie-contract 2.6.0
+        // 1. get the underlying priceFeed (could be ChainlinkPriceFeedV3 or UniswapV3PriceFeed)
+        // 2. get Chainlink aggregator if it's ChainlinkPriceFeedV3
+        // 3. call aggregator.getRoundData() with some decimal conversion
+        //   3.1 https://github.com/perpetual-protocol/perp-oracle-contract/blob/main/contracts/ChainlinkPriceFeedV2.sol#L46
+        // 4. it should revert if the underlying priceFeed is UniswapV3PriceFeed
+
         // It will revert with "function selector was not recognized and there's no fallback function"
         // if the priceFeed doesn't have `getRoundData(roundId)`
         ChainlinkPriceFeed chainlinkPriceFeed = ChainlinkPriceFeed(IBaseToken(baseToken).getPriceFeed());
