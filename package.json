@@ -41,8 +41,8 @@
     "prepack": "ts-node --files scripts/prepack.ts"
   },
   "dependencies": {
-    "@perp/curie-contract": "2.1.0",
-    "@perp/perp-oracle-contract": "0.4.3"
+    "@perp/curie-contract": "github:perpetual-protocol/perp-curie-contract#feature/add-new-oracle",
+    "@perp/perp-oracle-contract": "github:perpetual-protocol/perp-oracle-contract#feat/enhance-oracle"
   },
   "devDependencies": {
     "@defi-wonderland/smock": "2.0.7",
