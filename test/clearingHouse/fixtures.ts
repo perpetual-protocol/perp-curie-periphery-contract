@@ -3,12 +3,14 @@ import { ethers } from "hardhat"
 import {
     AccountBalance,
     BaseToken,
+    ChainlinkPriceFeedV3,
     ClearingHouse,
     ClearingHouseConfig,
     Exchange,
     InsuranceFund,
     MarketRegistry,
     OrderBook,
+    PriceFeedDispatcher,
     QuoteToken,
     TestAccountBalance,
     TestAggregatorV3,
@@ -17,6 +19,7 @@ import {
     TestExchange,
     UniswapV3Factory,
     UniswapV3Pool,
+    UniswapV3PriceFeed,
     Vault,
 } from "../../typechain-types"
 import { TestStdReference } from "../../typechain-types/contracts/test/TestStdReference"
@@ -126,7 +129,7 @@ export function createClearingHouseFixture(
             accountBalance.address,
             exchange.address,
         )
-        await insuranceFund.setBorrower(vault.address)
+        await insuranceFund.setVault(vault.address)
         await accountBalance.setVault(vault.address)
 
         // deploy a pool
@@ -134,6 +137,24 @@ export function createClearingHouseFixture(
         const pool = poolFactory.attach(poolAddr) as UniswapV3Pool
         await baseToken.addWhitelist(pool.address)
         await quoteToken.addWhitelist(pool.address)
+
+        let chainlinkPriceFeedV3Factory = await ethers.getContractFactory("ChainlinkPriceFeedV3")
+        const chainlinkPriceFeedV3 = (await chainlinkPriceFeedV3Factory.deploy(
+            mockedBaseAggregator.address,
+            40 * 60,
+            1e5,
+            10,
+            30 * 60,
+        )) as ChainlinkPriceFeedV3
+
+        let uniswapV3PriceFeedFactory = await ethers.getContractFactory("UniswapV3PriceFeed")
+        const uniswapV3PriceFeed = (await uniswapV3PriceFeedFactory.deploy(pool.address)) as UniswapV3PriceFeed
+
+        let priceFeedDispatcherFactory = await ethers.getContractFactory("PriceFeedDispatcher")
+        const priceFeedDispatcher = (await priceFeedDispatcherFactory.deploy(
+            uniswapV3PriceFeed.address,
+            chainlinkPriceFeedV3.address,
+        )) as PriceFeedDispatcher
 
         // deploy 2nd pool
         const _token0Fixture2 = await fastToken0Fixture(quoteToken.address)
