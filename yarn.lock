@@ -1186,9 +1186,9 @@
   resolved "https://registry.yarnpkg.com/@openzeppelin/contracts/-/contracts-3.4.1-solc-0.7-2.tgz#371c67ebffe50f551c3146a9eec5fe6ffe862e92"
   integrity sha512-tAG9LWg8+M2CMu7hIsqHPaTyG4uDzjr6mhvH96LvOpLZZj6tgzTluBt+LsCf1/QaYrlis6pITvpIaIhE+iZB+Q==
 
-"@perp/curie-contract@https://github.com/perpetual-protocol/perp-curie-contract#feature/add-new-oracle":
+"@perp/curie-contract@github:perpetual-protocol/perp-curie-contract#add-oracle-with-artifacts":
   version "2.5.0-rc"
-  resolved "https://github.com/perpetual-protocol/perp-curie-contract#cde1ddec04d3bf75ac3ada1a41a07a49174bb01c"
+  resolved "https://codeload.github.com/perpetual-protocol/perp-curie-contract/tar.gz/cdd5b1b3baafe600fa0722c7cd1c0aa7006afdcd"
   dependencies:
     "@chainlink/contracts" "0.1.7"
     "@openzeppelin/contracts" "3.4.1-solc-0.7-2"
@@ -1201,10 +1201,6 @@
 "@perp/perp-oracle-contract@github:perpetual-protocol/perp-oracle-contract#enhance-oracle-with-artifacts":
   version "0.5.0"
   resolved "https://codeload.github.com/perpetual-protocol/perp-oracle-contract/tar.gz/1b5193e6692ab5acbb54aabd384a4293e5c7885e"
-
-"@perp/perp-oracle-contract@https://github.com/perpetual-protocol/perp-oracle-contract#feat/enhance-oracle":
-  version "0.5.0"
-  resolved "https://github.com/perpetual-protocol/perp-oracle-contract#e845f62860d6d0c8cc1530de955535fa9294ea02"
 
 "@perp/voting-escrow@1.2.0":
   version "1.2.0"
@@ -1710,7 +1706,6 @@
 
 "@uniswap/v3-core@1.0.0", "@uniswap/v3-core@https://github.com/Uniswap/uniswap-v3-core/tarball/v1.0.0":
   version "1.0.0"
-  uid b3712e2b235ad2eeb7a0dfcac216a659cc450e28
   resolved "https://github.com/Uniswap/uniswap-v3-core/tarball/v1.0.0#b3712e2b235ad2eeb7a0dfcac216a659cc450e28"
 
 "@uniswap/v3-periphery@1.0.1":
