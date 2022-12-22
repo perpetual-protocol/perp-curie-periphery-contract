@@ -9,8 +9,8 @@ import {
     DelegateApproval,
     LimitOrderBook,
     LimitOrderRewardVault,
+    PriceFeedDispatcher,
     QuoteToken,
-    TestAggregatorV3,
     TestClearingHouse,
     TestERC20,
     UniswapV3Pool,
@@ -33,7 +33,7 @@ describe("LimitOrderBook cancelLimitOrder", function () {
     let baseToken: BaseToken
     let quoteToken: QuoteToken
     let pool: UniswapV3Pool
-    let mockedBaseAggregator: FakeContract<TestAggregatorV3>
+    let mockedBaseAggregator: FakeContract<PriceFeedDispatcher>
     let delegateApproval: DelegateApproval
     let limitOrderBook: LimitOrderBook
     let limitOrderRewardVault: LimitOrderRewardVault
@@ -68,6 +68,8 @@ describe("LimitOrderBook cancelLimitOrder", function () {
             getMaxTickRange(),
         )
         await syncIndexToMarketPrice(mockedBaseAggregator, pool)
+        console.log(`getChainlinkPriceFeedV3: ${await mockedBaseAggregator.getChainlinkPriceFeedV3()}`)
+        console.log(`getDispatchedPrice: ${await mockedBaseAggregator.getDispatchedPrice(23)}`)
 
         // prepare collateral for maker
         await mintAndDeposit(fixture, maker, 1_000_000_000_000)
@@ -92,7 +94,7 @@ describe("LimitOrderBook cancelLimitOrder", function () {
         await delegateApproval.connect(trader).approve(limitOrderBook.address, fixture.clearingHouseOpenPositionAction)
     })
 
-    it("cancel order: Q2B exact output", async () => {
+    it.only("cancel order: Q2B exact output", async () => {
         // long 0.1 ETH with $300 (limit price $3000)
         const limitOrder = {
             orderType: OrderType.LimitOrder,

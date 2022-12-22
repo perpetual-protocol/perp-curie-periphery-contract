@@ -7,9 +7,9 @@ import {
     Exchange,
     MarketRegistry,
     OrderBook,
+    PriceFeedDispatcher,
     Quoter,
     QuoteToken,
-    TestAggregatorV3,
     TestClearingHouse,
     TestERC20,
     UniswapV3Pool,
@@ -32,7 +32,7 @@ describe("Quoter.swap", () => {
     let baseToken: BaseToken
     let quoteToken: QuoteToken
     let pool: UniswapV3Pool
-    let mockedBaseAggregator: MockContract<TestAggregatorV3>
+    let mockedBaseAggregator: MockContract<PriceFeedDispatcher>
     let collateralDecimals: number
     let quoter: Quoter
     let lowerTick

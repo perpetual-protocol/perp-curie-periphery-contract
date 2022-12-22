@@ -11,6 +11,7 @@ import {
     DelegateApproval,
     Exchange,
     LimitOrderRewardVault,
+    PriceFeedDispatcher,
     QuoteToken,
     TestAggregatorV3,
     TestClearingHouse,
@@ -60,7 +61,8 @@ describe("LimitOrderBook fillLimitOrder advanced order types", function () {
     let baseToken: BaseToken
     let quoteToken: QuoteToken
     let pool: UniswapV3Pool
-    let mockedBaseAggregator: FakeContract<TestAggregatorV3>
+    let mockedBaseAggregator: FakeContract<PriceFeedDispatcher>
+    let mockedAggregator: FakeContract<TestAggregatorV3>
     let delegateApproval: DelegateApproval
     let limitOrderBook: TestLimitOrderBook
     let limitOrderRewardVault: LimitOrderRewardVault
@@ -78,6 +80,7 @@ describe("LimitOrderBook fillLimitOrder advanced order types", function () {
         baseToken = fixture.baseToken
         quoteToken = fixture.quoteToken
         mockedBaseAggregator = fixture.mockedBaseAggregator
+        mockedAggregator = fixture.mockedAggregator
         pool = fixture.pool
         delegateApproval = fixture.delegateApproval
         limitOrderBook = fixture.limitOrderBook
@@ -123,13 +126,13 @@ describe("LimitOrderBook fillLimitOrder advanced order types", function () {
         await delegateApproval.connect(trader).approve(limitOrderBook.address, fixture.clearingHouseOpenPositionAction)
 
         currentTime = (await waffle.provider.getBlock("latest")).timestamp
-        await setRoundData(mockedBaseAggregator, computeRoundId(1, 1), "2700", currentTime)
-        await setRoundData(mockedBaseAggregator, computeRoundId(1, 2), "2800", currentTime + 15 * 1)
-        await setRoundData(mockedBaseAggregator, computeRoundId(1, 3), "2900", currentTime + 15 * 2)
-        await setRoundData(mockedBaseAggregator, computeRoundId(1, 4), "3000", currentTime + 15 * 3)
-        await setRoundData(mockedBaseAggregator, computeRoundId(2, 1), "3100", currentTime + 15 * 4)
-        await setRoundData(mockedBaseAggregator, computeRoundId(2, 2), "3200", currentTime + 15 * 5)
-        await setRoundData(mockedBaseAggregator, computeRoundId(2, 3), "3300", currentTime + 15 * 6)
+        await setRoundData(mockedAggregator, computeRoundId(1, 1), "2700", currentTime)
+        await setRoundData(mockedAggregator, computeRoundId(1, 2), "2800", currentTime + 15 * 1)
+        await setRoundData(mockedAggregator, computeRoundId(1, 3), "2900", currentTime + 15 * 2)
+        await setRoundData(mockedAggregator, computeRoundId(1, 4), "3000", currentTime + 15 * 3)
+        await setRoundData(mockedAggregator, computeRoundId(2, 1), "3100", currentTime + 15 * 4)
+        await setRoundData(mockedAggregator, computeRoundId(2, 2), "3200", currentTime + 15 * 5)
+        await setRoundData(mockedAggregator, computeRoundId(2, 3), "3300", currentTime + 15 * 6)
     })
 
     describe("verify trigger price", async () => {

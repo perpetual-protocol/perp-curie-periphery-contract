@@ -10,8 +10,8 @@ import {
     Exchange,
     LimitOrderBook,
     LimitOrderRewardVault,
+    PriceFeedDispatcher,
     QuoteToken,
-    TestAggregatorV3,
     TestClearingHouse,
     TestERC20,
     TestKeeper,
@@ -37,7 +37,7 @@ describe("LimitOrderBook fillLimitOrder", function () {
     let baseToken: BaseToken
     let quoteToken: QuoteToken
     let pool: UniswapV3Pool
-    let mockedBaseAggregator: FakeContract<TestAggregatorV3>
+    let mockedBaseAggregator: FakeContract<PriceFeedDispatcher>
     let delegateApproval: DelegateApproval
     let limitOrderBook: LimitOrderBook
     let limitOrderRewardVault: LimitOrderRewardVault

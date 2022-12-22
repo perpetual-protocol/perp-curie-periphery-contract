@@ -1,8 +1,8 @@
 import { FakeContract } from "@defi-wonderland/smock"
 import { BigNumberish } from "ethers"
-import { parseUnits } from "ethers/lib/utils"
+import { parseEther } from "ethers/lib/utils"
 import { ethers } from "hardhat"
-import { TestAggregatorV3, UniswapV3Pool } from "../../typechain-types"
+import { PriceFeedDispatcher, UniswapV3Pool } from "../../typechain-types"
 import { ClearingHouseFixture } from "../clearingHouse/fixtures"
 import { encodePriceSqrt } from "../shared/utilities"
 import { getMaxTick, getMinTick } from "./number"
@@ -14,10 +14,10 @@ export async function initMarket(
     ifFeeRatio: BigNumberish = 100000, // 10%
     maxTickCrossedWithinBlock: number = 0,
     baseToken: string = fixture.baseToken.address,
-    mockedBaseAggregator: FakeContract<TestAggregatorV3> = fixture.mockedBaseAggregator,
+    mockedBaseAggregator: FakeContract<PriceFeedDispatcher> = fixture.mockedBaseAggregator,
 ): Promise<{ minTick: number; maxTick: number }> {
-    mockedBaseAggregator.latestRoundData.returns(async () => {
-        return [0, parseUnits(initPrice.toString(), 6), 0, 0, 0]
+    mockedBaseAggregator.getDispatchedPrice.returns(() => {
+        return parseEther(initPrice.toString())
     })
 
     const poolAddr = await fixture.uniV3Factory.getPool(baseToken, fixture.quoteToken.address, fixture.uniFeeTier)

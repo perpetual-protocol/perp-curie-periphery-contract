@@ -3,8 +3,8 @@ import { LogDescription } from "@ethersproject/abi"
 import { TransactionReceipt } from "@ethersproject/abstract-provider"
 import bn from "bignumber.js"
 import { BaseContract, BigNumber, BigNumberish } from "ethers"
-import { parseUnits } from "ethers/lib/utils"
-import { BaseToken, Exchange, TestAggregatorV3, UniswapV3Pool, VirtualToken } from "../../typechain-types"
+import { parseEther } from "ethers/lib/utils"
+import { BaseToken, Exchange, PriceFeedDispatcher, UniswapV3Pool, VirtualToken } from "../../typechain-types"
 
 bn.config({ EXPONENTIAL_AT: 999999, DECIMAL_PLACES: 40 })
 
@@ -50,14 +50,13 @@ export function filterLogs(receipt: TransactionReceipt, topic: string, baseContr
     return receipt.logs.filter(log => log.topics[0] === topic).map(log => baseContract.interface.parseLog(log))
 }
 
-export async function syncIndexToMarketPrice(aggregator: FakeContract<TestAggregatorV3>, pool: UniswapV3Pool) {
-    const oracleDecimals = 6
+export async function syncIndexToMarketPrice(aggregator: FakeContract<PriceFeedDispatcher>, pool: UniswapV3Pool) {
     const slot0 = await pool.slot0()
     const sqrtPrice = slot0.sqrtPriceX96
-    const price = formatSqrtPriceX96ToPrice(sqrtPrice, oracleDecimals)
-    aggregator.latestRoundData.returns(async () => {
-        return [0, parseUnits(price, oracleDecimals), 0, 0, 0]
-    })
+    const price = formatSqrtPriceX96ToPrice(sqrtPrice)
+    console.log(parseEther(price).toString())
+    aggregator.getDispatchedPrice.returns(parseEther(price))
+    console.log(`result: ${await aggregator.getDispatchedPrice(2)}`)
 }
 
 export async function getMarketTwap(exchange: Exchange, baseToken: BaseToken, interval: number) {
