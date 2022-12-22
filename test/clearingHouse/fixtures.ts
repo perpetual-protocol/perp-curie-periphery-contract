@@ -3,7 +3,6 @@ import { ethers } from "hardhat"
 import {
     AccountBalance,
     BaseToken,
-    ChainlinkPriceFeedV3,
     ClearingHouse,
     ClearingHouseConfig,
     Exchange,
@@ -19,7 +18,6 @@ import {
     TestExchange,
     UniswapV3Factory,
     UniswapV3Pool,
-    UniswapV3PriceFeed,
     Vault,
 } from "../../typechain-types"
 import { TestStdReference } from "../../typechain-types/contracts/test/TestStdReference"
@@ -47,6 +45,7 @@ export interface ClearingHouseFixture {
     baseToken3: BaseToken
     mockedStdReference3: MockContract<TestStdReference>
     pool3: UniswapV3Pool
+    mockedPriceFeedDispatcher: MockContract<PriceFeedDispatcher>
 }
 
 export enum BaseQuoteOrdering {
@@ -65,13 +64,17 @@ export function createClearingHouseFixture(
         const USDC = (await tokenFactory.deploy()) as TestERC20
         await USDC.__TestERC20_init("TestUSDC", "USDC", 6)
 
-        let baseToken: BaseToken, quoteToken: QuoteToken, mockedBaseAggregator: MockContract<TestAggregatorV3>
-        const { token0, mockedAggregator0, token1 } = await tokensFixture()
+        let baseToken: BaseToken,
+            quoteToken: QuoteToken,
+            mockedBaseAggregator: MockContract<TestAggregatorV3>,
+            mockedPriceFeedDispatcher: MockContract<PriceFeedDispatcher>
+        const { token0, mockedAggregator0, token1, mockedPriceFeedDispatcher0 } = await tokensFixture()
 
         // we assume (base, quote) == (token0, token1)
         baseToken = token0
         quoteToken = token1
         mockedBaseAggregator = mockedAggregator0
+        mockedPriceFeedDispatcher = mockedPriceFeedDispatcher0
 
         // deploy UniV3 factory
         const factoryFactory = await ethers.getContractFactory("UniswapV3Factory")
@@ -137,24 +140,6 @@ export function createClearingHouseFixture(
         const pool = poolFactory.attach(poolAddr) as UniswapV3Pool
         await baseToken.addWhitelist(pool.address)
         await quoteToken.addWhitelist(pool.address)
-
-        let chainlinkPriceFeedV3Factory = await ethers.getContractFactory("ChainlinkPriceFeedV3")
-        const chainlinkPriceFeedV3 = (await chainlinkPriceFeedV3Factory.deploy(
-            mockedBaseAggregator.address,
-            40 * 60,
-            1e5,
-            10,
-            30 * 60,
-        )) as ChainlinkPriceFeedV3
-
-        let uniswapV3PriceFeedFactory = await ethers.getContractFactory("UniswapV3PriceFeed")
-        const uniswapV3PriceFeed = (await uniswapV3PriceFeedFactory.deploy(pool.address)) as UniswapV3PriceFeed
-
-        let priceFeedDispatcherFactory = await ethers.getContractFactory("PriceFeedDispatcher")
-        const priceFeedDispatcher = (await priceFeedDispatcherFactory.deploy(
-            uniswapV3PriceFeed.address,
-            chainlinkPriceFeedV3.address,
-        )) as PriceFeedDispatcher
 
         // deploy 2nd pool
         const _token0Fixture2 = await fastToken0Fixture(quoteToken.address)
@@ -244,6 +229,7 @@ export function createClearingHouseFixture(
             baseToken3,
             mockedStdReference3,
             pool3,
+            mockedPriceFeedDispatcher,
         }
     }
 }

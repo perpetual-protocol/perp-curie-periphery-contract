@@ -7,6 +7,7 @@ import {
     Exchange,
     MarketRegistry,
     OrderBook,
+    PriceFeedDispatcher,
     Quoter,
     QuoteToken,
     TestAggregatorV3,
@@ -37,6 +38,7 @@ describe("Quoter.swap", () => {
     let quoter: Quoter
     let lowerTick
     let upperTick
+    let mockedPriceFeedDispatcher: MockContract<PriceFeedDispatcher>
 
     beforeEach(async () => {
         const _clearingHouseFixture = await loadFixture(createClearingHouseFixture())
@@ -51,11 +53,13 @@ describe("Quoter.swap", () => {
         pool = _clearingHouseFixture.pool
         mockedBaseAggregator = _clearingHouseFixture.mockedBaseAggregator
         collateralDecimals = await collateral.decimals()
+        mockedPriceFeedDispatcher = _clearingHouseFixture.mockedPriceFeedDispatcher
+
         await pool.initialize(encodePriceSqrt(151.3733069, 1))
         await marketRegistry.addPool(baseToken.address, "10000")
 
         await exchange.setMaxTickCrossedWithinBlock(baseToken.address, getMaxTickRange())
-        await syncIndexToMarketPrice(mockedBaseAggregator, pool)
+        await syncIndexToMarketPrice(mockedPriceFeedDispatcher, pool)
 
         const quoterFactory = await ethers.getContractFactory("Quoter")
         quoter = (await quoterFactory.deploy(marketRegistry.address)) as Quoter

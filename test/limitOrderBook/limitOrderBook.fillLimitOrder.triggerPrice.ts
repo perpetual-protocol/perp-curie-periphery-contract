@@ -1,4 +1,4 @@
-import { FakeContract } from "@defi-wonderland/smock"
+import { FakeContract, MockContract } from "@defi-wonderland/smock"
 import { loadFixture } from "@ethereum-waffle/provider"
 import { parseEther } from "@ethersproject/units"
 import { expect } from "chai"
@@ -11,6 +11,7 @@ import {
     DelegateApproval,
     Exchange,
     LimitOrderRewardVault,
+    PriceFeedDispatcher,
     QuoteToken,
     TestAggregatorV3,
     TestClearingHouse,
@@ -67,6 +68,7 @@ describe("LimitOrderBook fillLimitOrder advanced order types", function () {
     let rewardToken: TestERC20
     let priceFeedDecimals: number
     let currentTime: number
+    let mockedPriceFeedDispatcher: MockContract<PriceFeedDispatcher>
 
     beforeEach(async () => {
         fixture = await loadFixture(createLimitOrderFixture())
@@ -84,6 +86,7 @@ describe("LimitOrderBook fillLimitOrder advanced order types", function () {
         limitOrderRewardVault = fixture.limitOrderRewardVault
         rewardToken = fixture.rewardToken
         priceFeedDecimals = await mockedBaseAggregator.decimals()
+        mockedPriceFeedDispatcher = fixture.mockedPriceFeedDispatcher
 
         const pool1LowerTick: number = priceToTick(2000, await pool.tickSpacing())
         const pool1UpperTick: number = priceToTick(4000, await pool.tickSpacing())
@@ -98,7 +101,7 @@ describe("LimitOrderBook fillLimitOrder advanced order types", function () {
             // set maxTickCrossed as maximum tick range of pool by default, that means there is no over price when swap
             getMaxTickRange(),
         )
-        await syncIndexToMarketPrice(mockedBaseAggregator, pool)
+        await syncIndexToMarketPrice(mockedPriceFeedDispatcher, pool)
 
         // prepare collateral for maker
         await mintAndDeposit(fixture, maker, 1_000_000_000_000)

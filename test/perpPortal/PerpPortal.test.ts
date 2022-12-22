@@ -1,4 +1,4 @@
-import { FakeContract } from "@defi-wonderland/smock"
+import { FakeContract, MockContract } from "@defi-wonderland/smock"
 import { expect } from "chai"
 import { parseEther, parseUnits } from "ethers/lib/utils"
 import { ethers, waffle } from "hardhat"
@@ -11,6 +11,7 @@ import {
     MarketRegistry,
     OrderBook,
     PerpPortal,
+    PriceFeedDispatcher,
     Quoter,
     QuoteToken,
     TestAggregatorV3,
@@ -22,7 +23,7 @@ import {
 import { createClearingHouseFixture } from "../clearingHouse/fixtures"
 import { getMaxTickRange } from "../helper/number"
 import { deposit } from "../helper/token"
-import { encodePriceSqrt, formatSqrtPriceX96ToPrice } from "../shared/utilities"
+import { encodePriceSqrt, syncIndexToMarketPrice } from "../shared/utilities"
 
 describe("PerpPortal test", () => {
     const [admin, alice, bob] = waffle.provider.getWallets()
@@ -49,15 +50,7 @@ describe("PerpPortal test", () => {
     let upperTick: number
     let perpPortal: PerpPortal
     const oracleDecimals = 6
-
-    async function syncIndexToMarketPrice(aggregator: FakeContract<TestAggregatorV3>, pool: UniswapV3Pool) {
-        const slot0 = await pool.slot0()
-        const sqrtPrice = slot0.sqrtPriceX96
-        const price = formatSqrtPriceX96ToPrice(sqrtPrice, oracleDecimals)
-        aggregator.latestRoundData.returns(() => {
-            return [0, parseUnits(price, oracleDecimals), 0, 0, 0]
-        })
-    }
+    let mockedPriceFeedDispatcher: MockContract<PriceFeedDispatcher>
 
     beforeEach(async () => {
         const _clearingHouseFixture = await loadFixture(createClearingHouseFixture())
@@ -78,13 +71,14 @@ describe("PerpPortal test", () => {
         mockedBaseAggregator = _clearingHouseFixture.mockedBaseAggregator
         mockedBaseAggregator2 = _clearingHouseFixture.mockedBaseAggregator2
         collateralDecimals = await collateral.decimals()
+        mockedPriceFeedDispatcher = _clearingHouseFixture.mockedPriceFeedDispatcher
 
         await pool.initialize(encodePriceSqrt(151.3733069, 1))
-        await syncIndexToMarketPrice(mockedBaseAggregator, pool)
+        await syncIndexToMarketPrice(mockedPriceFeedDispatcher, pool)
         await marketRegistry.addPool(baseToken.address, "10000")
 
         await pool2.initialize(encodePriceSqrt(151.3733069, 1))
-        await syncIndexToMarketPrice(mockedBaseAggregator2, pool2)
+        await syncIndexToMarketPrice(mockedPriceFeedDispatcher, pool2)
         await marketRegistry.addPool(baseToken2.address, "10000")
 
         await exchange.setMaxTickCrossedWithinBlock(baseToken.address, getMaxTickRange())
@@ -153,7 +147,7 @@ describe("PerpPortal test", () => {
                 referralCode: ethers.constants.HashZero,
             })
 
-            await syncIndexToMarketPrice(mockedBaseAggregator, pool)
+            await syncIndexToMarketPrice(mockedPriceFeedDispatcher, pool)
 
             const liquidationPrice = await perpPortal.getLiquidationPrice(bob.address, baseToken.address)
 
@@ -179,7 +173,7 @@ describe("PerpPortal test", () => {
                 referralCode: ethers.constants.HashZero,
             })
 
-            await syncIndexToMarketPrice(mockedBaseAggregator, pool)
+            await syncIndexToMarketPrice(mockedPriceFeedDispatcher, pool)
 
             const liquidationPrice = await perpPortal.getLiquidationPrice(bob.address, baseToken.address)
 
@@ -205,7 +199,7 @@ describe("PerpPortal test", () => {
                 referralCode: ethers.constants.HashZero,
             })
 
-            await syncIndexToMarketPrice(mockedBaseAggregator, pool)
+            await syncIndexToMarketPrice(mockedPriceFeedDispatcher, pool)
 
             const liquidationPrice = await perpPortal.getLiquidationPrice(bob.address, baseToken.address)
             expect(liquidationPrice).to.be.eq(parseEther("0"))
@@ -223,7 +217,7 @@ describe("PerpPortal test", () => {
                 referralCode: ethers.constants.HashZero,
             })
 
-            await syncIndexToMarketPrice(mockedBaseAggregator, pool)
+            await syncIndexToMarketPrice(mockedPriceFeedDispatcher, pool)
 
             const liquidationPrice = await perpPortal.getLiquidationPrice(bob.address, baseToken.address)
 

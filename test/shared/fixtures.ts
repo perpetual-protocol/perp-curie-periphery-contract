@@ -3,7 +3,9 @@ import assert from "assert"
 import { ethers, waffle } from "hardhat"
 import {
     BaseToken,
-    ChainlinkPriceFeed,
+    ChainlinkPriceFeedV3,
+    PriceFeedDispatcher,
+    PriceFeedDispatcher__factory,
     QuoteToken,
     TestAggregatorV3,
     TestAggregatorV3__factory,
@@ -21,6 +23,8 @@ interface TokensFixture {
     token1: QuoteToken
     mockedAggregator0: MockContract<TestAggregatorV3>
     mockedAggregator1: MockContract<TestAggregatorV3>
+    mockedPriceFeedDispatcher0: MockContract<PriceFeedDispatcher>
+    mockedPriceFeedDispatcher1: MockContract<PriceFeedDispatcher>
 }
 
 interface PoolFixture {
@@ -33,6 +37,7 @@ interface PoolFixture {
 interface BaseTokenFixture {
     baseToken: BaseToken
     mockedAggregator: MockContract<TestAggregatorV3>
+    mockedPriceFeedDispatcher: MockContract<PriceFeedDispatcher>
 }
 
 interface BaseTokenWithBandPriceFeedFixture {
@@ -57,16 +62,28 @@ export function createBaseTokenFixture(name: string, symbol: string): () => Prom
             return 6
         })
 
-        const chainlinkPriceFeedFactory = await ethers.getContractFactory("ChainlinkPriceFeed")
-        const chainlinkPriceFeed = (await chainlinkPriceFeedFactory.deploy(
+        const chainlinkPriceFeedV3Factory = await ethers.getContractFactory("ChainlinkPriceFeedV3")
+        const chainlinkPriceFeedV3 = (await chainlinkPriceFeedV3Factory.deploy(
             mockedAggregator.address,
-        )) as ChainlinkPriceFeed
+            40 * 60,
+            1e5,
+            10,
+            30 * 60,
+        )) as ChainlinkPriceFeedV3
+
+        const priceFeedDispatcherFactory = await smock.mock<PriceFeedDispatcher__factory>("PriceFeedDispatcher")
+        const mockedPriceFeedDispatcher = await priceFeedDispatcherFactory.deploy(
+            "0x0000000000000000000000000000000000000000",
+            chainlinkPriceFeedV3.address,
+        )
+        mockedPriceFeedDispatcher.decimals.returns(18)
+        // mockedPriceFeedDispatcher.getDispatchedPrice.returns(100)
 
         const baseTokenFactory = await ethers.getContractFactory("BaseToken")
         const baseToken = (await baseTokenFactory.deploy()) as BaseToken
-        await baseToken.initialize(name, symbol, chainlinkPriceFeed.address)
+        await baseToken.initialize(name, symbol, mockedPriceFeedDispatcher.address)
 
-        return { baseToken, mockedAggregator }
+        return { baseToken, mockedAggregator, mockedPriceFeedDispatcher }
     }
 }
 
@@ -106,14 +123,26 @@ export function fastCreateBaseTokenFixture(
             return 6
         })
 
-        const chainlinkPriceFeedFactory = await ethers.getContractFactory("ChainlinkPriceFeed")
-        const chainlinkPriceFeed = (await chainlinkPriceFeedFactory.deploy(
+        const chainlinkPriceFeedV3Factory = await ethers.getContractFactory("ChainlinkPriceFeedV3")
+        const chainlinkPriceFeedV3 = (await chainlinkPriceFeedV3Factory.deploy(
             mockedAggregator.address,
-        )) as ChainlinkPriceFeed
+            40 * 60,
+            1e5,
+            10,
+            30 * 60,
+        )) as ChainlinkPriceFeedV3
 
-        const baseToken = await deployBaseToken(name, symbol, chainlinkPriceFeed.address, quoteTokenAddr)
+        const priceFeedDispatcherFactory = await smock.mock<PriceFeedDispatcher__factory>("PriceFeedDispatcher")
+        const mockedPriceFeedDispatcher = await priceFeedDispatcherFactory.deploy(
+            "0x0000000000000000000000000000000000000000",
+            chainlinkPriceFeedV3.address,
+        )
 
-        return { baseToken, mockedAggregator }
+        mockedPriceFeedDispatcher.decimals.returns(18)
+
+        const baseToken = await deployBaseToken(name, symbol, mockedPriceFeedDispatcher.address, quoteTokenAddr)
+
+        return { baseToken, mockedAggregator, mockedPriceFeedDispatcher }
     }
 }
 
@@ -184,35 +213,45 @@ export async function uniswapV3FactoryFixture(): Promise<UniswapV3Factory> {
 
 // assume isAscendingTokensOrder() == true/ token0 < token1
 export async function tokensFixture(): Promise<TokensFixture> {
-    const { baseToken: randomToken0, mockedAggregator: randomMockedAggregator0 } = await createBaseTokenFixture(
-        "RandomTestToken0",
-        "randomToken0",
-    )()
-    const { baseToken: randomToken1, mockedAggregator: randomMockedAggregator1 } = await createBaseTokenFixture(
-        "RandomTestToken1",
-        "randomToken1",
-    )()
+    const {
+        baseToken: randomToken0,
+        mockedAggregator: randomMockedAggregator0,
+        mockedPriceFeedDispatcher: randomMockedPriceFeedDispatcher0,
+    } = await createBaseTokenFixture("RandomTestToken0", "randomToken0")()
+    const {
+        baseToken: randomToken1,
+        mockedAggregator: randomMockedAggregator1,
+        mockedPriceFeedDispatcher: randomMockedPriceFeedDispatcher1,
+    } = await createBaseTokenFixture("RandomTestToken1", "randomToken1")()
 
     let token0: BaseToken
     let token1: QuoteToken
     let mockedAggregator0: MockContract<TestAggregatorV3>
     let mockedAggregator1: MockContract<TestAggregatorV3>
+    let mockedPriceFeedDispatcher0: MockContract<PriceFeedDispatcher>
+    let mockedPriceFeedDispatcher1: MockContract<PriceFeedDispatcher>
     if (isAscendingTokenOrder(randomToken0.address, randomToken1.address)) {
         token0 = randomToken0
         mockedAggregator0 = randomMockedAggregator0
         token1 = randomToken1 as VirtualToken as QuoteToken
         mockedAggregator1 = randomMockedAggregator1
+        mockedPriceFeedDispatcher0 = randomMockedPriceFeedDispatcher0
+        mockedPriceFeedDispatcher1 = randomMockedPriceFeedDispatcher1
     } else {
         token0 = randomToken1
         mockedAggregator0 = randomMockedAggregator1
         token1 = randomToken0 as VirtualToken as QuoteToken
         mockedAggregator1 = randomMockedAggregator0
+        mockedPriceFeedDispatcher0 = randomMockedPriceFeedDispatcher1
+        mockedPriceFeedDispatcher1 = randomMockedPriceFeedDispatcher0
     }
     return {
         token0,
         mockedAggregator0,
         token1,
         mockedAggregator1,
+        mockedPriceFeedDispatcher0,
+        mockedPriceFeedDispatcher1,
     }
 }
 
