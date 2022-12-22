@@ -19,6 +19,7 @@ import {
 import { initAndAddPool } from "../helper/marketHelper"
 import { getMaxTickRange, priceToTick } from "../helper/number"
 import { mintAndDeposit } from "../helper/token"
+import { forwardTimestamp } from "../shared/time"
 import { encodePriceSqrt, syncIndexToMarketPrice } from "../shared/utilities"
 import { createLimitOrderFixture, LimitOrderFixture } from "./fixtures"
 import { getOrderHash, getSignature, OrderStatus, OrderType } from "./orderUtils"
@@ -67,13 +68,14 @@ describe("LimitOrderBook cancelLimitOrder", function () {
             // set maxTickCrossed as maximum tick range of pool by default, that means there is no over price when swap
             getMaxTickRange(),
         )
+        console.log(`${await baseToken.getPriceFeed()} === ${mockedBaseAggregator.address}`)
         await syncIndexToMarketPrice(mockedBaseAggregator, pool)
         console.log(`getChainlinkPriceFeedV3: ${await mockedBaseAggregator.getChainlinkPriceFeedV3()}`)
         console.log(`getDispatchedPrice: ${await mockedBaseAggregator.getDispatchedPrice(23)}`)
-
         // prepare collateral for maker
         await mintAndDeposit(fixture, maker, 1_000_000_000_000)
 
+        await forwardTimestamp(clearingHouse, 10)
         // maker add liquidity
         await clearingHouse.connect(maker).addLiquidity({
             baseToken: baseToken.address,
@@ -86,6 +88,8 @@ describe("LimitOrderBook cancelLimitOrder", function () {
             useTakerBalance: false,
             deadline: ethers.constants.MaxUint256,
         })
+
+        console.log("added !!!")
 
         // prepare collateral for trader
         await mintAndDeposit(fixture, trader, 1000)

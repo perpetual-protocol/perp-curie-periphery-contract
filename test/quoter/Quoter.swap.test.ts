@@ -1,4 +1,4 @@
-import { MockContract } from "@defi-wonderland/smock"
+import { FakeContract } from "@defi-wonderland/smock"
 import { expect } from "chai"
 import { defaultAbiCoder, parseEther, parseUnits } from "ethers/lib/utils"
 import { ethers, waffle } from "hardhat"
@@ -32,7 +32,7 @@ describe("Quoter.swap", () => {
     let baseToken: BaseToken
     let quoteToken: QuoteToken
     let pool: UniswapV3Pool
-    let mockedBaseAggregator: MockContract<PriceFeedDispatcher>
+    let mockedBaseAggregator: FakeContract<PriceFeedDispatcher>
     let collateralDecimals: number
     let quoter: Quoter
     let lowerTick

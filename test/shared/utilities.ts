@@ -57,6 +57,7 @@ export async function syncIndexToMarketPrice(aggregator: FakeContract<PriceFeedD
     console.log(parseEther(price).toString())
     aggregator.getDispatchedPrice.returns(parseEther(price))
     console.log(`result: ${await aggregator.getDispatchedPrice(2)}`)
+    console.log(`result: ${await aggregator.decimals()}`)
 }
 
 export async function getMarketTwap(exchange: Exchange, baseToken: BaseToken, interval: number) {

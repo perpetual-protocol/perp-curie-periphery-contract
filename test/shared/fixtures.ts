@@ -1,4 +1,4 @@
-import { MockContract, smock } from "@defi-wonderland/smock"
+import { FakeContract, MockContract, smock } from "@defi-wonderland/smock"
 import assert from "assert"
 import { ethers, waffle } from "hardhat"
 import {
@@ -12,7 +12,7 @@ import {
     TestAggregatorV3__factory,
     UniswapV3Factory,
     UniswapV3Pool,
-    VirtualToken,
+    VirtualToken
 } from "../../typechain-types"
 import { BandPriceFeed } from "../../typechain-types/@perp/perp-oracle-contract/contracts/BandPriceFeed"
 import { TestStdReference } from "../../typechain-types/contracts/test/TestStdReference"
@@ -22,7 +22,7 @@ import { isAscendingTokenOrder } from "./utilities"
 interface TokensFixture {
     token0: BaseToken
     token1: QuoteToken
-    mockedPriceFeedDispatcher: MockContract<PriceFeedDispatcher>
+    mockedPriceFeedDispatcher: FakeContract<PriceFeedDispatcher>
     mockedAggregator: MockContract<TestAggregatorV3>
 }
 
@@ -35,7 +35,7 @@ interface PoolFixture {
 
 interface BaseTokenFixture {
     baseToken: BaseToken
-    mockedPriceFeedDispatcher: MockContract<PriceFeedDispatcher>
+    mockedPriceFeedDispatcher: FakeContract<PriceFeedDispatcher>
     mockedAggregator: MockContract<TestAggregatorV3>
 }
 
@@ -69,16 +69,19 @@ export function createBaseTokenFixture(name: string, symbol: string): () => Prom
             10,
             30 * 60,
         )
+        chainlinkPriceFeedV3.decimals.returns(6)
 
-        const mockedFeedDispatcherFactory = await smock.mock<PriceFeedDispatcher__factory>("PriceFeedDispatcher")
-        const mockedPriceFeedDispatcher = await mockedFeedDispatcherFactory.deploy(
-            ethers.constants.AddressZero,
-            chainlinkPriceFeedV3.address,
-        )
-
-        console.log(`decimals: ${await chainlinkPriceFeedV3.decimals()}`)
+        const feedDispatcherFactory = await smock.mock<PriceFeedDispatcher__factory>("PriceFeedDispatcher")
+        // const mockedPriceFeedDispatcher = (await feedDispatcherFactory.deploy(
+        //     ethers.constants.AddressZero,
+        //     chainlinkPriceFeedV3.address,
+        // )) as any
+        const mockedPriceFeedDispatcher = await smock.fake<PriceFeedDispatcher>("PriceFeedDispatcher")
 
         mockedPriceFeedDispatcher.decimals.returns(18)
+        mockedPriceFeedDispatcher.getChainlinkPriceFeedV3.returns(chainlinkPriceFeedV3.address)
+        mockedPriceFeedDispatcher.getDispatchedPrice.returns(100)
+        console.log(`res: ${await mockedPriceFeedDispatcher.getDispatchedPrice(1)}`)
 
         const baseTokenFactory = await ethers.getContractFactory("BaseToken")
         const baseToken = (await baseTokenFactory.deploy()) as BaseToken
@@ -139,9 +142,7 @@ export function fastCreateBaseTokenFixture(
             chainlinkPriceFeedV3.address,
         )
 
-        mockedPriceFeedDispatcher.decimals.returns(() => {
-            return 18
-        })
+        mockedPriceFeedDispatcher.decimals.returns(18)
 
         const baseToken = await deployBaseToken(name, symbol, mockedPriceFeedDispatcher.address, quoteTokenAddr)
 
@@ -229,7 +230,7 @@ export async function tokensFixture(): Promise<TokensFixture> {
 
     let token0: BaseToken
     let token1: QuoteToken
-    let mockedPriceFeedDispatcher: MockContract<PriceFeedDispatcher>
+    let mockedPriceFeedDispatcher: FakeContract<PriceFeedDispatcher>
     let mockedAggregator: MockContract<TestAggregatorV3>
     if (isAscendingTokenOrder(randomToken0.address, randomToken1.address)) {
         token0 = randomToken0
