@@ -4,7 +4,6 @@ import { defaultAbiCoder, parseEther, parseUnits } from "ethers/lib/utils"
 import { ethers, waffle } from "hardhat"
 import {
     BaseToken,
-    Exchange,
     MarketRegistry,
     OrderBook,
     PriceFeedDispatcher,
@@ -16,7 +15,7 @@ import {
     Vault,
 } from "../../typechain-types"
 import { createClearingHouseFixture } from "../clearingHouse/fixtures"
-import { getMaxTickRange } from "../helper/number"
+import { initMarket } from "../helper/marketHelper"
 import { deposit } from "../helper/token"
 import { encodePriceSqrt, syncIndexToMarketPrice } from "../shared/utilities"
 
@@ -25,7 +24,6 @@ describe("Quoter.swap", () => {
     const loadFixture: ReturnType<typeof waffle.createFixtureLoader> = waffle.createFixtureLoader([admin])
     let clearingHouse: TestClearingHouse
     let marketRegistry: MarketRegistry
-    let exchange: Exchange
     let orderBook: OrderBook
     let vault: Vault
     let collateral: TestERC20
@@ -43,7 +41,6 @@ describe("Quoter.swap", () => {
         clearingHouse = _clearingHouseFixture.clearingHouse as TestClearingHouse
         marketRegistry = _clearingHouseFixture.marketRegistry
         orderBook = _clearingHouseFixture.orderBook
-        exchange = _clearingHouseFixture.exchange
         vault = _clearingHouseFixture.vault
         collateral = _clearingHouseFixture.USDC
         baseToken = _clearingHouseFixture.baseToken
@@ -51,10 +48,10 @@ describe("Quoter.swap", () => {
         pool = _clearingHouseFixture.pool
         mockedBaseAggregator = _clearingHouseFixture.mockedBaseAggregator
         collateralDecimals = await collateral.decimals()
-        await pool.initialize(encodePriceSqrt(151.3733069, 1))
-        await marketRegistry.addPool(baseToken.address, "10000")
 
-        await exchange.setMaxTickCrossedWithinBlock(baseToken.address, getMaxTickRange())
+        const initPrice = "151.3733069"
+        await initMarket(_clearingHouseFixture, initPrice)
+
         await syncIndexToMarketPrice(mockedBaseAggregator, pool)
 
         const quoterFactory = await ethers.getContractFactory("Quoter")

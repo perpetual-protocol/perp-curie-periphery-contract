@@ -13,16 +13,15 @@ import {
     PerpPortal,
     PriceFeedDispatcher,
     Quoter,
-    QuoteToken,
     TestClearingHouse,
     TestERC20,
     UniswapV3Pool,
     Vault,
 } from "../../typechain-types"
 import { createClearingHouseFixture } from "../clearingHouse/fixtures"
-import { getMaxTickRange } from "../helper/number"
+import { initMarket } from "../helper/marketHelper"
 import { deposit } from "../helper/token"
-import { encodePriceSqrt, formatSqrtPriceX96ToPrice } from "../shared/utilities"
+import { syncIndexToMarketPrice } from "../shared/utilities"
 
 describe("PerpPortal test", () => {
     const [admin, alice, bob] = waffle.provider.getWallets()
@@ -38,7 +37,6 @@ describe("PerpPortal test", () => {
     let collateral: TestERC20
     let baseToken: BaseToken
     let baseToken2: BaseToken
-    let quoteToken: QuoteToken
     let pool: UniswapV3Pool
     let pool2: UniswapV3Pool
     let mockedBaseAggregator: FakeContract<PriceFeedDispatcher>
@@ -48,16 +46,6 @@ describe("PerpPortal test", () => {
     let lowerTick: number
     let upperTick: number
     let perpPortal: PerpPortal
-    const oracleDecimals = 6
-
-    async function syncIndexToMarketPrice(aggregator: FakeContract<PriceFeedDispatcher>, pool: UniswapV3Pool) {
-        const slot0 = await pool.slot0()
-        const sqrtPrice = slot0.sqrtPriceX96
-        const price = formatSqrtPriceX96ToPrice(sqrtPrice, oracleDecimals)
-        aggregator.getDispatchedPrice.returns(() => {
-            return parseEther(price)
-        })
-    }
 
     beforeEach(async () => {
         const _clearingHouseFixture = await loadFixture(createClearingHouseFixture())
@@ -72,23 +60,18 @@ describe("PerpPortal test", () => {
         collateral = _clearingHouseFixture.USDC
         baseToken = _clearingHouseFixture.baseToken
         baseToken2 = _clearingHouseFixture.baseToken2
-        quoteToken = _clearingHouseFixture.quoteToken
         pool = _clearingHouseFixture.pool
         pool2 = _clearingHouseFixture.pool2
         mockedBaseAggregator = _clearingHouseFixture.mockedBaseAggregator
         mockedBaseAggregator2 = _clearingHouseFixture.mockedBaseAggregator2
         collateralDecimals = await collateral.decimals()
 
-        await pool.initialize(encodePriceSqrt(151.3733069, 1))
+        const initPrice = "151.3733069"
+        await initMarket(_clearingHouseFixture, initPrice)
+        await initMarket(_clearingHouseFixture, initPrice, undefined, undefined, undefined, baseToken2.address)
+
         await syncIndexToMarketPrice(mockedBaseAggregator, pool)
-        await marketRegistry.addPool(baseToken.address, "10000")
-
-        await pool2.initialize(encodePriceSqrt(151.3733069, 1))
         await syncIndexToMarketPrice(mockedBaseAggregator2, pool2)
-        await marketRegistry.addPool(baseToken2.address, "10000")
-
-        await exchange.setMaxTickCrossedWithinBlock(baseToken.address, getMaxTickRange())
-        await exchange.setMaxTickCrossedWithinBlock(baseToken2.address, getMaxTickRange())
 
         const quoterFactory = await ethers.getContractFactory("Quoter")
         quoter = (await quoterFactory.deploy(marketRegistry.address)) as Quoter
