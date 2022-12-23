@@ -16,11 +16,10 @@ import {
     UniswapV3Pool,
     Vault,
 } from "../../typechain-types"
-import { initAndAddPool } from "../helper/marketHelper"
-import { getMaxTickRange, priceToTick } from "../helper/number"
+import { initMarket } from "../helper/marketHelper"
+import { priceToTick } from "../helper/number"
 import { mintAndDeposit } from "../helper/token"
-import { forwardTimestamp } from "../shared/time"
-import { encodePriceSqrt, syncIndexToMarketPrice } from "../shared/utilities"
+import { syncIndexToMarketPrice } from "../shared/utilities"
 import { createLimitOrderFixture, LimitOrderFixture } from "./fixtures"
 import { getOrderHash, getSignature, OrderStatus, OrderType } from "./orderUtils"
 
@@ -58,24 +57,12 @@ describe("LimitOrderBook cancelLimitOrder", function () {
         const pool1LowerTick: number = priceToTick(2000, await pool.tickSpacing())
         const pool1UpperTick: number = priceToTick(4000, await pool.tickSpacing())
 
-        // ETH
-        await initAndAddPool(
-            fixture,
-            pool,
-            baseToken.address,
-            encodePriceSqrt("2960", "1"),
-            10000, // 1%
-            // set maxTickCrossed as maximum tick range of pool by default, that means there is no over price when swap
-            getMaxTickRange(),
-        )
-        console.log(`${await baseToken.getPriceFeed()} === ${mockedBaseAggregator.address}`)
+        const initPrice = "2960"
+        await initMarket(fixture, initPrice)
         await syncIndexToMarketPrice(mockedBaseAggregator, pool)
-        console.log(`getChainlinkPriceFeedV3: ${await mockedBaseAggregator.getChainlinkPriceFeedV3()}`)
-        console.log(`getDispatchedPrice: ${await mockedBaseAggregator.getDispatchedPrice(23)}`)
         // prepare collateral for maker
         await mintAndDeposit(fixture, maker, 1_000_000_000_000)
 
-        await forwardTimestamp(clearingHouse, 10)
         // maker add liquidity
         await clearingHouse.connect(maker).addLiquidity({
             baseToken: baseToken.address,
@@ -89,8 +76,6 @@ describe("LimitOrderBook cancelLimitOrder", function () {
             deadline: ethers.constants.MaxUint256,
         })
 
-        console.log("added !!!")
-
         // prepare collateral for trader
         await mintAndDeposit(fixture, trader, 1000)
 
@@ -98,7 +83,7 @@ describe("LimitOrderBook cancelLimitOrder", function () {
         await delegateApproval.connect(trader).approve(limitOrderBook.address, fixture.clearingHouseOpenPositionAction)
     })
 
-    it.only("cancel order: Q2B exact output", async () => {
+    it("cancel order: Q2B exact output", async () => {
         // long 0.1 ETH with $300 (limit price $3000)
         const limitOrder = {
             orderType: OrderType.LimitOrder,

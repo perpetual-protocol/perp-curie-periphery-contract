@@ -81,7 +81,6 @@ export function createBaseTokenFixture(name: string, symbol: string): () => Prom
         mockedPriceFeedDispatcher.decimals.returns(18)
         mockedPriceFeedDispatcher.getChainlinkPriceFeedV3.returns(chainlinkPriceFeedV3.address)
         mockedPriceFeedDispatcher.getDispatchedPrice.returns(100)
-        console.log(`res: ${await mockedPriceFeedDispatcher.getDispatchedPrice(1)}`)
 
         const baseTokenFactory = await ethers.getContractFactory("BaseToken")
         const baseToken = (await baseTokenFactory.deploy()) as BaseToken

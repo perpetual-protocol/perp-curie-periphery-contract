@@ -20,10 +20,11 @@ import {
     UniswapV3Pool,
     Vault,
 } from "../../typechain-types"
-import { initAndAddPool } from "../helper/marketHelper"
-import { getMaxTickRange, priceToTick } from "../helper/number"
+import { initMarket } from "../helper/marketHelper"
+import { priceToTick } from "../helper/number"
 import { mintAndDeposit } from "../helper/token"
-import { encodePriceSqrt, syncIndexToMarketPrice } from "../shared/utilities"
+import { getRealTimestamp } from "../shared/time"
+import { syncIndexToMarketPrice } from "../shared/utilities"
 import { createLimitOrderFixture, LimitOrderFixture } from "./fixtures"
 import { getOrderHash, getSignature, OrderType } from "./orderUtils"
 
@@ -91,16 +92,9 @@ describe("LimitOrderBook fillLimitOrder advanced order types", function () {
         const pool1LowerTick: number = priceToTick(2000, await pool.tickSpacing())
         const pool1UpperTick: number = priceToTick(4000, await pool.tickSpacing())
 
-        // ETH
-        await initAndAddPool(
-            fixture,
-            pool,
-            baseToken.address,
-            encodePriceSqrt("2960", "1"),
-            10000, // 1%
-            // set maxTickCrossed as maximum tick range of pool by default, that means there is no over price when swap
-            getMaxTickRange(),
-        )
+        const initPrice = "2960"
+        await initMarket(fixture, initPrice)
+
         await syncIndexToMarketPrice(mockedBaseAggregator, pool)
 
         // prepare collateral for maker
@@ -125,7 +119,7 @@ describe("LimitOrderBook fillLimitOrder advanced order types", function () {
         // trader allows limitOrderBook to open position
         await delegateApproval.connect(trader).approve(limitOrderBook.address, fixture.clearingHouseOpenPositionAction)
 
-        currentTime = (await waffle.provider.getBlock("latest")).timestamp
+        currentTime = await getRealTimestamp()
         await setRoundData(mockedAggregator, computeRoundId(1, 1), "2700", currentTime)
         await setRoundData(mockedAggregator, computeRoundId(1, 2), "2800", currentTime + 15 * 1)
         await setRoundData(mockedAggregator, computeRoundId(1, 3), "2900", currentTime + 15 * 2)
