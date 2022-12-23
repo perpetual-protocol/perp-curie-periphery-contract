@@ -26,7 +26,7 @@ import { fastToken0Fixture, fastToken0WithBandPriceFeedFixture, tokensFixture } 
 export interface ClearingHouseFixture {
     clearingHouse: TestClearingHouse | ClearingHouse
     orderBook: OrderBook
-    accountBalance: TestAccountBalance | AccountBalance
+    accountBalance: TestAccountBalance
     marketRegistry: MarketRegistry
     clearingHouseConfig: ClearingHouseConfig
     exchange: TestExchange | Exchange

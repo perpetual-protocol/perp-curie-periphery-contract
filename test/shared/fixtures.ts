@@ -12,7 +12,7 @@ import {
     TestAggregatorV3__factory,
     UniswapV3Factory,
     UniswapV3Pool,
-    VirtualToken
+    VirtualToken,
 } from "../../typechain-types"
 import { BandPriceFeed } from "../../typechain-types/@perp/perp-oracle-contract/contracts/BandPriceFeed"
 import { TestStdReference } from "../../typechain-types/contracts/test/TestStdReference"
@@ -80,7 +80,6 @@ export function createBaseTokenFixture(name: string, symbol: string): () => Prom
 
         mockedPriceFeedDispatcher.decimals.returns(18)
         mockedPriceFeedDispatcher.getChainlinkPriceFeedV3.returns(chainlinkPriceFeedV3.address)
-        mockedPriceFeedDispatcher.getDispatchedPrice.returns(100)
 
         const baseTokenFactory = await ethers.getContractFactory("BaseToken")
         const baseToken = (await baseTokenFactory.deploy()) as BaseToken
@@ -135,13 +134,14 @@ export function fastCreateBaseTokenFixture(
             30 * 60,
         )) as ChainlinkPriceFeedV3
 
-        const mockedFeedDispatcherFactory = await smock.mock<PriceFeedDispatcher__factory>("PriceFeedDispatcher")
-        const mockedPriceFeedDispatcher = await mockedFeedDispatcherFactory.deploy(
-            ethers.constants.AddressZero,
-            chainlinkPriceFeedV3.address,
-        )
-
+        const mockedPriceFeedDispatcher = await smock.fake<PriceFeedDispatcher>("PriceFeedDispatcher")
         mockedPriceFeedDispatcher.decimals.returns(18)
+        mockedPriceFeedDispatcher.getChainlinkPriceFeedV3.returns(chainlinkPriceFeedV3.address)
+        // const mockedFeedDispatcherFactory = await smock.mock<PriceFeedDispatcher__factory>("PriceFeedDispatcher")
+        // const mockedPriceFeedDispatcher = await mockedFeedDispatcherFactory.deploy(
+        //     ethers.constants.AddressZero,
+        //     chainlinkPriceFeedV3.address,
+        // )
 
         const baseToken = await deployBaseToken(name, symbol, mockedPriceFeedDispatcher.address, quoteTokenAddr)
 

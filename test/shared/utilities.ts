@@ -4,7 +4,14 @@ import { TransactionReceipt } from "@ethersproject/abstract-provider"
 import bn from "bignumber.js"
 import { BaseContract, BigNumber, BigNumberish } from "ethers"
 import { parseEther } from "ethers/lib/utils"
-import { BaseToken, Exchange, PriceFeedDispatcher, UniswapV3Pool, VirtualToken } from "../../typechain-types"
+import {
+    BaseToken,
+    Exchange,
+    PriceFeedDispatcher,
+    TestAccountBalance,
+    UniswapV3Pool,
+    VirtualToken,
+} from "../../typechain-types"
 
 bn.config({ EXPONENTIAL_AT: 999999, DECIMAL_PLACES: 40 })
 
@@ -54,9 +61,18 @@ export async function syncIndexToMarketPrice(aggregator: FakeContract<PriceFeedD
     const slot0 = await pool.slot0()
     const sqrtPrice = slot0.sqrtPriceX96
     const price = formatSqrtPriceX96ToPrice(sqrtPrice)
-    console.log(price.toString())
     aggregator.getDispatchedPrice.returns(parseEther(price))
-    console.log((await aggregator.getDispatchedPrice(0)).toString())
+}
+
+export async function syncMarkPriceToMarketPrice(
+    accountBalance: TestAccountBalance,
+    baseToken: string,
+    pool: UniswapV3Pool,
+) {
+    const slot0 = await pool.slot0()
+    const sqrtPrice = slot0.sqrtPriceX96
+    const price = formatSqrtPriceX96ToPrice(sqrtPrice)
+    await accountBalance.mockMarkPrice(baseToken, parseEther(price))
 }
 
 export async function getMarketTwap(exchange: Exchange, baseToken: BaseToken, interval: number) {

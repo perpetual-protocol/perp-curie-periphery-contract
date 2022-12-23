@@ -3,7 +3,6 @@ import { expect } from "chai"
 import { parseEther, parseUnits } from "ethers/lib/utils"
 import { ethers, waffle } from "hardhat"
 import {
-    AccountBalance,
     BaseToken,
     ClearingHouseConfig,
     Exchange,
@@ -13,6 +12,7 @@ import {
     PerpPortal,
     PriceFeedDispatcher,
     Quoter,
+    TestAccountBalance,
     TestClearingHouse,
     TestERC20,
     UniswapV3Pool,
@@ -21,14 +21,14 @@ import {
 import { createClearingHouseFixture } from "../clearingHouse/fixtures"
 import { initMarket } from "../helper/marketHelper"
 import { deposit } from "../helper/token"
-import { syncIndexToMarketPrice } from "../shared/utilities"
+import { syncIndexToMarketPrice, syncMarkPriceToMarketPrice } from "../shared/utilities"
 
-describe("PerpPortal test", () => {
+describe.only("PerpPortal test", () => {
     const [admin, alice, bob] = waffle.provider.getWallets()
     const loadFixture: ReturnType<typeof waffle.createFixtureLoader> = waffle.createFixtureLoader([admin])
     let clearingHouse: TestClearingHouse
     let clearingHouseConfig: ClearingHouseConfig
-    let accountBalance: AccountBalance
+    let accountBalance: TestAccountBalance
     let insuranceFund: InsuranceFund
     let marketRegistry: MarketRegistry
     let exchange: Exchange
@@ -70,6 +70,8 @@ describe("PerpPortal test", () => {
         await initMarket(_clearingHouseFixture, initPrice)
         await initMarket(_clearingHouseFixture, initPrice, undefined, undefined, undefined, baseToken2.address)
 
+        await syncMarkPriceToMarketPrice(accountBalance, baseToken.address, pool)
+        await syncMarkPriceToMarketPrice(accountBalance, baseToken2.address, pool2)
         await syncIndexToMarketPrice(mockedBaseAggregator, pool)
         await syncIndexToMarketPrice(mockedBaseAggregator2, pool2)
 
@@ -136,13 +138,11 @@ describe("PerpPortal test", () => {
                 referralCode: ethers.constants.HashZero,
             })
 
-            await syncIndexToMarketPrice(mockedBaseAggregator, pool)
+            await syncMarkPriceToMarketPrice(accountBalance, baseToken.address, pool)
 
             const liquidationPrice = await perpPortal.getLiquidationPrice(bob.address, baseToken.address)
 
-            mockedBaseAggregator.getDispatchedPrice.returns(() => {
-                return liquidationPrice
-            })
+            accountBalance.mockMarkPrice(baseToken.address, liquidationPrice)
 
             const accountValue = await clearingHouse.getAccountValue(bob.address)
             const mmRequirement = await accountBalance.getMarginRequirementForLiquidation(bob.address)
@@ -162,13 +162,11 @@ describe("PerpPortal test", () => {
                 referralCode: ethers.constants.HashZero,
             })
 
-            await syncIndexToMarketPrice(mockedBaseAggregator, pool)
+            await syncMarkPriceToMarketPrice(accountBalance, baseToken.address, pool)
 
             const liquidationPrice = await perpPortal.getLiquidationPrice(bob.address, baseToken.address)
 
-            mockedBaseAggregator.getDispatchedPrice.returns(() => {
-                return liquidationPrice
-            })
+            accountBalance.mockMarkPrice(baseToken.address, liquidationPrice)
 
             const accountValue = await clearingHouse.getAccountValue(bob.address)
             const mmRequirement = await accountBalance.getMarginRequirementForLiquidation(bob.address)
@@ -188,7 +186,7 @@ describe("PerpPortal test", () => {
                 referralCode: ethers.constants.HashZero,
             })
 
-            await syncIndexToMarketPrice(mockedBaseAggregator, pool)
+            await syncMarkPriceToMarketPrice(accountBalance, baseToken.address, pool)
 
             const liquidationPrice = await perpPortal.getLiquidationPrice(bob.address, baseToken.address)
             expect(liquidationPrice).to.be.eq(parseEther("0"))
@@ -206,13 +204,11 @@ describe("PerpPortal test", () => {
                 referralCode: ethers.constants.HashZero,
             })
 
-            await syncIndexToMarketPrice(mockedBaseAggregator, pool)
+            await syncMarkPriceToMarketPrice(accountBalance, baseToken.address, pool)
 
             const liquidationPrice = await perpPortal.getLiquidationPrice(bob.address, baseToken.address)
 
-            mockedBaseAggregator.getDispatchedPrice.returns(() => {
-                return liquidationPrice
-            })
+            await accountBalance.mockMarkPrice(baseToken.address, liquidationPrice)
 
             const accountValue = await clearingHouse.getAccountValue(bob.address)
             const mmRequirement = await accountBalance.getMarginRequirementForLiquidation(bob.address)
@@ -249,8 +245,7 @@ describe("PerpPortal test", () => {
                 referralCode: ethers.constants.HashZero,
             })
 
-            // set index price to 50 so the trade can be liquidated right now
-            const indexPrice = parseUnits("50", 6)
+            accountBalance.mockMarkPrice(baseToken.address, parseEther("50"))
             mockedBaseAggregator.getDispatchedPrice.returns(() => {
                 return parseEther("50")
             })
@@ -276,15 +271,17 @@ describe("PerpPortal test", () => {
                 deadline: ethers.constants.MaxUint256,
                 referralCode: ethers.constants.HashZero,
             })
-            mockedBaseAggregator.getDispatchedPrice.returns(() => {
-                return parseEther("50")
-            })
+
+            accountBalance.mockMarkPrice(baseToken.address, parseEther("50"))
+            // mockedBaseAggregator.getDispatchedPrice.returns(parseEther("50"))
+
             // account value: -1038.80514917
             expect(await clearingHouse.getAccountValue(bob.address)).to.be.lt("0")
             expect(await perpPortal.getAccountLeverage(bob.address)).to.be.eq("-1")
         })
 
         it("account value > total position value", async () => {
+            await syncMarkPriceToMarketPrice(accountBalance, baseToken.address, pool)
             await clearingHouse.connect(bob).openPosition({
                 baseToken: baseToken.address,
                 isBaseToQuote: false,
@@ -295,11 +292,15 @@ describe("PerpPortal test", () => {
                 deadline: ethers.constants.MaxUint256,
                 referralCode: ethers.constants.HashZero,
             })
+
             // account value: 996.38873205
             // total position value: 296.38873205
             expect(await clearingHouse.getAccountValue(bob.address)).to.be.gt("300")
             // get account leverage: 296.38873205 / 996.38873205 = 0.29746295
-            expect(await perpPortal.getAccountLeverage(bob.address)).to.be.eq(parseEther("0.297462950488980192"))
+            expect(await perpPortal.getAccountLeverage(bob.address)).to.be.closeTo(
+                parseEther("0.297462950488980192"),
+                parseEther("0.001"),
+            )
         })
 
         it("0 < account value < total position value", async () => {
@@ -323,7 +324,10 @@ describe("PerpPortal test", () => {
             expect(bobAccountValue).to.be.lt(bobPositionValue)
 
             // account leverage: 5704.69430511 / 704.69430511 = 8.09527516
-            expect(await perpPortal.getAccountLeverage(bob.address)).to.be.eq(parseEther("8.095275163483218890"))
+            expect(await perpPortal.getAccountLeverage(bob.address)).to.be.closeTo(
+                parseEther("8.095275163483218890"),
+                parseEther("0.001"),
+            )
         })
 
         it("no position value", async () => {
