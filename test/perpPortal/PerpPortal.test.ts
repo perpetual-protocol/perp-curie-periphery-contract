@@ -21,6 +21,7 @@ import {
 import { createClearingHouseFixture } from "../clearingHouse/fixtures"
 import { initMarket } from "../helper/marketHelper"
 import { deposit } from "../helper/token"
+import { initiateBothTimestamps } from "../shared/time"
 import { syncIndexToMarketPrice, syncMarkPriceToMarketPrice } from "../shared/utilities"
 
 describe("PerpPortal test", () => {
@@ -123,6 +124,8 @@ describe("PerpPortal test", () => {
             marketRegistry.address,
             vault.address,
         )) as PerpPortal
+
+        await initiateBothTimestamps(clearingHouse)
     })
 
     describe("# getLiquidationPrice", async () => {
