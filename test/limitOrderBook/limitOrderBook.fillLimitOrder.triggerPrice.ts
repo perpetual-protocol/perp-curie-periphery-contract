@@ -62,7 +62,7 @@ describe("LimitOrderBook fillLimitOrder advanced order types", function () {
     let baseToken: BaseToken
     let quoteToken: QuoteToken
     let pool: UniswapV3Pool
-    let mockedBaseAggregator: FakeContract<PriceFeedDispatcher>
+    let mockedPriceFeedDispatcher: FakeContract<PriceFeedDispatcher>
     let mockedAggregator: FakeContract<TestAggregatorV3>
     let delegateApproval: DelegateApproval
     let limitOrderBook: TestLimitOrderBook
@@ -80,14 +80,14 @@ describe("LimitOrderBook fillLimitOrder advanced order types", function () {
         collateral = fixture.USDC
         baseToken = fixture.baseToken
         quoteToken = fixture.quoteToken
-        mockedBaseAggregator = fixture.mockedBaseAggregator
+        mockedPriceFeedDispatcher = fixture.mockedPriceFeedDispatcher
         mockedAggregator = fixture.mockedAggregator
         pool = fixture.pool
         delegateApproval = fixture.delegateApproval
         limitOrderBook = fixture.limitOrderBook
         limitOrderRewardVault = fixture.limitOrderRewardVault
         rewardToken = fixture.rewardToken
-        priceFeedDecimals = await mockedBaseAggregator.decimals()
+        priceFeedDecimals = await mockedPriceFeedDispatcher.decimals()
 
         const pool1LowerTick: number = priceToTick(2000, await pool.tickSpacing())
         const pool1UpperTick: number = priceToTick(4000, await pool.tickSpacing())
@@ -95,7 +95,7 @@ describe("LimitOrderBook fillLimitOrder advanced order types", function () {
         const initPrice = "2960"
         await initMarket(fixture, initPrice)
 
-        await syncIndexToMarketPrice(mockedBaseAggregator, pool)
+        await syncIndexToMarketPrice(mockedPriceFeedDispatcher, pool)
 
         // prepare collateral for maker
         await mintAndDeposit(fixture, maker, 1_000_000_000_000)

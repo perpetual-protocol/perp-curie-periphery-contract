@@ -40,8 +40,8 @@ describe("PerpPortal test", () => {
     let baseToken2: BaseToken
     let pool: UniswapV3Pool
     let pool2: UniswapV3Pool
-    let mockedBaseAggregator: FakeContract<PriceFeedDispatcher>
-    let mockedBaseAggregator2: FakeContract<PriceFeedDispatcher>
+    let mockedPriceFeedDispatcher: FakeContract<PriceFeedDispatcher>
+    let mockedPriceFeedDispatcher2: FakeContract<PriceFeedDispatcher>
     let collateralDecimals: number
     let quoter: Quoter
     let lowerTick: number
@@ -63,8 +63,8 @@ describe("PerpPortal test", () => {
         baseToken2 = _clearingHouseFixture.baseToken2
         pool = _clearingHouseFixture.pool
         pool2 = _clearingHouseFixture.pool2
-        mockedBaseAggregator = _clearingHouseFixture.mockedBaseAggregator
-        mockedBaseAggregator2 = _clearingHouseFixture.mockedBaseAggregator2
+        mockedPriceFeedDispatcher = _clearingHouseFixture.mockedPriceFeedDispatcher
+        mockedPriceFeedDispatcher2 = _clearingHouseFixture.mockedPriceFeedDispatcher2
         collateralDecimals = await collateral.decimals()
 
         const initPrice = "151.3733069"
@@ -73,8 +73,8 @@ describe("PerpPortal test", () => {
 
         await syncMarkPriceToMarketPrice(accountBalance, baseToken.address, pool)
         await syncMarkPriceToMarketPrice(accountBalance, baseToken2.address, pool2)
-        await syncIndexToMarketPrice(mockedBaseAggregator, pool)
-        await syncIndexToMarketPrice(mockedBaseAggregator2, pool2)
+        await syncIndexToMarketPrice(mockedPriceFeedDispatcher, pool)
+        await syncIndexToMarketPrice(mockedPriceFeedDispatcher2, pool2)
 
         const quoterFactory = await ethers.getContractFactory("Quoter")
         quoter = (await quoterFactory.deploy(marketRegistry.address)) as Quoter
@@ -249,7 +249,7 @@ describe("PerpPortal test", () => {
             })
 
             accountBalance.mockMarkPrice(baseToken.address, parseEther("50"))
-            mockedBaseAggregator.getDispatchedPrice.returns(() => {
+            mockedPriceFeedDispatcher.getDispatchedPrice.returns(() => {
                 return parseEther("50")
             })
 
@@ -276,7 +276,7 @@ describe("PerpPortal test", () => {
             })
 
             accountBalance.mockMarkPrice(baseToken.address, parseEther("50"))
-            // mockedBaseAggregator.getDispatchedPrice.returns(parseEther("50"))
+            // mockedPriceFeedDispatcher.getDispatchedPrice.returns(parseEther("50"))
 
             // account value: -1038.80514917
             expect(await clearingHouse.getAccountValue(bob.address)).to.be.lt("0")

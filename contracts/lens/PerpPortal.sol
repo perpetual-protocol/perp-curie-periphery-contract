@@ -18,7 +18,6 @@ import { PerpMath } from "@perp/curie-contract/contracts/lib/PerpMath.sol";
 import { FullMath } from "@uniswap/v3-core/contracts/libraries/FullMath.sol";
 import { PerpSafeCast } from "@perp/curie-contract/contracts/lib/PerpSafeCast.sol";
 import { SignedSafeMath } from "@openzeppelin/contracts/math/SignedSafeMath.sol";
-import "hardhat/console.sol";
 
 contract PerpPortal {
     using PerpMath for int256;

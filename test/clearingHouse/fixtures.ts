@@ -38,10 +38,10 @@ export interface ClearingHouseFixture {
     USDC: TestERC20
     quoteToken: QuoteToken
     baseToken: BaseToken
-    mockedBaseAggregator: FakeContract<PriceFeedDispatcher>
+    mockedPriceFeedDispatcher: FakeContract<PriceFeedDispatcher>
     mockedAggregator: MockContract<TestAggregatorV3>
     baseToken2: BaseToken
-    mockedBaseAggregator2: FakeContract<PriceFeedDispatcher>
+    mockedPriceFeedDispatcher2: FakeContract<PriceFeedDispatcher>
     pool2: UniswapV3Pool
     baseToken3: BaseToken
     mockedStdReference3: MockContract<TestStdReference>
@@ -64,13 +64,12 @@ export function createClearingHouseFixture(
         const USDC = (await tokenFactory.deploy()) as TestERC20
         await USDC.__TestERC20_init("TestUSDC", "USDC", 6)
 
-        let baseToken: BaseToken, quoteToken: QuoteToken, mockedBaseAggregator: FakeContract<PriceFeedDispatcher>
+        let baseToken: BaseToken, quoteToken: QuoteToken
         const { token0, mockedPriceFeedDispatcher, token1, mockedAggregator } = await tokensFixture()
 
         // we assume (base, quote) == (token0, token1)
         baseToken = token0
         quoteToken = token1
-        mockedBaseAggregator = mockedPriceFeedDispatcher
 
         // deploy UniV3 factory
         const factoryFactory = await ethers.getContractFactory("UniswapV3Factory")
@@ -140,7 +139,7 @@ export function createClearingHouseFixture(
         // deploy 2nd pool
         const _token0Fixture2 = await fastToken0Fixture(quoteToken.address)
         const baseToken2 = _token0Fixture2.baseToken
-        const mockedBaseAggregator2 = _token0Fixture2.mockedPriceFeedDispatcher
+        const mockedPriceFeedDispatcher2 = _token0Fixture2.mockedPriceFeedDispatcher
         await uniV3Factory.createPool(baseToken2.address, quoteToken.address, uniFeeTier)
         const pool2Addr = await uniV3Factory.getPool(baseToken2.address, quoteToken.address, uniFeeTier)
         const pool2 = poolFactory.attach(pool2Addr) as UniswapV3Pool
@@ -218,10 +217,10 @@ export function createClearingHouseFixture(
             USDC,
             quoteToken,
             baseToken,
-            mockedBaseAggregator,
+            mockedPriceFeedDispatcher,
             mockedAggregator,
             baseToken2,
-            mockedBaseAggregator2,
+            mockedPriceFeedDispatcher2,
             pool2,
             baseToken3,
             mockedStdReference3,

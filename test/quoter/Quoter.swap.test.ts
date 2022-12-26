@@ -30,7 +30,7 @@ describe("Quoter.swap", () => {
     let baseToken: BaseToken
     let quoteToken: QuoteToken
     let pool: UniswapV3Pool
-    let mockedBaseAggregator: FakeContract<PriceFeedDispatcher>
+    let mockedPriceFeedDispatcher: FakeContract<PriceFeedDispatcher>
     let collateralDecimals: number
     let quoter: Quoter
     let lowerTick
@@ -46,13 +46,13 @@ describe("Quoter.swap", () => {
         baseToken = _clearingHouseFixture.baseToken
         quoteToken = _clearingHouseFixture.quoteToken
         pool = _clearingHouseFixture.pool
-        mockedBaseAggregator = _clearingHouseFixture.mockedBaseAggregator
+        mockedPriceFeedDispatcher = _clearingHouseFixture.mockedPriceFeedDispatcher
         collateralDecimals = await collateral.decimals()
 
         const initPrice = "151.3733069"
         await initMarket(_clearingHouseFixture, initPrice)
 
-        await syncIndexToMarketPrice(mockedBaseAggregator, pool)
+        await syncIndexToMarketPrice(mockedPriceFeedDispatcher, pool)
 
         const quoterFactory = await ethers.getContractFactory("Quoter")
         quoter = (await quoterFactory.deploy(marketRegistry.address)) as Quoter

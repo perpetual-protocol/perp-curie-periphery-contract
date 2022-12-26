@@ -33,7 +33,7 @@ describe("LimitOrderBook cancelLimitOrder", function () {
     let baseToken: BaseToken
     let quoteToken: QuoteToken
     let pool: UniswapV3Pool
-    let mockedBaseAggregator: FakeContract<PriceFeedDispatcher>
+    let mockedPriceFeedDispatcher: FakeContract<PriceFeedDispatcher>
     let delegateApproval: DelegateApproval
     let limitOrderBook: LimitOrderBook
     let limitOrderRewardVault: LimitOrderRewardVault
@@ -47,7 +47,7 @@ describe("LimitOrderBook cancelLimitOrder", function () {
         collateral = fixture.USDC
         baseToken = fixture.baseToken
         quoteToken = fixture.quoteToken
-        mockedBaseAggregator = fixture.mockedBaseAggregator
+        mockedPriceFeedDispatcher = fixture.mockedPriceFeedDispatcher
         pool = fixture.pool
         delegateApproval = fixture.delegateApproval
         limitOrderBook = fixture.limitOrderBook
@@ -59,7 +59,7 @@ describe("LimitOrderBook cancelLimitOrder", function () {
 
         const initPrice = "2960"
         await initMarket(fixture, initPrice)
-        await syncIndexToMarketPrice(mockedBaseAggregator, pool)
+        await syncIndexToMarketPrice(mockedPriceFeedDispatcher, pool)
         // prepare collateral for maker
         await mintAndDeposit(fixture, maker, 1_000_000_000_000)
 
