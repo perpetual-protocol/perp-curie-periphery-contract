@@ -6,7 +6,6 @@ import {
     ChainlinkPriceFeedV3,
     ChainlinkPriceFeedV3__factory,
     PriceFeedDispatcher,
-    PriceFeedDispatcher__factory,
     QuoteToken,
     TestAggregatorV3,
     TestAggregatorV3__factory,
@@ -71,11 +70,6 @@ export function createBaseTokenFixture(name: string, symbol: string): () => Prom
         )
         chainlinkPriceFeedV3.decimals.returns(6)
 
-        const feedDispatcherFactory = await smock.mock<PriceFeedDispatcher__factory>("PriceFeedDispatcher")
-        // const mockedPriceFeedDispatcher = (await feedDispatcherFactory.deploy(
-        //     ethers.constants.AddressZero,
-        //     chainlinkPriceFeedV3.address,
-        // )) as any
         const mockedPriceFeedDispatcher = await smock.fake<PriceFeedDispatcher>("PriceFeedDispatcher")
 
         mockedPriceFeedDispatcher.decimals.returns(18)
@@ -137,11 +131,6 @@ export function fastCreateBaseTokenFixture(
         const mockedPriceFeedDispatcher = await smock.fake<PriceFeedDispatcher>("PriceFeedDispatcher")
         mockedPriceFeedDispatcher.decimals.returns(18)
         mockedPriceFeedDispatcher.getChainlinkPriceFeedV3.returns(chainlinkPriceFeedV3.address)
-        // const mockedFeedDispatcherFactory = await smock.mock<PriceFeedDispatcher__factory>("PriceFeedDispatcher")
-        // const mockedPriceFeedDispatcher = await mockedFeedDispatcherFactory.deploy(
-        //     ethers.constants.AddressZero,
-        //     chainlinkPriceFeedV3.address,
-        // )
 
         const baseToken = await deployBaseToken(name, symbol, mockedPriceFeedDispatcher.address, quoteTokenAddr)
 
