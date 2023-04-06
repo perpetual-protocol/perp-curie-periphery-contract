@@ -63,10 +63,8 @@ export function createBaseTokenFixture(name: string, symbol: string): () => Prom
         const chainlinkPriceFeedV3Factory = await smock.mock<ChainlinkPriceFeedV3__factory>("ChainlinkPriceFeedV3")
         const chainlinkPriceFeedV3 = await chainlinkPriceFeedV3Factory.deploy(
             mockedAggregator.address,
-            40 * 60,
-            1e5,
-            10,
-            30 * 60,
+            40 * 60, // timeout
+            30 * 60, // twap interval
         )
         chainlinkPriceFeedV3.decimals.returns(6)
 
@@ -122,10 +120,8 @@ export function fastCreateBaseTokenFixture(
         const chainlinkPriceFeedV3Factory = await ethers.getContractFactory("ChainlinkPriceFeedV3")
         const chainlinkPriceFeedV3 = (await chainlinkPriceFeedV3Factory.deploy(
             mockedAggregator.address,
-            40 * 60,
-            1e5,
-            10,
-            30 * 60,
+            40 * 60, // timeout
+            30 * 60, // twap interval
         )) as ChainlinkPriceFeedV3
 
         const mockedPriceFeedDispatcher = await smock.fake<PriceFeedDispatcher>("PriceFeedDispatcher")
