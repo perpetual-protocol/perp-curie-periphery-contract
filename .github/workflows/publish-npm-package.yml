@@ -8,7 +8,7 @@ jobs:
   publish-npm-package:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
         with:
           persist-credentials: false
 
@@ -18,7 +18,7 @@ jobs:
           ssh-private-key: ${{ secrets.PERP_LUSHAN_DEPLOY_PRIVATE_KEY }}
 
       - name: Use Node.js 16.x
-        uses: actions/setup-node@v2
+        uses: actions/setup-node@v3
         with:
           node-version: 16.x
           registry-url: 'https://registry.npmjs.org'
@@ -30,14 +30,16 @@ jobs:
         run: echo "::set-output name=dir::$(yarn cache dir)"
 
       - name: Use Yarn cache
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         id: yarn-cache
         with:
             path: ${{ steps.yarn-cache-dir-path.outputs.dir }}
-            key: ${{ runner.os }}-yarn-${{ matrix.node-version }}-${{ hashFiles('**/yarn.lock') }}
+            key: ${{ runner.os }}-yarn-${{ hashFiles('**/yarn.lock') }}
+            restore-keys: |
+              ${{ runner.os }}-yarn-
 
       - name: Install package dependencies
-        run: yarn install --prefer-offline --frozen-lockfile --network-concurrency 1
+        run: yarn install --ignore-scripts --prefer-offline --frozen-lockfile --network-concurrency 1
 
       - name: Build packages
         run: yarn build
