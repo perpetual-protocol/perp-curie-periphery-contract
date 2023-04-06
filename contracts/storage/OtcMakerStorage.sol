@@ -5,5 +5,5 @@ pragma solidity 0.7.6;
 /// contract which implements OtcMakerStorageV1 and following the naming convention
 /// OtcMakerStorageVX.
 abstract contract OtcMakerStorageV1 {
-
+    address internal _clearingHouse;
 }
