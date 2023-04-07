@@ -27,4 +27,6 @@ interface IOtcMaker is IOtcMakerStruct, IOtcMakerEvent {
     function setCaller(address newCaller) external;
 
     function setMarginRatioLimit(uint24 openMarginRatioLimitArg) external;
+
+    function getCaller() external view returns (address);
 }

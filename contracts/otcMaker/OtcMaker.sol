@@ -131,6 +131,14 @@ contract OtcMaker is SafeOwnable, IOtcMaker, OtcMakerStorageV1 {
     }
 
     //
+    // EXTERNAL VIEW
+    //
+
+    function getCaller() external view override returns (address) {
+        return _caller;
+    }
+
+    //
     // PUBLIC NON-VIEW
     //
 
