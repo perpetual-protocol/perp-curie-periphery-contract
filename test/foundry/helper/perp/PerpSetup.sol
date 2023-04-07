@@ -130,20 +130,10 @@ contract PerpSetup is Test, DeployConfig {
     }
 
     function _create_UniswapV3Factory() internal returns (IUniswapV3Factory) {
-        // Foundry's vm.getCode will get different UniswapV3Factory bytes,
-        // and it will cause address unmatching of createPool address and computeAddress.
-        // So we get the factory bytecode from artifacts compiled by Uniswap
-        string memory fatoryArtifactPath = string(
-            abi.encodePacked(
-                vm.projectRoot(),
-                "/node_modules/@uniswap/v3-core/artifacts/contracts/UniswapV3Factory.sol/UniswapV3Factory.json"
-            )
-        );
-        string memory artifact = vm.readFile(fatoryArtifactPath);
-        bytes memory creationCode = abi.decode(vm.parseJson(artifact, ".bytecode"), (bytes));
+        bytes memory bytecode = abi.encodePacked(vm.getCode("UniswapV3Factory.sol:UniswapV3Factory"));
         address anotherAddress;
         assembly {
-            anotherAddress := create(0, add(creationCode, 0x20), mload(creationCode))
+            anotherAddress := create(0, add(bytecode, 0x20), mload(bytecode))
         }
         return IUniswapV3Factory(anotherAddress);
     }

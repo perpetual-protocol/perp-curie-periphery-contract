@@ -7,8 +7,6 @@ cache_path = 'forge-cache'
 no_match_path = 'contracts/test/*'
 fs_permissions = [
     { access = "read", path = "./out"},
-    { access = "read", path = "./test"},
-    { access = "read", path = "./node_modules/@uniswap"},
 ]
 
 

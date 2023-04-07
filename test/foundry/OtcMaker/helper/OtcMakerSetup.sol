@@ -6,10 +6,12 @@ import "forge-std/Test.sol";
 
 import { PerpSetup } from "../../helper/perp/PerpSetup.sol";
 import { OtcMaker } from "../../../../contracts/otcMaker/OtcMaker.sol";
+import { TestERC20 } from "../../../../contracts/test/TestERC20.sol";
 
 contract OtcMakerSetup is Test {
     address public alice = makeAddr("alice");
     address public otcCaller = makeAddr("otcCaller");
+    TestERC20 public usdc;
 
     PerpSetup public perp;
     OtcMaker public otcMaker;
@@ -19,12 +21,15 @@ contract OtcMakerSetup is Test {
         perp.setUp();
         otcMaker = new OtcMaker();
         otcMaker.initialize(address(perp.clearingHouse()));
+        otcMaker.setCaller(otcCaller);
+        usdc = perp.usdc();
     }
 
     modifier prepareCaller(uint256 balance) {
         otcMaker.setCaller(otcCaller);
-        deal(address(perp.usdc()), otcCaller, balance);
+        deal(address(usdc), otcCaller, balance);
         vm.startPrank(otcCaller);
+        usdc.approve(address(otcMaker), type(uint256).max);
         _;
         vm.stopPrank();
     }
