@@ -9,8 +9,9 @@ import { OtcMaker } from "../../../../contracts/otcMaker/OtcMaker.sol";
 import { TestERC20 } from "../../../../contracts/test/TestERC20.sol";
 
 contract OtcMakerSetup is Test {
+    address public otcMakerOwner = makeAddr("otcMakerOwner");
     address public alice = makeAddr("alice");
-    address public otcCaller = makeAddr("otcCaller");
+    address public otcMakerCaller = makeAddr("otcMakerCaller");
     TestERC20 public usdc;
 
     PerpSetup public perp;
@@ -21,13 +22,26 @@ contract OtcMakerSetup is Test {
         perp.setUp();
         otcMaker = new OtcMaker();
         otcMaker.initialize(address(perp.clearingHouse()));
-        otcMaker.setCaller(otcCaller);
+        otcMaker.setCaller(otcMakerCaller);
+        otcMaker.setOwner(otcMakerOwner);
+
+        vm.prank(otcMakerOwner);
+        otcMaker.updateOwner();
+
         usdc = perp.usdc();
     }
 
     modifier prepareCaller(uint256 balance) {
-        deal(address(usdc), otcCaller, balance);
-        vm.startPrank(otcCaller);
+        deal(address(usdc), otcMakerCaller, balance);
+        vm.startPrank(otcMakerCaller);
+        usdc.approve(address(otcMaker), type(uint256).max);
+        _;
+        vm.stopPrank();
+    }
+
+    modifier prepareOwner(uint256 balance) {
+        deal(address(usdc), otcMakerOwner, balance);
+        vm.startPrank(otcMakerOwner);
         usdc.approve(address(otcMaker), type(uint256).max);
         _;
         vm.stopPrank();

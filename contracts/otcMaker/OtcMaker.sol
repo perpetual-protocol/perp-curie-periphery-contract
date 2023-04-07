@@ -4,6 +4,7 @@ pragma abicoder v2;
 
 import { SafeERC20Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC20/SafeERC20Upgradeable.sol";
 import { IERC20Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC20/SafeERC20Upgradeable.sol";
+import { EIP712Upgradeable } from "@openzeppelin/contracts-upgradeable/drafts/EIP712Upgradeable.sol";
 
 import { IClearingHouse } from "@perp/curie-contract/contracts/interface/IClearingHouse.sol";
 import { IClearingHouseConfig } from "@perp/curie-contract/contracts/interface/IClearingHouseConfig.sol";
@@ -14,7 +15,7 @@ import { SafeOwnable } from "../base/SafeOwnable.sol";
 import { IOtcMaker } from "../interface/IOtcMaker.sol";
 import { OtcMakerStorageV1 } from "../storage/OtcMakerStorage.sol";
 
-contract OtcMaker is SafeOwnable, IOtcMaker, OtcMakerStorageV1 {
+contract OtcMaker is SafeOwnable, EIP712Upgradeable, IOtcMaker, OtcMakerStorageV1 {
     //
     // MODIFIER
     //
@@ -35,15 +36,15 @@ contract OtcMaker is SafeOwnable, IOtcMaker, OtcMakerStorageV1 {
         _vault = IClearingHouse(_clearingHouse).getVault();
     }
 
-    function setCaller(address newCaller) external override onlyCaller {
+    function setCaller(address newCaller) external override onlyOwner {
         // OM_ZA: zero address
         require(newCaller != address(0), "OM_ZA");
         _caller = newCaller;
         emit UpdateCaller(_caller, newCaller);
     }
 
-    function deposit(address token, uint256 amount) external override onlyCaller {
-        SafeERC20Upgradeable.safeTransferFrom(IERC20Upgradeable(token), _caller, address(this), amount);
+    function deposit(address token, uint256 amount) external override onlyOwner {
+        SafeERC20Upgradeable.safeTransferFrom(IERC20Upgradeable(token), owner(), address(this), amount);
         IERC20Upgradeable(token).approve(_vault, amount);
         IVault(_vault).deposit(token, amount);
     }
@@ -52,6 +53,7 @@ contract OtcMaker is SafeOwnable, IOtcMaker, OtcMakerStorageV1 {
     function openPositionFor(OpenPositionForParams calldata params)
         external
         override
+        onlyCaller
         returns (uint256 base, uint256 quote)
     {
         // _verifySigner()
@@ -105,15 +107,21 @@ contract OtcMaker is SafeOwnable, IOtcMaker, OtcMakerStorageV1 {
     }
 
     // TODO onlyCaller -> emergency margin adjustment to manage OtcMaker's margin ratio
-    function openPosition(OpenPositionParams calldata params) external override returns (uint256 base, uint256 quote) {
+    function openPosition(OpenPositionParams calldata params)
+        external
+        override
+        onlyOwner
+        returns (uint256 base, uint256 quote)
+    {
         revert();
     }
 
-    function withdraw(address token, uint256 amount) external override {
-        revert();
+    function withdraw(address token, uint256 amount) external override onlyOwner {
+        IVault(_vault).withdraw(token, amount);
+        SafeERC20Upgradeable.safeTransferFrom(IERC20Upgradeable(token), _caller, address(this), amount);
     }
 
-    function withdrawToken(address token) external override {
+    function withdrawToken(address token) external override onlyOwner {
         revert();
     }
 
@@ -123,11 +131,11 @@ contract OtcMaker is SafeOwnable, IOtcMaker, OtcMakerStorageV1 {
         uint256 week,
         uint256 claimedBalance,
         bytes32[] calldata _merkleProof
-    ) external override {
+    ) external override onlyOwner {
         revert();
     }
 
-    function setMarginRatioLimit(uint24 openMarginRatioLimitArg) external override {
+    function setMarginRatioLimit(uint24 openMarginRatioLimitArg) external override onlyOwner {
         revert();
     }
 
