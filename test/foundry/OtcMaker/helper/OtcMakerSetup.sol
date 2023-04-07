@@ -24,6 +24,7 @@ contract OtcMakerSetup is Test {
         otcMaker.initialize(address(perp.clearingHouse()));
         otcMaker.setCaller(otcMakerCaller);
         otcMaker.setOwner(otcMakerOwner);
+        otcMaker.setMarginRatioLimit(500_000); // ratio: 50%, max leverage: 2x
 
         vm.prank(otcMakerOwner);
         otcMaker.updateOwner();

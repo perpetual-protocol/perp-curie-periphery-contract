@@ -7,9 +7,12 @@ import { IERC20Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC
 import { ECDSAUpgradeable } from "@openzeppelin/contracts-upgradeable/cryptography/ECDSAUpgradeable.sol";
 import { EIP712Upgradeable } from "@openzeppelin/contracts-upgradeable/drafts/EIP712Upgradeable.sol";
 
+import { PerpMath } from "@perp/curie-contract/contracts/lib/PerpMath.sol";
+import { PerpSafeCast } from "@perp/curie-contract/contracts/lib/PerpSafeCast.sol";
 import { IClearingHouse } from "@perp/curie-contract/contracts/interface/IClearingHouse.sol";
 import { IClearingHouseConfig } from "@perp/curie-contract/contracts/interface/IClearingHouseConfig.sol";
 import { IVault } from "@perp/curie-contract/contracts/interface/IVault.sol";
+import { IAccountBalance } from "@perp/curie-contract/contracts/interface/IAccountBalance.sol";
 
 import { SafeOwnable } from "../base/SafeOwnable.sol";
 
@@ -17,6 +20,10 @@ import { IOtcMaker } from "../interface/IOtcMaker.sol";
 import { OtcMakerStorageV1 } from "../storage/OtcMakerStorage.sol";
 
 contract OtcMaker is SafeOwnable, EIP712Upgradeable, IOtcMaker, OtcMakerStorageV1 {
+    using PerpMath for uint256;
+    using PerpMath for int256;
+    using PerpSafeCast for uint256;
+
     bytes32 public constant OTC_MAKER_TYPEHASH =
         keccak256(
             // solhint-disable-next-line max-line-length
@@ -41,6 +48,7 @@ contract OtcMaker is SafeOwnable, EIP712Upgradeable, IOtcMaker, OtcMakerStorageV
         _caller = _msgSender();
         _clearingHouse = clearingHouseArg;
         _vault = IClearingHouse(_clearingHouse).getVault();
+        _accountBalance = IClearingHouse(_clearingHouse).getAccountBalance();
     }
 
     function setCaller(address newCaller) external override onlyOwner {
@@ -65,7 +73,7 @@ contract OtcMaker is SafeOwnable, EIP712Upgradeable, IOtcMaker, OtcMakerStorageV
     {
         address signer = _obtainSigner(params);
 
-        // _checkMarginLimit()
+        // isMarginSufficientByRatio()
 
         // addLiquidity()
         //     AddLiquidityParams{
@@ -143,8 +151,8 @@ contract OtcMaker is SafeOwnable, EIP712Upgradeable, IOtcMaker, OtcMakerStorageV
         revert();
     }
 
-    function setMarginRatioLimit(uint24 openMarginRatioLimitArg) external override onlyOwner {
-        revert();
+    function setMarginRatioLimit(uint24 marginRatioLimitArg) external override onlyOwner {
+        _marginRatioLimit = marginRatioLimitArg;
     }
 
     //
@@ -153,6 +161,15 @@ contract OtcMaker is SafeOwnable, EIP712Upgradeable, IOtcMaker, OtcMakerStorageV
 
     function getCaller() external view override returns (address) {
         return _caller;
+    }
+
+    function isMarginSufficient() external view returns (bool) {
+        int256 accountValue_18 = IClearingHouse(_clearingHouse).getAccountValue(address(this));
+        int256 marginRequirement = IAccountBalance(_accountBalance)
+            .getTotalAbsPositionValue(address(this))
+            .mulRatio(_marginRatioLimit)
+            .toInt256();
+        return accountValue_18 >= marginRequirement;
     }
 
     //
@@ -178,8 +195,6 @@ contract OtcMaker is SafeOwnable, EIP712Upgradeable, IOtcMaker, OtcMakerStorageV
 
         return signer;
     }
-
-    function _checkMarginLimit() internal view returns (bool) {}
 
     //
     // INTERNAL PURE
