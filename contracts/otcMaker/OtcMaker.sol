@@ -4,6 +4,7 @@ pragma abicoder v2;
 
 import { SafeERC20Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC20/SafeERC20Upgradeable.sol";
 import { IERC20Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC20/SafeERC20Upgradeable.sol";
+import { ECDSAUpgradeable } from "@openzeppelin/contracts-upgradeable/cryptography/ECDSAUpgradeable.sol";
 import { EIP712Upgradeable } from "@openzeppelin/contracts-upgradeable/drafts/EIP712Upgradeable.sol";
 
 import { IClearingHouse } from "@perp/curie-contract/contracts/interface/IClearingHouse.sol";
@@ -16,6 +17,12 @@ import { IOtcMaker } from "../interface/IOtcMaker.sol";
 import { OtcMakerStorageV1 } from "../storage/OtcMakerStorage.sol";
 
 contract OtcMaker is SafeOwnable, EIP712Upgradeable, IOtcMaker, OtcMakerStorageV1 {
+    bytes32 public constant OTC_MAKER_TYPEHASH =
+        keccak256(
+            // solhint-disable-next-line max-line-length
+            "OpenPositionForParams(bytes signature,address baseToken,int256 amount,uint256 oppositeAmountBound,uint256 deadline,bytes referralCode,uint256 liquidityBase,uint256 liquidityQuote,int24 upperTick,int24 lowerTick)"
+        );
+
     //
     // MODIFIER
     //
@@ -56,7 +63,7 @@ contract OtcMaker is SafeOwnable, EIP712Upgradeable, IOtcMaker, OtcMakerStorageV
         onlyCaller
         returns (uint256 base, uint256 quote)
     {
-        // _verifySigner()
+        address signer = _obtainSigner(params);
 
         // _checkMarginLimit()
 
@@ -165,12 +172,12 @@ contract OtcMaker is SafeOwnable, EIP712Upgradeable, IOtcMaker, OtcMakerStorageV
     //
 
     /// @return address signer address
-    /// @return bytes32 hash of openPositionFor
-    function _verifySigner(OpenPositionForParams calldata params, bytes memory signature)
-        internal
-        view
-        returns (address, bytes32)
-    {}
+    function _obtainSigner(OpenPositionForParams calldata params) internal view returns (address) {
+        bytes32 digest = _hashTypedDataV4(keccak256(abi.encode(OTC_MAKER_TYPEHASH, params)));
+        address signer = ECDSAUpgradeable.recover(digest, params.signature);
+
+        return signer;
+    }
 
     function _checkMarginLimit() internal view returns (bool) {}
 
