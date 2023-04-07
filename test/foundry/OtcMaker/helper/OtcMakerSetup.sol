@@ -4,28 +4,33 @@ pragma abicoder v2;
 
 import "forge-std/Test.sol";
 
-import { ClearingHouse } from "@perp/curie-contract/contracts/ClearingHouse.sol";
-import { ClearingHouseConfig } from "@perp/curie-contract/contracts/ClearingHouseConfig.sol";
-import { Vault } from "@perp/curie-contract/contracts/Vault.sol";
-
-import "../../../../contracts/otcMaker/OtcMaker.sol";
+import { PerpSetup } from "../../helper/perp/PerpSetup.sol";
+import { OtcMaker } from "../../../../contracts/otcMaker/OtcMaker.sol";
+import { TestERC20 } from "../../../../contracts/test/TestERC20.sol";
 
 contract OtcMakerSetup is Test {
     address public alice = makeAddr("alice");
     address public otcCaller = makeAddr("otcCaller");
+    TestERC20 public usdc;
 
-    OtcMaker otcMaker;
-    ClearingHouse public mockClearingHouse = new ClearingHouse();
-    ClearingHouseConfig public mockClearingHouseConfig = new ClearingHouseConfig();
-    Vault public mockVault = new Vault();
+    PerpSetup public perp;
+    OtcMaker public otcMaker;
 
     function setUp() public virtual {
+        perp = new PerpSetup();
+        perp.setUp();
         otcMaker = new OtcMaker();
-        vm.mockCall(
-            address(mockClearingHouse),
-            abi.encodeWithSelector(ClearingHouse.getVault.selector),
-            abi.encode(address(mockVault))
-        );
-        otcMaker.initialize(address(mockClearingHouse));
+        otcMaker.initialize(address(perp.clearingHouse()));
+        otcMaker.setCaller(otcCaller);
+        usdc = perp.usdc();
+    }
+
+    modifier prepareCaller(uint256 balance) {
+        otcMaker.setCaller(otcCaller);
+        deal(address(usdc), otcCaller, balance);
+        vm.startPrank(otcCaller);
+        usdc.approve(address(otcMaker), type(uint256).max);
+        _;
+        vm.stopPrank();
     }
 }

@@ -841,20 +841,26 @@
   resolved "https://registry.yarnpkg.com/@openzeppelin/contracts-upgradeable/-/contracts-upgradeable-3.4.2.tgz#2c2a1b0fa748235a1f495b6489349776365c51b3"
   integrity sha512-mDlBS17ymb2wpaLcrqRYdnBAmP1EwqhOXMvqWk2c5Q1N1pm5TkiCtXM9Xzznh4bYsQBq0aIWEkFFE2+iLSN1Tw==
 
+"@openzeppelin/contracts@3.4.0":
+  version "3.4.0"
+  resolved "https://registry.yarnpkg.com/@openzeppelin/contracts/-/contracts-3.4.0.tgz#9a1669ad5f9fdfb6e273bb5a4fed10cb4cc35eb0"
+  integrity sha512-qh+EiHWzfY/9CORr+eRUkeEUP1WiFUcq3974bLHwyYzLBUtK6HPaMkIUHi74S1rDTZ0sNz42DwPc5A4IJvN3rg==
+
 "@openzeppelin/contracts@3.4.1-solc-0.7-2":
   version "3.4.1-solc-0.7-2"
   resolved "https://registry.yarnpkg.com/@openzeppelin/contracts/-/contracts-3.4.1-solc-0.7-2.tgz#371c67ebffe50f551c3146a9eec5fe6ffe862e92"
   integrity sha512-tAG9LWg8+M2CMu7hIsqHPaTyG4uDzjr6mhvH96LvOpLZZj6tgzTluBt+LsCf1/QaYrlis6pITvpIaIhE+iZB+Q==
 
-"@perp/curie-contract@2.1.0":
-  version "2.1.0"
-  resolved "https://registry.yarnpkg.com/@perp/curie-contract/-/curie-contract-2.1.0.tgz#9956298aab2409dacc659beedb6cebc213964925"
-  integrity sha512-v4nJGyAS19vVE334vXbvJ3QZjwGO1TI0oWW6O1AFXA6eX8tIpeUrJi3Vitf1ADgHirmBObAMTovMnOpcg523TA==
+"@perp/curie-contract@2.4.5":
+  version "2.4.5"
+  resolved "https://registry.yarnpkg.com/@perp/curie-contract/-/curie-contract-2.4.5.tgz#ab630d6b5a77f697b8525c2b4f7c185d46bac6dc"
+  integrity sha512-Ob1lwpSBKoeRhkUjlIH099vsmaT5dfrk9MtlEcSZm3onBTGEhMlNnMmXhnca8ULY/RlwT8vMLSvwol/G5eacRA==
   dependencies:
     "@chainlink/contracts" "0.1.7"
     "@openzeppelin/contracts" "3.4.1-solc-0.7-2"
     "@openzeppelin/contracts-upgradeable" "3.4.2"
     "@perp/perp-oracle-contract" "0.4.3"
+    "@perp/voting-escrow" "1.2.0"
     "@uniswap/v3-core" "https://github.com/Uniswap/uniswap-v3-core/tarball/v1.0.0"
     "@uniswap/v3-periphery" "1.0.1"
 
@@ -862,6 +868,15 @@
   version "0.4.3"
   resolved "https://registry.yarnpkg.com/@perp/perp-oracle-contract/-/perp-oracle-contract-0.4.3.tgz#55cc52fef187d3b341c3e4ead7040916be5ad433"
   integrity sha512-ijOfXkjHRvMVXVj9wLPHpDMr+zYkm2LPgy5pmQ+sG2qIWI3/4jH2Fp8CJR8ZaOTXSLSxe/Yyf1fXSGVIYgcigA==
+
+"@perp/voting-escrow@1.2.0":
+  version "1.2.0"
+  resolved "https://registry.yarnpkg.com/@perp/voting-escrow/-/voting-escrow-1.2.0.tgz#c45f0702dc68826902a97f66bc1113d2fac60680"
+  integrity sha512-ZoUbpQHLMYqYQfb/YZvQzdeqf/B1Jq59CaFrGcC2Wkz7MDRaWhN1Ldx0XVZyMyStGvemp+A7eoMh7HJLFONC5Q==
+  dependencies:
+    "@openzeppelin/contracts" "3.4.0"
+    "@openzeppelin/contracts-upgradeable" "3.4.2"
+    "@uniswap/v3-core" "https://github.com/Uniswap/uniswap-v3-core/tarball/v1.0.0"
 
 "@resolver-engine/core@^0.3.3":
   version "0.3.3"
@@ -1358,7 +1373,13 @@
 
 "@uniswap/v3-core@1.0.0", "@uniswap/v3-core@https://github.com/Uniswap/uniswap-v3-core/tarball/v1.0.0":
   version "1.0.0"
+  uid b3712e2b235ad2eeb7a0dfcac216a659cc450e28
   resolved "https://github.com/Uniswap/uniswap-v3-core/tarball/v1.0.0#b3712e2b235ad2eeb7a0dfcac216a659cc450e28"
+
+"@uniswap/v3-core@https://github.com/Uniswap/v3-core/tarball/v1.0.0":
+  version "1.0.0"
+  uid b3712e2b235ad2eeb7a0dfcac216a659cc450e28
+  resolved "https://github.com/Uniswap/v3-core/tarball/v1.0.0#b3712e2b235ad2eeb7a0dfcac216a659cc450e28"
 
 "@uniswap/v3-periphery@1.0.1":
   version "1.0.1"
