@@ -26,7 +26,6 @@ contract OtcMakerSetup is Test {
     }
 
     modifier prepareCaller(uint256 balance) {
-        otcMaker.setCaller(otcCaller);
         deal(address(usdc), otcCaller, balance);
         vm.startPrank(otcCaller);
         usdc.approve(address(otcMaker), type(uint256).max);

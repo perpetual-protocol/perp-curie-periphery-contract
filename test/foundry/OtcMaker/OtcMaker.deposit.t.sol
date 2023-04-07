@@ -14,8 +14,7 @@ contract OtcMakerDepositTest is OtcMakerSetup {
     }
 
     function test_success_deposit_to_perp_vault() public prepareCaller(2) {
-        perp.usdc().approve(address(otcMaker), type(uint256).max);
         otcMaker.deposit(address(usdc), 2);
-        // assertEq(vault.getBalance(address(otcMaker)), 123456);
+        assertEq(perp.vault().getBalance(address(otcMaker)), 2);
     }
 }

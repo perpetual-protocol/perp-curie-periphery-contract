@@ -44,6 +44,7 @@ contract OtcMaker is SafeOwnable, IOtcMaker, OtcMakerStorageV1 {
 
     function deposit(address token, uint256 amount) external override onlyCaller {
         SafeERC20Upgradeable.safeTransferFrom(IERC20Upgradeable(token), _caller, address(this), amount);
+        IERC20Upgradeable(token).approve(_vault, amount);
         IVault(_vault).deposit(token, amount);
     }
 
