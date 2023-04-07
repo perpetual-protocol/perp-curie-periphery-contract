@@ -24,7 +24,7 @@ interface IOtcMaker is IOtcMakerStruct, IOtcMakerEvent {
         bytes32[] calldata _merkleProof
     ) external;
 
-    function setCaller(address minterArg) external;
+    function setCaller(address newCaller) external;
 
     function setMarginRatioLimit(uint24 openMarginRatioLimitArg) external;
 }

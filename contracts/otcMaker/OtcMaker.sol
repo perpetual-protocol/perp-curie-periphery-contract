@@ -2,22 +2,49 @@
 pragma solidity 0.7.6;
 pragma abicoder v2;
 
-import { SafeOwnable } from "../base/SafeOwnable.sol";
+import { SafeERC20Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC20/SafeERC20Upgradeable.sol";
+import { IERC20Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC20/SafeERC20Upgradeable.sol";
 
 import { IClearingHouse } from "@perp/curie-contract/contracts/interface/IClearingHouse.sol";
 import { IClearingHouseConfig } from "@perp/curie-contract/contracts/interface/IClearingHouseConfig.sol";
+import { IVault } from "@perp/curie-contract/contracts/interface/IVault.sol";
+
+import { SafeOwnable } from "../base/SafeOwnable.sol";
 
 import { IOtcMaker } from "../interface/IOtcMaker.sol";
 import { OtcMakerStorageV1 } from "../storage/OtcMakerStorage.sol";
 
 contract OtcMaker is SafeOwnable, IOtcMaker, OtcMakerStorageV1 {
     //
+    // MODIFIER
+    //
+    modifier onlyCaller() {
+        // OM_NC: not caller
+        require(_msgSender() == _caller, "OM_NC");
+        _;
+    }
+
+    //
     // EXTERNAL NON-VIEW
     //
 
     function initialize(address clearingHouseArg) external initializer {
         __SafeOwnable_init();
+        _caller = _msgSender();
         _clearingHouse = clearingHouseArg;
+        _vault = IClearingHouse(_clearingHouse).getVault();
+    }
+
+    function setCaller(address newCaller) external override onlyCaller {
+        // OM_ZA: zero address
+        require(newCaller != address(0), "OM_ZA");
+        _caller = newCaller;
+        emit UpdateCaller(_caller, newCaller);
+    }
+
+    function deposit(address token, uint256 amount) external override onlyCaller {
+        SafeERC20Upgradeable.safeTransferFrom(IERC20Upgradeable(token), _caller, address(this), amount);
+        IVault(_vault).deposit(token, amount);
     }
 
     // TODO onlyCaller
@@ -81,10 +108,6 @@ contract OtcMaker is SafeOwnable, IOtcMaker, OtcMakerStorageV1 {
         revert();
     }
 
-    function deposit(address token, uint256 amount) external override {
-        revert();
-    }
-
     function withdraw(address token, uint256 amount) external override {
         revert();
     }
@@ -100,10 +123,6 @@ contract OtcMaker is SafeOwnable, IOtcMaker, OtcMakerStorageV1 {
         uint256 claimedBalance,
         bytes32[] calldata _merkleProof
     ) external override {
-        revert();
-    }
-
-    function setCaller(address minterArg) external override {
         revert();
     }
 
