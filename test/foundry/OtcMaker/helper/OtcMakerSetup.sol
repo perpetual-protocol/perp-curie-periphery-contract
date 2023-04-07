@@ -31,8 +31,12 @@ contract OtcMakerSetup is Test {
         usdc = perp.usdc();
     }
 
+    function _topUpUsdc(address to, uint256 amount) internal {
+        deal(address(usdc), to, amount);
+    }
+
     modifier prepareCaller(uint256 balance) {
-        deal(address(usdc), otcMakerCaller, balance);
+        _topUpUsdc(otcMakerCaller, balance);
         vm.startPrank(otcMakerCaller);
         usdc.approve(address(otcMaker), type(uint256).max);
         _;
@@ -40,7 +44,7 @@ contract OtcMakerSetup is Test {
     }
 
     modifier prepareOwner(uint256 balance) {
-        deal(address(usdc), otcMakerOwner, balance);
+        _topUpUsdc(otcMakerOwner, balance);
         vm.startPrank(otcMakerOwner);
         usdc.approve(address(otcMaker), type(uint256).max);
         _;

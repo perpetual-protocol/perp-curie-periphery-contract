@@ -118,11 +118,12 @@ contract OtcMaker is SafeOwnable, EIP712Upgradeable, IOtcMaker, OtcMakerStorageV
 
     function withdraw(address token, uint256 amount) external override onlyOwner {
         IVault(_vault).withdraw(token, amount);
-        SafeERC20Upgradeable.safeTransferFrom(IERC20Upgradeable(token), _caller, address(this), amount);
+        SafeERC20Upgradeable.safeTransfer(IERC20Upgradeable(token), owner(), amount);
     }
 
     function withdrawToken(address token) external override onlyOwner {
-        revert();
+        uint256 amount = IERC20Upgradeable(token).balanceOf(address(this));
+        SafeERC20Upgradeable.safeTransfer(IERC20Upgradeable(token), owner(), amount);
     }
 
     function claimWeek(

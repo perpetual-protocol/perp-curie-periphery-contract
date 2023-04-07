@@ -23,8 +23,8 @@ import { IUniswapV3Pool } from "@uniswap/v3-core/contracts/interfaces/IUniswapV3
 
 import { ITestExchange } from "../../interface/ITestExchange.sol";
 import { DeployConfig } from "./DeployConfig.sol";
-import "../../../../contracts/otcMaker/OtcMaker.sol";
-import "../../../../contracts/test/TestERC20.sol";
+import { OtcMaker } from "../../../../contracts/otcMaker/OtcMaker.sol";
+import { TestERC20 } from "../../../../contracts/test/TestERC20.sol";
 
 contract PerpSetup is Test, DeployConfig {
     address public alice = makeAddr("alice");
