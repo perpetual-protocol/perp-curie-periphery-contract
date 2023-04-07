@@ -163,7 +163,7 @@ contract OtcMaker is SafeOwnable, EIP712Upgradeable, IOtcMaker, OtcMakerStorageV
         return _caller;
     }
 
-    function isMarginSufficient() external view returns (bool) {
+    function isMarginSufficient() external view override returns (bool) {
         int256 accountValue_18 = IClearingHouse(_clearingHouse).getAccountValue(address(this));
         int256 marginRequirement = IAccountBalance(_accountBalance)
             .getTotalAbsPositionValue(address(this))
