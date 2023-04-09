@@ -7,8 +7,8 @@ import {
     MarketRegistry,
     OrderBook,
     PriceFeedDispatcher,
-    Quoter,
     QuoteToken,
+    Quoter,
     TestClearingHouse,
     TestERC20,
     UniswapV3Pool,
@@ -173,6 +173,17 @@ describe("Quoter.swap", () => {
         })
 
         it("returns same result with CH.swap when liquidity is not enough", async () => {
+            // maker's upper tick is 51400
+            // target tick is 51460
+            // 51460 > 51400, open huge long position => swap all liquidity
+            const targetPrice = Math.pow(1.0001, 51400)
+
+            // set sqrtPriceLimitX96 to target price limit, avoid swap to max tick
+            const targetPriceLimit = encodePriceSqrt(targetPrice, 1)
+
+            // mock index price target price to open long position
+            mockedPriceFeedDispatcher.getDispatchedPrice.returns(() => parseEther(targetPrice.toString()))
+
             const quoteAmount = parseEther("30000")
             const quoteResponse = await quoter.callStatic.swap({
                 baseToken: baseToken.address,
@@ -180,7 +191,7 @@ describe("Quoter.swap", () => {
                 isBaseToQuote: false,
                 isExactInput: true,
                 amount: quoteAmount,
-                sqrtPriceLimitX96: 0,
+                sqrtPriceLimitX96: targetPriceLimit,
             })
             expect(quoteResponse.deltaAvailableQuote).to.be.lt(quoteAmount)
 
@@ -190,7 +201,7 @@ describe("Quoter.swap", () => {
                 isBaseToQuote: false,
                 isExactInput: true,
                 amount: quoteAmount,
-                sqrtPriceLimitX96: 0,
+                sqrtPriceLimitX96: targetPriceLimit,
             })
 
             // real tx to trigger price update
@@ -200,7 +211,7 @@ describe("Quoter.swap", () => {
                 isBaseToQuote: false,
                 isExactInput: true,
                 amount: quoteAmount,
-                sqrtPriceLimitX96: 0,
+                sqrtPriceLimitX96: targetPriceLimit,
             })
 
             expect(quoteResponse.deltaAvailableBase).to.be.eq(swapResponse.base)
@@ -380,6 +391,17 @@ describe("Quoter.swap", () => {
         })
 
         it("returns same result with CH.swap when liquidity is not enough", async () => {
+            // maker's lower tick is 49000
+            // target tick is 48940
+            // 48940 < 49000, open huge short position => swap all liquidity
+            const targetPrice = Math.pow(1.0001, 48940)
+
+            // set sqrtPriceLimitX96 to target price limit, avoid swap to max tick
+            const targetPriceLimit = encodePriceSqrt(targetPrice, 1)
+
+            // mock index price target price to open long position
+            mockedPriceFeedDispatcher.getDispatchedPrice.returns(() => parseEther(targetPrice.toString()))
+
             const baseAmount = parseEther("30")
             const quoteResponse = await quoter.callStatic.swap({
                 baseToken: baseToken.address,
@@ -387,7 +409,7 @@ describe("Quoter.swap", () => {
                 isBaseToQuote: true,
                 isExactInput: true,
                 amount: baseAmount,
-                sqrtPriceLimitX96: 0,
+                sqrtPriceLimitX96: targetPriceLimit,
             })
             expect(quoteResponse.deltaAvailableBase).to.be.lt(baseAmount)
 
@@ -397,7 +419,7 @@ describe("Quoter.swap", () => {
                 isBaseToQuote: true,
                 isExactInput: true,
                 amount: baseAmount,
-                sqrtPriceLimitX96: 0,
+                sqrtPriceLimitX96: targetPriceLimit,
             })
 
             // real tx to trigger price update
@@ -407,7 +429,7 @@ describe("Quoter.swap", () => {
                 isBaseToQuote: true,
                 isExactInput: true,
                 amount: baseAmount,
-                sqrtPriceLimitX96: 0,
+                sqrtPriceLimitX96: targetPriceLimit,
             })
 
             const partialSwapResponse = [
