@@ -276,7 +276,7 @@ describe("PerpPortal test", () => {
             })
 
             accountBalance.mockMarkPrice(baseToken.address, parseEther("50"))
-            // mockedPriceFeedDispatcher.getDispatchedPrice.returns(parseEther("50"))
+            mockedPriceFeedDispatcher.getDispatchedPrice.returns(parseEther("50"))
 
             // account value: -1038.80514917
             expect(await clearingHouse.getAccountValue(bob.address)).to.be.lt("0")
