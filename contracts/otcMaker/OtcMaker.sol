@@ -6,6 +6,7 @@ import { SafeERC20Upgradeable } from "@openzeppelin/contracts-upgradeable/token/
 import { IERC20Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC20/SafeERC20Upgradeable.sol";
 import { ECDSAUpgradeable } from "@openzeppelin/contracts-upgradeable/cryptography/ECDSAUpgradeable.sol";
 import { EIP712Upgradeable } from "@openzeppelin/contracts-upgradeable/drafts/EIP712Upgradeable.sol";
+import { FullMath } from "@uniswap/v3-core/contracts/libraries/FullMath.sol";
 
 import { PerpMath } from "@perp/curie-contract/contracts/lib/PerpMath.sol";
 import { PerpSafeCast } from "@perp/curie-contract/contracts/lib/PerpSafeCast.sol";
@@ -20,8 +21,9 @@ import { IOtcMaker } from "../interface/IOtcMaker.sol";
 import { OtcMakerStorageV1 } from "../storage/OtcMakerStorage.sol";
 
 contract OtcMaker is SafeOwnable, EIP712Upgradeable, IOtcMaker, OtcMakerStorageV1 {
-    using PerpMath for uint256;
     using PerpMath for int256;
+    using PerpMath for uint256;
+    using PerpSafeCast for int256;
     using PerpSafeCast for uint256;
 
     bytes32 public constant OTC_MAKER_TYPEHASH =
@@ -74,50 +76,62 @@ contract OtcMaker is SafeOwnable, EIP712Upgradeable, IOtcMaker, OtcMakerStorageV
 
         address signer = _obtainSigner(openPositionForParams, signature);
 
-        // addLiquidity()
-        //     AddLiquidityParams{
-        //         address baseToken;
-        //         uint256 base;
-        //         uint256 quote;
-        //         int24 lowerTick;
-        //         int24 upperTick;
-        //         uint256 minBase;
-        //         uint256 minQuote;
-        //         bool useTakerBalance;
-        //         uint256 deadline;
-        //     }
-        //     { liquidity } = return struct AddLiquidityResponse {
-        //         uint256 base;
-        //         uint256 quote;
-        //         uint256 fee;
-        //         uint256 liquidity;
-        //     }
+        // TODO should we set minBase & minQuote's percentage as a constant in contract?
+        IClearingHouse.AddLiquidityResponse memory addLiquidityResponse = IClearingHouse(_clearingHouse).addLiquidity(
+            IClearingHouse.AddLiquidityParams({
+                baseToken: openPositionForParams.baseToken,
+                base: jitLiquidityParams.liquidityBase,
+                quote: jitLiquidityParams.liquidityQuote,
+                lowerTick: jitLiquidityParams.lowerTick,
+                upperTick: jitLiquidityParams.upperTick,
+                minBase: FullMath.mulDiv(jitLiquidityParams.liquidityBase, 9, 10),
+                minQuote: FullMath.mulDiv(jitLiquidityParams.liquidityQuote, 9, 10),
+                useTakerBalance: false,
+                deadline: openPositionForParams.deadline
+            })
+        );
 
-        // openPositionFor()
-        //     address trader
-        //     struct OpenPositionParams {
-        //         address baseToken;
-        //         bool isBaseToQuote;
-        //         bool isExactInput;
-        //         uint256 amount;
-        //         uint256 oppositeAmountBound;
-        //         uint256 deadline;
-        //         uint160 sqrtPriceLimitX96;
-        //         bytes32 referralCode;
-        //     }
+        (base, quote, ) = IClearingHouse(_clearingHouse).openPositionFor(
+            signer,
+            IClearingHouse.OpenPositionParams({
+                baseToken: openPositionForParams.baseToken,
+                isBaseToQuote: openPositionForParams.isBaseToQuote,
+                isExactInput: openPositionForParams.isExactInput,
+                amount: openPositionForParams.amount,
+                oppositeAmountBound: openPositionForParams.oppositeAmountBound,
+                deadline: openPositionForParams.deadline,
+                sqrtPriceLimitX96: openPositionForParams.sqrtPriceLimitX96,
+                referralCode: openPositionForParams.referralCode
+            })
+        );
 
-        // removeLiquidity()
-        //     RemoveLiquidityParams {
-        //         address baseToken;
-        //         int24 lowerTick;
-        //         int24 upperTick;
-        //         uint128 liquidity;
-        //         uint256 minBase;
-        //         uint256 minQuote;
-        //         uint256 deadline;
-        //     }
+        IClearingHouse(_clearingHouse).removeLiquidity(
+            IClearingHouse.RemoveLiquidityParams({
+                baseToken: openPositionForParams.baseToken,
+                lowerTick: jitLiquidityParams.lowerTick,
+                upperTick: jitLiquidityParams.upperTick,
+                liquidity: addLiquidityResponse.liquidity.toUint128(),
+                minBase: FullMath.mulDiv(jitLiquidityParams.liquidityBase, 9, 10),
+                minQuote: FullMath.mulDiv(jitLiquidityParams.liquidityQuote, 9, 10),
+                deadline: openPositionForParams.deadline
+            })
+        );
 
-        revert();
+        _requireMarginSufficient();
+
+        emit OpenPositionFor(
+            signer,
+            openPositionForParams.baseToken,
+            openPositionForParams.isBaseToQuote,
+            openPositionForParams.isExactInput,
+            openPositionForParams.amount,
+            openPositionForParams.oppositeAmountBound,
+            openPositionForParams.deadline,
+            openPositionForParams.sqrtPriceLimitX96,
+            openPositionForParams.referralCode
+        );
+
+        return (base, quote);
     }
 
     // TODO onlyCaller -> emergency margin adjustment to manage OtcMaker's margin ratio
