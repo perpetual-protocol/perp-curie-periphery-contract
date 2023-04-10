@@ -6,6 +6,7 @@ import { SafeERC20Upgradeable } from "@openzeppelin/contracts-upgradeable/token/
 import { IERC20Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC20/SafeERC20Upgradeable.sol";
 import { ECDSAUpgradeable } from "@openzeppelin/contracts-upgradeable/cryptography/ECDSAUpgradeable.sol";
 import { EIP712Upgradeable } from "@openzeppelin/contracts-upgradeable/drafts/EIP712Upgradeable.sol";
+import { FullMath } from "@uniswap/v3-core/contracts/libraries/FullMath.sol";
 
 import { PerpMath } from "@perp/curie-contract/contracts/lib/PerpMath.sol";
 import { PerpSafeCast } from "@perp/curie-contract/contracts/lib/PerpSafeCast.sol";
@@ -17,18 +18,14 @@ import { IAccountBalance } from "@perp/curie-contract/contracts/interface/IAccou
 import { SafeOwnable } from "../base/SafeOwnable.sol";
 
 import { IOtcMaker } from "../interface/IOtcMaker.sol";
+import { ILimitOrderBook } from "../interface/ILimitOrderBook.sol";
 import { OtcMakerStorageV1 } from "../storage/OtcMakerStorage.sol";
 
 contract OtcMaker is SafeOwnable, EIP712Upgradeable, IOtcMaker, OtcMakerStorageV1 {
-    using PerpMath for uint256;
     using PerpMath for int256;
+    using PerpMath for uint256;
+    using PerpSafeCast for int256;
     using PerpSafeCast for uint256;
-
-    bytes32 public constant OTC_MAKER_TYPEHASH =
-        keccak256(
-            // solhint-disable-next-line max-line-length
-            "OpenPositionForParams(bytes signature,address baseToken,int256 amount,uint256 oppositeAmountBound,uint256 deadline,bytes referralCode,uint256 liquidityBase,uint256 liquidityQuote,int24 upperTick,int24 lowerTick)"
-        );
 
     //
     // MODIFIER
@@ -42,11 +39,11 @@ contract OtcMaker is SafeOwnable, EIP712Upgradeable, IOtcMaker, OtcMakerStorageV
     //
     // EXTERNAL NON-VIEW
     //
-
-    function initialize(address clearingHouseArg) external initializer {
+    function initialize(address clearingHouseArg, address limitOrderBookArg) external initializer {
         __SafeOwnable_init();
         _caller = _msgSender();
         _clearingHouse = clearingHouseArg;
+        _limitOrderBook = limitOrderBookArg;
         _vault = IClearingHouse(_clearingHouse).getVault();
         _accountBalance = IClearingHouse(_clearingHouse).getAccountBalance();
     }
@@ -64,70 +61,51 @@ contract OtcMaker is SafeOwnable, EIP712Upgradeable, IOtcMaker, OtcMakerStorageV
         IVault(_vault).deposit(token, amount);
     }
 
-    // TODO onlyCaller
-    function openPositionFor(OpenPositionForParams calldata params)
-        external
-        override
-        onlyCaller
-        returns (uint256 base, uint256 quote)
-    {
-        address signer = _obtainSigner(params);
+    function openPositionFor(
+        ILimitOrderBook.LimitOrder calldata limitOrderParams,
+        JitLiquidityParams calldata jitLiquidityParams,
+        bytes calldata signature
+    ) external override onlyCaller {
+        // OM_NLO: not limit order
+        require(limitOrderParams.orderType == ILimitOrderBook.OrderType.LimitOrder, "OM_NLO");
 
-        // isMarginSufficientByRatio()
+        // TODO should we set minBase & minQuote's percentage as a constant in contract?
+        IClearingHouse.AddLiquidityResponse memory addLiquidityResponse = IClearingHouse(_clearingHouse).addLiquidity(
+            IClearingHouse.AddLiquidityParams({
+                baseToken: limitOrderParams.baseToken,
+                base: jitLiquidityParams.liquidityBase,
+                quote: jitLiquidityParams.liquidityQuote,
+                lowerTick: jitLiquidityParams.lowerTick,
+                upperTick: jitLiquidityParams.upperTick,
+                minBase: FullMath.mulDiv(jitLiquidityParams.liquidityBase, 9, 10),
+                minQuote: FullMath.mulDiv(jitLiquidityParams.liquidityQuote, 9, 10),
+                useTakerBalance: false,
+                deadline: block.timestamp
+            })
+        );
 
-        // addLiquidity()
-        //     AddLiquidityParams{
-        //         address baseToken;
-        //         uint256 base;
-        //         uint256 quote;
-        //         int24 lowerTick;
-        //         int24 upperTick;
-        //         uint256 minBase;
-        //         uint256 minQuote;
-        //         bool useTakerBalance;
-        //         uint256 deadline;
-        //     }
-        //     { liquidity } = return struct AddLiquidityResponse {
-        //         uint256 base;
-        //         uint256 quote;
-        //         uint256 fee;
-        //         uint256 liquidity;
-        //     }
+        ILimitOrderBook(_limitOrderBook).fillLimitOrder(limitOrderParams, signature, 0);
 
-        // openPositionFor()
-        //     address trader
-        //     struct OpenPositionParams {
-        //         address baseToken;
-        //         bool isBaseToQuote;
-        //         bool isExactInput;
-        //         uint256 amount;
-        //         uint256 oppositeAmountBound;
-        //         uint256 deadline;
-        //         uint160 sqrtPriceLimitX96;
-        //         bytes32 referralCode;
-        //     }
+        IClearingHouse(_clearingHouse).removeLiquidity(
+            IClearingHouse.RemoveLiquidityParams({
+                baseToken: limitOrderParams.baseToken,
+                lowerTick: jitLiquidityParams.lowerTick,
+                upperTick: jitLiquidityParams.upperTick,
+                liquidity: addLiquidityResponse.liquidity.toUint128(),
+                minBase: FullMath.mulDiv(jitLiquidityParams.liquidityBase, 9, 10),
+                minQuote: FullMath.mulDiv(jitLiquidityParams.liquidityQuote, 9, 10),
+                deadline: block.timestamp
+            })
+        );
 
-        // removeLiquidity()
-        //     RemoveLiquidityParams {
-        //         address baseToken;
-        //         int24 lowerTick;
-        //         int24 upperTick;
-        //         uint128 liquidity;
-        //         uint256 minBase;
-        //         uint256 minQuote;
-        //         uint256 deadline;
-        //     }
-
-        revert();
+        // OM_IM: insufficient margin
+        require(isMarginSufficient(), "OM_IM");
     }
 
     // TODO onlyCaller -> emergency margin adjustment to manage OtcMaker's margin ratio
-    function openPosition(OpenPositionParams calldata params)
-        external
-        override
-        onlyOwner
-        returns (uint256 base, uint256 quote)
-    {
+    function openPosition(
+        OpenPositionParams calldata params
+    ) external override onlyOwner returns (uint256 base, uint256 quote) {
         revert();
     }
 
@@ -158,18 +136,8 @@ contract OtcMaker is SafeOwnable, EIP712Upgradeable, IOtcMaker, OtcMakerStorageV
     //
     // EXTERNAL VIEW
     //
-
     function getCaller() external view override returns (address) {
         return _caller;
-    }
-
-    function isMarginSufficient() external view override returns (bool) {
-        int256 accountValue_18 = IClearingHouse(_clearingHouse).getAccountValue(address(this));
-        int256 marginRequirement = IAccountBalance(_accountBalance)
-            .getTotalAbsPositionValue(address(this))
-            .mulRatio(_marginRatioLimit)
-            .toInt256();
-        return accountValue_18 >= marginRequirement;
     }
 
     //
@@ -179,6 +147,14 @@ contract OtcMaker is SafeOwnable, EIP712Upgradeable, IOtcMaker, OtcMakerStorageV
     //
     // PUBLIC VIEW
     //
+    function isMarginSufficient() public view override returns (bool) {
+        int256 accountValue_18 = IClearingHouse(_clearingHouse).getAccountValue(address(this));
+        int256 marginRequirement = IAccountBalance(_accountBalance)
+            .getTotalAbsPositionValue(address(this))
+            .mulRatio(_marginRatioLimit)
+            .toInt256();
+        return accountValue_18 >= marginRequirement;
+    }
 
     //
     // INTERNAL NON-VIEW
@@ -187,14 +163,6 @@ contract OtcMaker is SafeOwnable, EIP712Upgradeable, IOtcMaker, OtcMakerStorageV
     //
     // INTERNAL VIEW
     //
-
-    /// @return address signer address
-    function _obtainSigner(OpenPositionForParams calldata params) internal view returns (address) {
-        bytes32 digest = _hashTypedDataV4(keccak256(abi.encode(OTC_MAKER_TYPEHASH, params)));
-        address signer = ECDSAUpgradeable.recover(digest, params.signature);
-
-        return signer;
-    }
 
     //
     // INTERNAL PURE

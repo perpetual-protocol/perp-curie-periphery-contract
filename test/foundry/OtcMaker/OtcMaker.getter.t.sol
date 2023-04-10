@@ -19,7 +19,7 @@ contract OtcMakerGetterTest is OtcMakerSetup {
         vm.mockCall(
             address(perp.accountBalance()),
             abi.encodeWithSelector(IAccountBalance.getTotalAbsPositionValue.selector),
-            abi.encode(10 * 10**(18 - usdc.decimals()))
+            abi.encode(10 * 10 ** (18 - usdc.decimals()))
         ); // margin ratio = 5 / 10 = 50%, leverage = 2x
 
         assertTrue(otcMaker.isMarginSufficient() == true);
@@ -27,7 +27,7 @@ contract OtcMakerGetterTest is OtcMakerSetup {
         vm.mockCall(
             address(perp.accountBalance()),
             abi.encodeWithSelector(IAccountBalance.getTotalAbsPositionValue.selector),
-            abi.encode(11 * 10**(18 - usdc.decimals()))
+            abi.encode(11 * 10 ** (18 - usdc.decimals()))
         ); // margin ratio = 5 / 11 = 45.4545%, leverage = 2.2x
 
         assertTrue(otcMaker.isMarginSufficient() == false);

@@ -34,7 +34,7 @@
     "build": "hardhat compile",
     "test": "hardhat test",
     "test-parallel": "hardhat test --parallel",
-    "foundry-test": "forge test -vvv",
+    "foundry-test": "npm run foundry-build-uniswap && forge test -vvv",
     "foundry-build-uniswap": "forge build --contracts node_modules/@uniswap/v3-core/contracts/UniswapV3Factory.sol",
     "lint": "npm run lint-contracts && npm run lint-tests",
     "lint-contracts": "solhint 'contracts/**/*.sol'",

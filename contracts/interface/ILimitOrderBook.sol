@@ -106,11 +106,7 @@ interface ILimitOrderBook {
     /// @param signature The EIP-712 signature of `order` generated from `eth_signTypedData_V4`
     /// @param roundIdWhenTriggered Chainlink `roundId` when triggerPrice is satisfied
     // Only available if orderType is StopLossLimitOrder/TakeProfitLimitOrder, otherwise set to 0
-    function fillLimitOrder(
-        LimitOrder memory order,
-        bytes memory signature,
-        uint80 roundIdWhenTriggered
-    ) external;
+    function fillLimitOrder(LimitOrder memory order, bytes memory signature, uint80 roundIdWhenTriggered) external;
 
     /// @param order LimitOrder struct
     function cancelLimitOrder(LimitOrder memory order) external;
@@ -118,4 +114,6 @@ interface ILimitOrderBook {
     function getOrderStatus(bytes32 orderHash) external view returns (ILimitOrderBook.OrderStatus);
 
     function getOrderHash(LimitOrder memory order) external view returns (bytes32);
+
+    function isWhitelistContractCaller(address caller) external view returns (bool);
 }

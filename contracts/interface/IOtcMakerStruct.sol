@@ -3,16 +3,22 @@ pragma solidity 0.7.6;
 
 interface IOtcMakerStruct {
     struct OpenPositionForParams {
-        bytes signature;
+        address trader;
         address baseToken;
-        int256 amount;
+        bool isBaseToQuote;
+        bool isExactInput;
+        uint256 amount;
         uint256 oppositeAmountBound;
         uint256 deadline;
-        bytes referralCode;
+        uint160 sqrtPriceLimitX96;
+        bytes32 referralCode;
+    }
+
+    struct JitLiquidityParams {
         uint256 liquidityBase;
         uint256 liquidityQuote;
-        int24 upperTick;
         int24 lowerTick;
+        int24 upperTick;
     }
 
     struct OpenPositionParams {

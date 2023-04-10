@@ -7,6 +7,7 @@ pragma solidity 0.7.6;
 abstract contract OtcMakerStorageV1 {
     address internal _caller;
     address internal _clearingHouse;
+    address internal _limitOrderBook;
     address internal _vault;
     address internal _accountBalance;
     uint24 internal _marginRatioLimit;
