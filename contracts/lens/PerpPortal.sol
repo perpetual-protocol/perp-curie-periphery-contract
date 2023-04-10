@@ -106,8 +106,13 @@ contract PerpPortal {
         return IExchange(_exchange).getPendingFundingPayment(trader, baseToken);
     }
 
+    /// @notice (Deprecated function, will be removed in the next release)
     function getSqrtMarkTwapX96(address baseToken, uint32 twapInterval) external view returns (uint160) {
-        return IExchange(_exchange).getSqrtMarkTwapX96(baseToken, twapInterval);
+        return IExchange(_exchange).getSqrtMarketTwapX96(baseToken, twapInterval);
+    }
+
+    function getSqrtMarketTwapX96(address baseToken, uint32 twapInterval) external view returns (uint160) {
+        return IExchange(_exchange).getSqrtMarketTwapX96(baseToken, twapInterval);
     }
 
     function getPnlToBeRealized(IExchange.RealizePnlParams memory params) external view returns (int256) {
