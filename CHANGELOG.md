@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [unreleased]
+### Added
+- Add `PerpPortal.getSqrtMarketTwapX96()` to return market twap.
+
+### Deprecated
+- `PerpPortal.getSqrtMarkTwapX96(address baseToken, uint32 twapInterval)` will be deprecated at later releases. Suggest to use `PerpPortal.getSqrtMarketTwapX96()` instead.
+
+
 ## [1.4.2] - 2023-04-10
 - Support Curie v2.6.0
 
