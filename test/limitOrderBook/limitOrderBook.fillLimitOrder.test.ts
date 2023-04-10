@@ -408,7 +408,7 @@ describe("LimitOrderBook fillLimitOrder", function () {
         )
     })
 
-    it.only("force error, fillLimitOrder by whitelisted EOA", async () => {
+    it("force error, fillLimitOrder by whitelisted EOA", async () => {
         // long 0.1 ETH with $300 (limit price $3000)
         const limitOrder = {
             orderType: OrderType.LimitOrder,
@@ -1118,5 +1118,18 @@ describe("LimitOrderBook fillLimitOrder", function () {
         await expect(limitOrderBook.connect(keeper).fillLimitOrder(badLimitOrder, signature, "0")).to.revertedWith(
             "function was called with incorrect parameters",
         )
+    })
+
+    describe("whitelistContractCaller", () => {
+        it("setWhitelistContractCaller correctly", async () => {
+            const testKeeperContractFactory = await ethers.getContractFactory("TestKeeper")
+            const testKeeperContract = (await testKeeperContractFactory.deploy(limitOrderBook.address)) as TestKeeper
+
+            await limitOrderBook.setWhitelistContractCaller(testKeeperContract.address, true)
+            expect(await limitOrderBook.isWhitelistContractCaller(testKeeperContract.address)).to.be.true
+
+            await limitOrderBook.setWhitelistContractCaller(testKeeperContract.address, false)
+            expect(await limitOrderBook.isWhitelistContractCaller(testKeeperContract.address)).to.be.false
+        })
     })
 })

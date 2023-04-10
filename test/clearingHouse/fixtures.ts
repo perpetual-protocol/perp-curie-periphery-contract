@@ -126,7 +126,7 @@ export function createClearingHouseFixture(
             accountBalance.address,
             exchange.address,
         )
-        await insuranceFund.setBorrower(vault.address)
+
         await accountBalance.setVault(vault.address)
 
         // deploy a pool

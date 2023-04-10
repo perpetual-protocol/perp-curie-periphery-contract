@@ -107,6 +107,8 @@ contract LimitOrderBook is
     }
 
     function setWhitelistContractCaller(address caller, bool enable) external onlyOwner {
+        // LOB_NCA: Not contract address
+        require(caller.isContract(), "LOB_NCA");
         _whitelistedContractCaller[caller] = enable;
     }
 
@@ -120,7 +122,7 @@ contract LimitOrderBook is
 
         // short term solution: mitigate that attacker can drain LimitOrderRewardVault
         // LOB_SMBE: Sender Must Be EOA
-        require(!sender.isContract() || isWhitelistContractCaller(sender), "LOB_SMBE");
+        require(tx.origin == sender || isWhitelistContractCaller(sender), "LOB_SMBE");
 
         (, bytes32 orderHash) = _verifySigner(order, signature);
 
