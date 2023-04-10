@@ -6,7 +6,15 @@ import { IOtcMakerEvent } from "./IOtcMakerEvent.sol";
 import { IOtcMakerStruct } from "./IOtcMakerStruct.sol";
 
 interface IOtcMaker is IOtcMakerStruct, IOtcMakerEvent {
-    function openPositionFor(OpenPositionForParams calldata params) external returns (uint256 base, uint256 quote);
+    //
+    // EXTERNAL NON-VIEW
+    //
+
+    function openPositionFor(
+        OpenPositionForParams calldata openPositionForParams,
+        JitLiquidityParams calldata jitLiquidityParams,
+        bytes calldata signature
+    ) external returns (uint256 base, uint256 quote);
 
     function openPosition(OpenPositionParams calldata params) external returns (uint256 base, uint256 quote);
 
@@ -28,7 +36,17 @@ interface IOtcMaker is IOtcMakerStruct, IOtcMakerEvent {
 
     function setMarginRatioLimit(uint24 openMarginRatioLimitArg) external;
 
-    function isMarginSufficient() external view returns (bool);
+    //
+    // EXTERNAL VIEW
+    //
 
     function getCaller() external view returns (address);
+
+    //
+    // PUBLIC VIEW
+    //
+
+    function isMarginSufficient() external view returns (bool);
+
+    function getOpenPositionForHash(OpenPositionForParams memory params) external view returns (bytes32);
 }

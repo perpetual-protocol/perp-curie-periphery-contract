@@ -27,7 +27,7 @@ contract OtcMaker is SafeOwnable, EIP712Upgradeable, IOtcMaker, OtcMakerStorageV
     bytes32 public constant OTC_MAKER_TYPEHASH =
         keccak256(
             // solhint-disable-next-line max-line-length
-            "OpenPositionForParams(bytes signature,address baseToken,int256 amount,uint256 oppositeAmountBound,uint256 deadline,bytes referralCode,uint256 liquidityBase,uint256 liquidityQuote,int24 upperTick,int24 lowerTick)"
+            "OpenPositionForParams(address trader, address baseToken, bool isBaseToQuote, bool isExactInput, uint256 amount, uint256 oppositeAmountBound, uint256 deadline, uint160 sqrtPriceLimitX96, bytes32 referralCode)"
         );
 
     //
@@ -65,15 +65,14 @@ contract OtcMaker is SafeOwnable, EIP712Upgradeable, IOtcMaker, OtcMakerStorageV
     }
 
     // TODO onlyCaller
-    function openPositionFor(OpenPositionForParams calldata params)
-        external
-        override
-        onlyCaller
-        returns (uint256 base, uint256 quote)
-    {
+    function openPositionFor(
+        OpenPositionForParams calldata openPositionForParams,
+        JitLiquidityParams calldata jitLiquidityParams,
+        bytes calldata signature
+    ) external override onlyCaller returns (uint256 base, uint256 quote) {
         _requireMarginSufficient();
 
-        address signer = _obtainSigner(params);
+        address signer = _obtainSigner(openPositionForParams, signature);
 
         // addLiquidity()
         //     AddLiquidityParams{
@@ -180,6 +179,10 @@ contract OtcMaker is SafeOwnable, EIP712Upgradeable, IOtcMaker, OtcMakerStorageV
         return accountValue_18 >= marginRequirement;
     }
 
+    function getOpenPositionForHash(OpenPositionForParams memory params) public view override returns (bytes32) {
+        return _hashTypedDataV4(keccak256(abi.encode(OTC_MAKER_TYPEHASH, params)));
+    }
+
     //
     // INTERNAL NON-VIEW
     //
@@ -188,10 +191,16 @@ contract OtcMaker is SafeOwnable, EIP712Upgradeable, IOtcMaker, OtcMakerStorageV
     // INTERNAL VIEW
     //
 
-    /// @return address signer address
-    function _obtainSigner(OpenPositionForParams calldata params) internal view returns (address) {
-        bytes32 digest = _hashTypedDataV4(keccak256(abi.encode(OTC_MAKER_TYPEHASH, params)));
-        address signer = ECDSAUpgradeable.recover(digest, params.signature);
+    function _obtainSigner(OpenPositionForParams memory params, bytes memory signature)
+        internal
+        view
+        returns (address)
+    {
+        bytes32 digest = getOpenPositionForHash(params);
+        address signer = ECDSAUpgradeable.recover(digest, signature);
+
+        // OM_SINT: Signer Is Not Trader
+        require(signer == params.trader, "OM_SINT");
 
         return signer;
     }

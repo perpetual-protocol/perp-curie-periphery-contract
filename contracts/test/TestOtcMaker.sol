@@ -13,7 +13,11 @@ contract TestOtcMaker is OtcMaker {
     // EXTERNAL VIEW
     //
 
-    function obtainSigner(OpenPositionForParams calldata params) external view returns (address) {
-        return _obtainSigner(params);
+    function obtainSigner(OpenPositionForParams calldata openPositionForParams, bytes calldata signature)
+        external
+        view
+        returns (address)
+    {
+        return _obtainSigner(openPositionForParams, signature);
     }
 }
