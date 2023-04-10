@@ -71,9 +71,9 @@ contract OtcMaker is SafeOwnable, EIP712Upgradeable, IOtcMaker, OtcMakerStorageV
         onlyCaller
         returns (uint256 base, uint256 quote)
     {
-        address signer = _obtainSigner(params);
+        _requireMarginSufficient();
 
-        // isMarginSufficientByRatio()
+        address signer = _obtainSigner(params);
 
         // addLiquidity()
         //     AddLiquidityParams{
@@ -163,15 +163,6 @@ contract OtcMaker is SafeOwnable, EIP712Upgradeable, IOtcMaker, OtcMakerStorageV
         return _caller;
     }
 
-    function isMarginSufficient() external view override returns (bool) {
-        int256 accountValue_18 = IClearingHouse(_clearingHouse).getAccountValue(address(this));
-        int256 marginRequirement = IAccountBalance(_accountBalance)
-            .getTotalAbsPositionValue(address(this))
-            .mulRatio(_marginRatioLimit)
-            .toInt256();
-        return accountValue_18 >= marginRequirement;
-    }
-
     //
     // PUBLIC NON-VIEW
     //
@@ -179,6 +170,15 @@ contract OtcMaker is SafeOwnable, EIP712Upgradeable, IOtcMaker, OtcMakerStorageV
     //
     // PUBLIC VIEW
     //
+
+    function isMarginSufficient() public view override returns (bool) {
+        int256 accountValue_18 = IClearingHouse(_clearingHouse).getAccountValue(address(this));
+        int256 marginRequirement = IAccountBalance(_accountBalance)
+            .getTotalAbsPositionValue(address(this))
+            .mulRatio(_marginRatioLimit)
+            .toInt256();
+        return accountValue_18 >= marginRequirement;
+    }
 
     //
     // INTERNAL NON-VIEW
@@ -194,6 +194,11 @@ contract OtcMaker is SafeOwnable, EIP712Upgradeable, IOtcMaker, OtcMakerStorageV
         address signer = ECDSAUpgradeable.recover(digest, params.signature);
 
         return signer;
+    }
+
+    function _requireMarginSufficient() internal view {
+        // OM_IM: insufficient margin
+        require(isMarginSufficient(), "OM_IM");
     }
 
     //
