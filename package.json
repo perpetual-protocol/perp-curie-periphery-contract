@@ -41,7 +41,7 @@
     "prepack": "ts-node --files scripts/prepack.ts"
   },
   "dependencies": {
-    "@perp/curie-contract": "2.6.0-rc.dev3",
+    "@perp/curie-contract": "2.6.0",
     "@perp/perp-oracle-contract": "0.6.5"
   },
   "devDependencies": {
