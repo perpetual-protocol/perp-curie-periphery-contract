@@ -17,6 +17,7 @@ import { AccountBalance } from "@perp/curie-contract/contracts/AccountBalance.so
 import { Vault } from "@perp/curie-contract/contracts/Vault.sol";
 import { QuoteToken } from "@perp/curie-contract/contracts/QuoteToken.sol";
 import { BaseToken } from "@perp/curie-contract/contracts/BaseToken.sol";
+import { IClearingHouse } from "@perp/curie-contract/contracts/interface/IClearingHouse.sol";
 import { IPriceFeed } from "@perp/perp-oracle-contract/contracts/interface/IPriceFeed.sol";
 import { IUniswapV3Factory } from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Factory.sol";
 import { IUniswapV3Pool } from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
@@ -25,10 +26,13 @@ import { ITestExchange } from "../../interface/ITestExchange.sol";
 import { DeployConfig } from "./DeployConfig.sol";
 import { TestERC20 } from "../../../../contracts/test/TestERC20.sol";
 import { TestLimitOrderBook } from "../../../../contracts/test/TestLimitOrderBook.sol";
+import { LimitOrderRewardVault } from "../../../../contracts/limitOrder/LimitOrderRewardVault.sol";
 
 contract PerpSetup is Test, DeployConfig {
     address public alice = makeAddr("alice");
     address public otcCaller = makeAddr("otcCaller");
+    address public maker = makeAddr("maker");
+    address public limitOrderBookOwner = makeAddr("limitOrderBookOwner");
     address internal _BASE_TOKEN_PRICE_FEED = makeAddr("_BASE_TOKEN_PRICE_FEED");
     address internal _BASE_TOKEN_2_PRICE_FEED = makeAddr("_BASE_TOKEN_2_PRICE_FEED");
     MarketRegistry public marketRegistry;
@@ -46,12 +50,15 @@ contract PerpSetup is Test, DeployConfig {
     BaseToken public baseToken2;
     QuoteToken public quoteToken;
     TestERC20 public usdc;
+    TestERC20 public rewardToken;
     TestLimitOrderBook public limitOrderBook;
+    LimitOrderRewardVault public limitOrderRewardVault;
+    uint8 public usdcDecimals = 6;
 
     function setUp() public virtual {
         // External
         uniswapV3Factory = _create_UniswapV3Factory();
-        usdc = _create_TestERC20("USD Coin", "USDC", 6);
+        usdc = _create_TestERC20("USD Coin", "USDC", usdcDecimals);
 
         // Cores
         clearingHouseConfig = _create_ClearingHouseConfig();
@@ -81,7 +88,19 @@ contract PerpSetup is Test, DeployConfig {
         pool = _create_UniswapV3Pool(uniswapV3Factory, baseToken, quoteToken, _DEFAULT_POOL_FEE);
         pool2 = _create_UniswapV3Pool(uniswapV3Factory, baseToken2, quoteToken, _DEFAULT_POOL_FEE);
 
-        limitOrderBook = new TestLimitOrderBook();
+        rewardToken = _create_TestERC20("TestPERP-1", "PERP-1", 18);
+
+        limitOrderRewardVault = new LimitOrderRewardVault();
+        limitOrderRewardVault.initialize(address(rewardToken), 10 ** 18);
+        deal(address(rewardToken), address(limitOrderRewardVault), uint256(-1));
+
+        limitOrderBook = _create_LimitOrderBook(
+            _EIP_712_NAME,
+            _EIP_712_VERSION,
+            address(clearingHouse),
+            address(limitOrderRewardVault),
+            1
+        );
 
         _setter();
 
@@ -146,10 +165,31 @@ contract PerpSetup is Test, DeployConfig {
         return IUniswapV3Pool(poolAddress);
     }
 
-    function _create_MarketRegistry(address uniswapV3FactoryArg, address quoteTokenArg)
-        internal
-        returns (MarketRegistry)
-    {
+    function _create_LimitOrderBook(
+        string memory eip712Name,
+        string memory eip712Version,
+        address clearingHouseArg,
+        address limitOrderBookRewardVaultArg,
+        uint256 minOrderValue
+    ) internal returns (TestLimitOrderBook) {
+        TestLimitOrderBook limitOrderBook = new TestLimitOrderBook();
+        limitOrderBook.initialize(
+            eip712Name,
+            eip712Version,
+            clearingHouseArg,
+            limitOrderBookRewardVaultArg,
+            minOrderValue
+        );
+        limitOrderBook.setOwner(limitOrderBookOwner);
+        vm.prank(limitOrderBookOwner);
+        limitOrderBook.updateOwner();
+        return limitOrderBook;
+    }
+
+    function _create_MarketRegistry(
+        address uniswapV3FactoryArg,
+        address quoteTokenArg
+    ) internal returns (MarketRegistry) {
         MarketRegistry newMarketRegistry = new MarketRegistry();
         newMarketRegistry.initialize(uniswapV3FactoryArg, quoteTokenArg);
         return newMarketRegistry;
@@ -210,10 +250,10 @@ contract PerpSetup is Test, DeployConfig {
         return newInsuranceFund;
     }
 
-    function _create_AccountBalance(address clearingHouseConfigArg, address orderBookArg)
-        internal
-        returns (AccountBalance)
-    {
+    function _create_AccountBalance(
+        address clearingHouseConfigArg,
+        address orderBookArg
+    ) internal returns (AccountBalance) {
         AccountBalance newAccountBalance = new AccountBalance();
         newAccountBalance.initialize(clearingHouseConfigArg, orderBookArg);
         return newAccountBalance;
@@ -230,14 +270,27 @@ contract PerpSetup is Test, DeployConfig {
         return newVault;
     }
 
-    function _create_TestERC20(
-        string memory name,
-        string memory symbol,
-        uint8 decimal
-    ) internal returns (TestERC20) {
+    function _create_TestERC20(string memory name, string memory symbol, uint8 decimal) internal returns (TestERC20) {
         TestERC20 testErc20 = new TestERC20();
         testErc20.__TestERC20_init(name, symbol, decimal);
         return testErc20;
+    }
+
+    function prepareMarket(uint160 initialSqrtPriceX96, uint256 initialPriceFeedPrice) public {
+        // initial market
+        pool.initialize(initialSqrtPriceX96);
+        pool.increaseObservationCardinalityNext(250);
+        marketRegistry.addPool(address(baseToken), pool.fee());
+        marketRegistry.setFeeRatio(address(baseToken), 10000);
+        marketRegistry.setInsuranceFundFeeRatio(address(baseToken), 100000);
+        exchange.setMaxTickCrossedWithinBlock(address(baseToken), 250);
+
+        // mock priceFeed oracle
+        vm.mockCall(
+            _BASE_TOKEN_PRICE_FEED,
+            abi.encodeWithSelector(IPriceFeed.getPrice.selector),
+            abi.encode(initialPriceFeedPrice)
+        );
     }
 
     function _setter() internal {
@@ -259,8 +312,8 @@ contract PerpSetup is Test, DeployConfig {
 
         // clearingHouseConfig
         clearingHouseConfig.setMaxMarketsPerAccount(MAX_MARKETS_PER_ACCOUNT);
-        uint8 settlementTokenDecimals = vault.decimals();
-        clearingHouseConfig.setSettlementTokenBalanceCap(SETTLEMENT_TOKEN_BALANCE_CAP * 10**settlementTokenDecimals);
+        clearingHouseConfig.setSettlementTokenBalanceCap(SETTLEMENT_TOKEN_BALANCE_CAP * 10 ** usdcDecimals);
+        clearingHouseConfig.setTwapInterval(15);
 
         // marketRegistry
         marketRegistry.setClearingHouse(address(clearingHouse));
@@ -283,5 +336,8 @@ contract PerpSetup is Test, DeployConfig {
 
         // vault
         vault.setClearingHouse(address(clearingHouse));
+
+        // limitOrderReward
+        limitOrderRewardVault.setLimitOrderBook(address(limitOrderBook));
     }
 }

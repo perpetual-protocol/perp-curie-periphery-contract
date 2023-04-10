@@ -4,27 +4,44 @@ pragma abicoder v2;
 
 import "forge-std/Test.sol";
 
+import { IDelegateApproval } from "@perp/curie-contract/contracts/interface/IDelegateApproval.sol";
 import { PerpSetup } from "../../helper/perp/PerpSetup.sol";
-import { TestOtcMaker } from "../../../../contracts/test/TestOtcMaker.sol";
+import { OtcMaker } from "../../../../contracts/otcMaker/OtcMaker.sol";
 import { TestERC20 } from "../../../../contracts/test/TestERC20.sol";
 
 contract OtcMakerSetup is Test {
     address public otcMakerOwner = makeAddr("otcMakerOwner");
-    address public alice = makeAddr("alice");
+    address public alice;
+    uint256 public alicePrivateKey;
     address public otcMakerCaller = makeAddr("otcMakerCaller");
     TestERC20 public usdc;
 
     PerpSetup public perp;
-    TestOtcMaker public otcMaker;
+    OtcMaker public otcMaker;
 
     function setUp() public virtual {
+        (alice, alicePrivateKey) = makeAddrAndKey("alice");
+
         perp = new PerpSetup();
         perp.setUp();
-        otcMaker = new TestOtcMaker();
+        otcMaker = new OtcMaker();
         otcMaker.initialize(address(perp.clearingHouse()), address(perp.limitOrderBook()));
         otcMaker.setCaller(otcMakerCaller);
         otcMaker.setOwner(otcMakerOwner);
         otcMaker.setMarginRatioLimit(500_000); // ratio: 50%, max leverage: 2x
+        vm.startPrank(perp.limitOrderBookOwner());
+        perp.limitOrderBook().setWhitelistContractCaller(address(otcMaker), true);
+        vm.stopPrank();
+
+        vm.mockCall(
+            address(0),
+            abi.encodeWithSelector(
+                IDelegateApproval.canOpenPositionFor.selector,
+                address(alice),
+                address(perp.limitOrderBook())
+            ),
+            abi.encode(true)
+        );
 
         vm.prank(otcMakerOwner);
         otcMaker.updateOwner();

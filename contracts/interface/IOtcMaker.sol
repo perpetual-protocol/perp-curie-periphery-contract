@@ -10,7 +10,6 @@ interface IOtcMaker is IOtcMakerStruct, IOtcMakerEvent {
     //
     // EXTERNAL NON-VIEW
     //
-
     function openPositionFor(
         ILimitOrderBook.LimitOrder calldata limitOrderParams,
         JitLiquidityParams calldata jitLiquidityParams,
@@ -40,12 +39,10 @@ interface IOtcMaker is IOtcMakerStruct, IOtcMakerEvent {
     //
     // EXTERNAL VIEW
     //
-
     function getCaller() external view returns (address);
 
     //
     // PUBLIC VIEW
     //
-
     function isMarginSufficient() external view returns (bool);
 }

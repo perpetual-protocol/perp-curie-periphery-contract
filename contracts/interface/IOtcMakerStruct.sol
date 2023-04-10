@@ -17,8 +17,8 @@ interface IOtcMakerStruct {
     struct JitLiquidityParams {
         uint256 liquidityBase;
         uint256 liquidityQuote;
-        int24 upperTick;
         int24 lowerTick;
+        int24 upperTick;
     }
 
     struct OpenPositionParams {

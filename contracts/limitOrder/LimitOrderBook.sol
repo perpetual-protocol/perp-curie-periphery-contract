@@ -47,7 +47,6 @@ contract LimitOrderBook is
     //
     // EXTERNAL NON-VIEW
     //
-
     function initialize(
         string memory name,
         string memory version,
@@ -197,12 +196,11 @@ contract LimitOrderBook is
     //
     // PUBLIC VIEW
     //
-
     function getOrderHash(LimitOrder memory order) public view override returns (bytes32) {
         return _hashTypedDataV4(keccak256(abi.encode(LIMIT_ORDER_TYPEHASH, order)));
     }
 
-    function isWhitelistContractCaller(address caller) public view returns (bool) {
+    function isWhitelistContractCaller(address caller) public view override returns (bool) {
         return _whitelistedContractCaller[caller];
     }
 
@@ -213,15 +211,10 @@ contract LimitOrderBook is
     //
     // INTERNAL NON-VIEW
     //
-
-    function _fillLimitOrder(LimitOrder memory order, uint80 roundIdWhenTriggered)
-        internal
-        returns (
-            int256,
-            int256,
-            uint256
-        )
-    {
+    function _fillLimitOrder(
+        LimitOrder memory order,
+        uint80 roundIdWhenTriggered
+    ) internal returns (int256, int256, uint256) {
         _verifyTriggerPrice(order, roundIdWhenTriggered);
 
         int256 oldTakerPositionSize = IAccountBalance(accountBalance).getTakerPositionSize(
@@ -278,7 +271,6 @@ contract LimitOrderBook is
     //
     // INTERNAL VIEW
     //
-
     function _verifySigner(LimitOrder memory order, bytes memory signature) internal view returns (address, bytes32) {
         bytes32 orderHash = getOrderHash(order);
         address signer = ECDSAUpgradeable.recover(orderHash, signature);
@@ -337,14 +329,10 @@ contract LimitOrderBook is
         return _formatDecimals(price, chainlinkPriceFeed.decimals(), 18);
     }
 
-    function _formatDecimals(
-        uint256 price,
-        uint8 fromDecimals,
-        uint8 toDecimals
-    ) internal pure returns (uint256) {
+    function _formatDecimals(uint256 price, uint8 fromDecimals, uint8 toDecimals) internal pure returns (uint256) {
         // LOB_ID: Invalid Decimals
         require(fromDecimals <= toDecimals, "LOB_ID");
 
-        return price.mul(10**(toDecimals.sub(fromDecimals)));
+        return price.mul(10 ** (toDecimals.sub(fromDecimals)));
     }
 }
