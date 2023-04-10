@@ -378,7 +378,7 @@ describe("LimitOrderBook fillLimitOrder", function () {
         await expect(tx2).to.emit(limitOrderBook, "LimitOrderFilled")
     })
 
-    it("force error, fillLimitOrder by non-EOA", async () => {
+    it("force error, fillLimitOrder by non-whitelisted EOA", async () => {
         // long 0.1 ETH with $300 (limit price $3000)
         const limitOrder = {
             orderType: OrderType.LimitOrder,
@@ -406,6 +406,35 @@ describe("LimitOrderBook fillLimitOrder", function () {
         await expect(testKeeperContract.connect(keeper).fillLimitOrder(limitOrder, signature, "0")).to.revertedWith(
             "LOB_SMBE",
         )
+    })
+
+    it.only("force error, fillLimitOrder by whitelisted EOA", async () => {
+        // long 0.1 ETH with $300 (limit price $3000)
+        const limitOrder = {
+            orderType: OrderType.LimitOrder,
+            salt: 1,
+            trader: trader.address,
+            baseToken: baseToken.address,
+            isBaseToQuote: false,
+            isExactInput: false,
+            amount: parseEther("0.1").toString(),
+            oppositeAmountBound: parseEther("300").toString(),
+            deadline: ethers.constants.MaxUint256,
+            sqrtPriceLimitX96: 0,
+            referralCode: ethers.constants.HashZero,
+            reduceOnly: false,
+            roundIdWhenCreated: "0",
+            triggerPrice: parseEther("0").toString(),
+        }
+
+        const signature = await getSignature(fixture, limitOrder, trader)
+
+        const testKeeperContractFactory = await ethers.getContractFactory("TestKeeper")
+        const testKeeperContract = (await testKeeperContractFactory.deploy(limitOrderBook.address)) as TestKeeper
+        limitOrderBook.setWhitelistContractCaller(testKeeperContract.address, true)
+
+        // keeper (EOA) -> TestKeeper (contract) -> LimitOrderBook
+        await expect(testKeeperContract.connect(keeper).fillLimitOrder(limitOrder, signature, "0"))
     })
 
     it("force error, order value is too small", async () => {

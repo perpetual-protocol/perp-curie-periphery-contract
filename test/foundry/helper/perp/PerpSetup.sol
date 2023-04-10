@@ -23,15 +23,12 @@ import { IUniswapV3Pool } from "@uniswap/v3-core/contracts/interfaces/IUniswapV3
 
 import { ITestExchange } from "../../interface/ITestExchange.sol";
 import { DeployConfig } from "./DeployConfig.sol";
-import { OtcMaker } from "../../../../contracts/otcMaker/OtcMaker.sol";
 import { TestERC20 } from "../../../../contracts/test/TestERC20.sol";
+import { TestLimitOrderBook } from "../../../../contracts/test/TestLimitOrderBook.sol";
 
 contract PerpSetup is Test, DeployConfig {
     address public alice = makeAddr("alice");
     address public otcCaller = makeAddr("otcCaller");
-
-    OtcMaker otcMaker;
-
     address internal _BASE_TOKEN_PRICE_FEED = makeAddr("_BASE_TOKEN_PRICE_FEED");
     address internal _BASE_TOKEN_2_PRICE_FEED = makeAddr("_BASE_TOKEN_2_PRICE_FEED");
     MarketRegistry public marketRegistry;
@@ -49,6 +46,7 @@ contract PerpSetup is Test, DeployConfig {
     BaseToken public baseToken2;
     QuoteToken public quoteToken;
     TestERC20 public usdc;
+    TestLimitOrderBook public limitOrderBook;
 
     function setUp() public virtual {
         // External
@@ -83,6 +81,8 @@ contract PerpSetup is Test, DeployConfig {
         pool = _create_UniswapV3Pool(uniswapV3Factory, baseToken, quoteToken, _DEFAULT_POOL_FEE);
         pool2 = _create_UniswapV3Pool(uniswapV3Factory, baseToken2, quoteToken, _DEFAULT_POOL_FEE);
 
+        limitOrderBook = new TestLimitOrderBook();
+
         _setter();
 
         // Label addresses for easier debugging
@@ -100,10 +100,6 @@ contract PerpSetup is Test, DeployConfig {
         vm.label(address(pool), "Pool");
         vm.label(address(pool2), "Pool2");
         vm.label(address(usdc), "Usdc");
-
-        otcMaker = new OtcMaker();
-
-        otcMaker.initialize(address(clearingHouse));
     }
 
     function _create_QuoteToken() internal returns (QuoteToken) {

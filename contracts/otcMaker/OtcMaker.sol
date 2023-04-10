@@ -18,6 +18,7 @@ import { IAccountBalance } from "@perp/curie-contract/contracts/interface/IAccou
 import { SafeOwnable } from "../base/SafeOwnable.sol";
 
 import { IOtcMaker } from "../interface/IOtcMaker.sol";
+import { ILimitOrderBook } from "../interface/ILimitOrderBook.sol";
 import { OtcMakerStorageV1 } from "../storage/OtcMakerStorage.sol";
 
 contract OtcMaker is SafeOwnable, EIP712Upgradeable, IOtcMaker, OtcMakerStorageV1 {
@@ -25,12 +26,6 @@ contract OtcMaker is SafeOwnable, EIP712Upgradeable, IOtcMaker, OtcMakerStorageV
     using PerpMath for uint256;
     using PerpSafeCast for int256;
     using PerpSafeCast for uint256;
-
-    bytes32 public constant OTC_MAKER_TYPEHASH =
-        keccak256(
-            // solhint-disable-next-line max-line-length
-            "OpenPositionForParams(address trader, address baseToken, bool isBaseToQuote, bool isExactInput, uint256 amount, uint256 oppositeAmountBound, uint256 deadline, uint160 sqrtPriceLimitX96, bytes32 referralCode)"
-        );
 
     //
     // MODIFIER
@@ -45,10 +40,11 @@ contract OtcMaker is SafeOwnable, EIP712Upgradeable, IOtcMaker, OtcMakerStorageV
     // EXTERNAL NON-VIEW
     //
 
-    function initialize(address clearingHouseArg) external initializer {
+    function initialize(address clearingHouseArg, address limitOrderBookArg) external initializer {
         __SafeOwnable_init();
         _caller = _msgSender();
         _clearingHouse = clearingHouseArg;
+        _limitOrderBook = limitOrderBookArg;
         _vault = IClearingHouse(_clearingHouse).getVault();
         _accountBalance = IClearingHouse(_clearingHouse).getAccountBalance();
     }
@@ -66,20 +62,18 @@ contract OtcMaker is SafeOwnable, EIP712Upgradeable, IOtcMaker, OtcMakerStorageV
         IVault(_vault).deposit(token, amount);
     }
 
-    // TODO onlyCaller
     function openPositionFor(
-        OpenPositionForParams calldata openPositionForParams,
+        ILimitOrderBook.LimitOrder calldata limitOrderParams,
         JitLiquidityParams calldata jitLiquidityParams,
         bytes calldata signature
-    ) external override onlyCaller returns (uint256 base, uint256 quote) {
-        _requireMarginSufficient();
-
-        address signer = _obtainSigner(openPositionForParams, signature);
+    ) external override onlyCaller {
+        // OM_NLO: not limit order
+        require(limitOrderParams.orderType == ILimitOrderBook.OrderType.LimitOrder, "OM_NLO");
 
         // TODO should we set minBase & minQuote's percentage as a constant in contract?
         IClearingHouse.AddLiquidityResponse memory addLiquidityResponse = IClearingHouse(_clearingHouse).addLiquidity(
             IClearingHouse.AddLiquidityParams({
-                baseToken: openPositionForParams.baseToken,
+                baseToken: limitOrderParams.baseToken,
                 base: jitLiquidityParams.liquidityBase,
                 quote: jitLiquidityParams.liquidityQuote,
                 lowerTick: jitLiquidityParams.lowerTick,
@@ -87,51 +81,26 @@ contract OtcMaker is SafeOwnable, EIP712Upgradeable, IOtcMaker, OtcMakerStorageV
                 minBase: FullMath.mulDiv(jitLiquidityParams.liquidityBase, 9, 10),
                 minQuote: FullMath.mulDiv(jitLiquidityParams.liquidityQuote, 9, 10),
                 useTakerBalance: false,
-                deadline: openPositionForParams.deadline
+                deadline: block.timestamp
             })
         );
 
-        (base, quote, ) = IClearingHouse(_clearingHouse).openPositionFor(
-            signer,
-            IClearingHouse.OpenPositionParams({
-                baseToken: openPositionForParams.baseToken,
-                isBaseToQuote: openPositionForParams.isBaseToQuote,
-                isExactInput: openPositionForParams.isExactInput,
-                amount: openPositionForParams.amount,
-                oppositeAmountBound: openPositionForParams.oppositeAmountBound,
-                deadline: openPositionForParams.deadline,
-                sqrtPriceLimitX96: openPositionForParams.sqrtPriceLimitX96,
-                referralCode: openPositionForParams.referralCode
-            })
-        );
+        ILimitOrderBook(_limitOrderBook).fillLimitOrder(limitOrderParams, signature, 0);
 
         IClearingHouse(_clearingHouse).removeLiquidity(
             IClearingHouse.RemoveLiquidityParams({
-                baseToken: openPositionForParams.baseToken,
+                baseToken: limitOrderParams.baseToken,
                 lowerTick: jitLiquidityParams.lowerTick,
                 upperTick: jitLiquidityParams.upperTick,
                 liquidity: addLiquidityResponse.liquidity.toUint128(),
                 minBase: FullMath.mulDiv(jitLiquidityParams.liquidityBase, 9, 10),
                 minQuote: FullMath.mulDiv(jitLiquidityParams.liquidityQuote, 9, 10),
-                deadline: openPositionForParams.deadline
+                deadline: block.timestamp
             })
         );
 
-        _requireMarginSufficient();
-
-        emit OpenPositionFor(
-            signer,
-            openPositionForParams.baseToken,
-            openPositionForParams.isBaseToQuote,
-            openPositionForParams.isExactInput,
-            openPositionForParams.amount,
-            openPositionForParams.oppositeAmountBound,
-            openPositionForParams.deadline,
-            openPositionForParams.sqrtPriceLimitX96,
-            openPositionForParams.referralCode
-        );
-
-        return (base, quote);
+        // OM_IM: insufficient margin
+        require(isMarginSufficient(), "OM_IM");
     }
 
     // TODO onlyCaller -> emergency margin adjustment to manage OtcMaker's margin ratio
@@ -193,10 +162,6 @@ contract OtcMaker is SafeOwnable, EIP712Upgradeable, IOtcMaker, OtcMakerStorageV
         return accountValue_18 >= marginRequirement;
     }
 
-    function getOpenPositionForHash(OpenPositionForParams memory params) public view override returns (bytes32) {
-        return _hashTypedDataV4(keccak256(abi.encode(OTC_MAKER_TYPEHASH, params)));
-    }
-
     //
     // INTERNAL NON-VIEW
     //
@@ -204,25 +169,6 @@ contract OtcMaker is SafeOwnable, EIP712Upgradeable, IOtcMaker, OtcMakerStorageV
     //
     // INTERNAL VIEW
     //
-
-    function _obtainSigner(OpenPositionForParams memory params, bytes memory signature)
-        internal
-        view
-        returns (address)
-    {
-        bytes32 digest = getOpenPositionForHash(params);
-        address signer = ECDSAUpgradeable.recover(digest, signature);
-
-        // OM_SINT: Signer Is Not Trader
-        require(signer == params.trader, "OM_SINT");
-
-        return signer;
-    }
-
-    function _requireMarginSufficient() internal view {
-        // OM_IM: insufficient margin
-        require(isMarginSufficient(), "OM_IM");
-    }
 
     //
     // INTERNAL PURE

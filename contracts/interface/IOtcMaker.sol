@@ -4,6 +4,7 @@ pragma abicoder v2;
 
 import { IOtcMakerEvent } from "./IOtcMakerEvent.sol";
 import { IOtcMakerStruct } from "./IOtcMakerStruct.sol";
+import { ILimitOrderBook } from "./ILimitOrderBook.sol";
 
 interface IOtcMaker is IOtcMakerStruct, IOtcMakerEvent {
     //
@@ -11,10 +12,10 @@ interface IOtcMaker is IOtcMakerStruct, IOtcMakerEvent {
     //
 
     function openPositionFor(
-        OpenPositionForParams calldata openPositionForParams,
+        ILimitOrderBook.LimitOrder calldata limitOrderParams,
         JitLiquidityParams calldata jitLiquidityParams,
         bytes calldata signature
-    ) external returns (uint256 base, uint256 quote);
+    ) external;
 
     function openPosition(OpenPositionParams calldata params) external returns (uint256 base, uint256 quote);
 
@@ -47,6 +48,4 @@ interface IOtcMaker is IOtcMakerStruct, IOtcMakerEvent {
     //
 
     function isMarginSufficient() external view returns (bool);
-
-    function getOpenPositionForHash(OpenPositionForParams memory params) external view returns (bytes32);
 }
