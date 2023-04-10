@@ -32,8 +32,4 @@ contract OtcMakerGetterTest is OtcMakerSetup {
 
         assertTrue(otcMaker.isMarginSufficient() == false);
     }
-
-    function test_getOpenPositionForHash() public {
-        // TODO
-    }
 }
