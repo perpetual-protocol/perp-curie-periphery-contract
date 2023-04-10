@@ -5,7 +5,7 @@ pragma abicoder v2;
 import "forge-std/Test.sol";
 
 import { PerpSetup } from "../../helper/perp/PerpSetup.sol";
-import { OtcMaker } from "../../../../contracts/otcMaker/OtcMaker.sol";
+import { TestOtcMaker } from "../../../../contracts/test/TestOtcMaker.sol";
 import { TestERC20 } from "../../../../contracts/test/TestERC20.sol";
 
 contract OtcMakerSetup is Test {
@@ -15,12 +15,12 @@ contract OtcMakerSetup is Test {
     TestERC20 public usdc;
 
     PerpSetup public perp;
-    OtcMaker public otcMaker;
+    TestOtcMaker public otcMaker;
 
     function setUp() public virtual {
         perp = new PerpSetup();
         perp.setUp();
-        otcMaker = new OtcMaker();
+        otcMaker = new TestOtcMaker();
         otcMaker.initialize(address(perp.clearingHouse()));
         otcMaker.setCaller(otcMakerCaller);
         otcMaker.setOwner(otcMakerOwner);
