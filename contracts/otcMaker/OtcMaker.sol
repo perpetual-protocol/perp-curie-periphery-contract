@@ -90,6 +90,8 @@ contract OtcMaker is SafeOwnable, EIP712Upgradeable, IOtcMaker, OtcMakerStorageV
             })
         );
 
+        // TODO check if we should add a new order type like ILimitOrderBook.OrderType.LimitOrder
+        // roundIdWhenTriggered should be 0, since we will only send OrderType.LimitOrder
         ILimitOrderBook(_limitOrderBook).fillLimitOrder(limitOrderParams, signature, 0);
 
         IClearingHouse(_clearingHouse).removeLiquidity(

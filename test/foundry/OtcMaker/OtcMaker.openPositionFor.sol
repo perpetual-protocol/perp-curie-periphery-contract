@@ -25,6 +25,8 @@ contract OtcMakerOpenPositionForTest is OtcMakerSetup, EIP712Upgradeable {
         ); // current tick: 69081
         skip(15);
 
+        // alice spend 1 quoteToken to long baseToken
+        // amount => The input amount if isExactInput is true, otherwise the output amount
         ILimitOrderBook.LimitOrder memory limitOrderParams = ILimitOrderBook.LimitOrder(
             ILimitOrderBook.OrderType.LimitOrder,
             1,
@@ -42,18 +44,17 @@ contract OtcMakerOpenPositionForTest is OtcMakerSetup, EIP712Upgradeable {
             0
         );
 
-        bytes32 digest = perp.limitOrderBook().getOrderHash(limitOrderParams);
-        (uint8 v, bytes32 r, bytes32 s) = vm.sign(alicePrivateKey, digest);
-
         uint256 toppedUpAmount = 100000 * 10**perp.usdcDecimals();
         _topUpUsdc(otcMakerOwner, toppedUpAmount);
         _topUpUsdc(alice, toppedUpAmount);
 
+        // otcMaker deposit to PERP vault
         vm.startPrank(otcMakerOwner);
         usdc.approve(address(otcMaker), type(uint256).max);
         otcMaker.deposit(address(usdc), toppedUpAmount);
         vm.stopPrank();
 
+        // alice deposit to PERP vault
         vm.startPrank(alice);
         usdc.approve(address(perp.vault()), type(uint256).max);
         perp.vault().deposit(address(usdc), toppedUpAmount);
@@ -67,13 +68,16 @@ contract OtcMakerOpenPositionForTest is OtcMakerSetup, EIP712Upgradeable {
             10000 * 1e18
         );
 
-        (uint160 sqrtPriceX96, int24 tick, , , , , ) = perp.pool().slot0();
         (uint256 amount0, uint256 amount1) = LiquidityAmounts.getAmountsForLiquidity(
             initialSqrtPriceX96,
             TickMath.getSqrtRatioAtTick(69060),
             TickMath.getSqrtRatioAtTick(69120),
             liquidity
         );
+
+        // prepare signed data
+        bytes32 digest = perp.limitOrderBook().getOrderHash(limitOrderParams);
+        (, bytes32 r, bytes32 s) = vm.sign(alicePrivateKey, digest);
 
         vm.prank(otcMakerCaller);
         otcMaker.openPositionFor(
@@ -82,6 +86,7 @@ contract OtcMakerOpenPositionForTest is OtcMakerSetup, EIP712Upgradeable {
             abi.encodePacked(r, s, bytes1(0x1c)) // copied from `ether.js`'s `joinSignature`
         );
 
+        // expect alice to long position, our otcMaker should hold short position
         assertApproxEqAbs(
             (perp.accountBalance().getTakerPositionSize(address(otcMaker), address(perp.baseToken())) * -1).toUint256(),
             perp.accountBalance().getTakerPositionSize(address(alice), address(perp.baseToken())).toUint256(),
