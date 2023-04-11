@@ -39,14 +39,28 @@ contract OtcMakerOpenPositionForTest is OtcMakerSetup, EIP712Upgradeable {
         _depositToPerpFromOtcMaker(toppedUpAmount);
         _depositToPerpFromAlice(toppedUpAmount);
 
-        (uint256 amount0, uint256 amount1) = _getAmountsByLiquidity(initialSqrtPriceX96);
-        (, bytes32 r, bytes32 s) = _getSignByLimitOrderParams(limitOrderParams);
+        uint128 liquidity = LiquidityAmounts.getLiquidityForAmounts(
+            initialSqrtPriceX96,
+            TickMath.getSqrtRatioAtTick(69060),
+            TickMath.getSqrtRatioAtTick(69120),
+            10 * 1e18,
+            10000 * 1e18
+        );
+
+        (uint256 amount0, uint256 amount1) = LiquidityAmounts.getAmountsForLiquidity(
+            initialSqrtPriceX96,
+            TickMath.getSqrtRatioAtTick(69060),
+            TickMath.getSqrtRatioAtTick(69120),
+            liquidity
+        );
+
+        bytes memory signature = _signLimitOrderParams(alicePrivateKey, limitOrderParams);
 
         vm.prank(otcMakerCaller);
         otcMaker.openPositionFor(
             limitOrderParams,
             IOtcMakerStruct.JitLiquidityParams(amount0, amount1, 69060, 69120),
-            abi.encodePacked(r, s, bytes1(0x1c)) // copied from `ether.js`'s `joinSignature`
+            signature
         );
 
         // expect alice to long position, our otcMaker should hold short position
@@ -83,15 +97,29 @@ contract OtcMakerOpenPositionForTest is OtcMakerSetup, EIP712Upgradeable {
             abi.encode(1)
         );
 
-        (uint256 amount0, uint256 amount1) = _getAmountsByLiquidity(initialSqrtPriceX96);
-        (, bytes32 r, bytes32 s) = _getSignByLimitOrderParams(limitOrderParams);
+        uint128 liquidity = LiquidityAmounts.getLiquidityForAmounts(
+            initialSqrtPriceX96,
+            TickMath.getSqrtRatioAtTick(69060),
+            TickMath.getSqrtRatioAtTick(69120),
+            10 * 1e18,
+            10000 * 1e18
+        );
+
+        (uint256 amount0, uint256 amount1) = LiquidityAmounts.getAmountsForLiquidity(
+            initialSqrtPriceX96,
+            TickMath.getSqrtRatioAtTick(69060),
+            TickMath.getSqrtRatioAtTick(69120),
+            liquidity
+        );
+
+        bytes memory signature = _signLimitOrderParams(alicePrivateKey, limitOrderParams);
 
         vm.expectRevert(bytes("OM_IM"));
         vm.prank(otcMakerCaller);
         otcMaker.openPositionFor(
             limitOrderParams,
             IOtcMakerStruct.JitLiquidityParams(amount0, amount1, 69060, 69120),
-            abi.encodePacked(r, s, bytes1(0x1c)) // copied from `ether.js`'s `joinSignature`
+            signature
         );
     }
 
@@ -111,15 +139,29 @@ contract OtcMakerOpenPositionForTest is OtcMakerSetup, EIP712Upgradeable {
             1e18
         );
 
-        (uint256 amount0, uint256 amount1) = _getAmountsByLiquidity(initialSqrtPriceX96);
-        (, bytes32 r, bytes32 s) = _getSignByLimitOrderParams(limitOrderParams);
+        uint128 liquidity = LiquidityAmounts.getLiquidityForAmounts(
+            initialSqrtPriceX96,
+            TickMath.getSqrtRatioAtTick(69060),
+            TickMath.getSqrtRatioAtTick(69120),
+            10 * 1e18,
+            10000 * 1e18
+        );
+
+        (uint256 amount0, uint256 amount1) = LiquidityAmounts.getAmountsForLiquidity(
+            initialSqrtPriceX96,
+            TickMath.getSqrtRatioAtTick(69060),
+            TickMath.getSqrtRatioAtTick(69120),
+            liquidity
+        );
+
+        bytes memory signature = _signLimitOrderParams(alicePrivateKey, limitOrderParams);
 
         vm.expectRevert(bytes("OM_NLO"));
         vm.prank(otcMakerCaller);
         otcMaker.openPositionFor(
             limitOrderParams,
             IOtcMakerStruct.JitLiquidityParams(amount0, amount1, 69060, 69120),
-            abi.encodePacked(r, s, bytes1(0x1c)) // copied from `ether.js`'s `joinSignature`
+            signature
         );
     }
 
@@ -169,35 +211,14 @@ contract OtcMakerOpenPositionForTest is OtcMakerSetup, EIP712Upgradeable {
             );
     }
 
-    function _getAmountsByLiquidity(uint160 initialSqrtPriceX96) internal returns (uint256 amount0, uint256 amount1) {
-        uint128 liquidity = LiquidityAmounts.getLiquidityForAmounts(
-            initialSqrtPriceX96,
-            TickMath.getSqrtRatioAtTick(69060),
-            TickMath.getSqrtRatioAtTick(69120),
-            10 * 1e18,
-            10000 * 1e18
-        );
-
-        return
-            LiquidityAmounts.getAmountsForLiquidity(
-                initialSqrtPriceX96,
-                TickMath.getSqrtRatioAtTick(69060),
-                TickMath.getSqrtRatioAtTick(69120),
-                liquidity
-            );
-    }
-
-    function _getSignByLimitOrderParams(ILimitOrderBook.LimitOrder memory limitOrderParams)
+    function _signLimitOrderParams(uint256 pk, ILimitOrderBook.LimitOrder memory limitOrderParams)
         internal
-        returns (
-            uint8 v,
-            bytes32 r,
-            bytes32 s
-        )
+        returns (bytes memory)
     {
         // prepare signed data
         bytes32 digest = perp.limitOrderBook().getOrderHash(limitOrderParams);
-        return vm.sign(alicePrivateKey, digest);
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(pk, digest);
+        return abi.encodePacked(r, s, bytes1(0x1c)); // copied from `ether.js`'s `joinSignature`
     }
 
     function _prepareMarket(uint160 initialSqrtPriceX96, uint256 price) internal {
