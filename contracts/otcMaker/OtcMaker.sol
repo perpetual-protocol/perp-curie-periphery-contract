@@ -17,6 +17,7 @@ import { IAccountBalance } from "@perp/curie-contract/contracts/interface/IAccou
 
 import { SafeOwnable } from "../base/SafeOwnable.sol";
 
+import { IMerkleRedeem } from "../interface/IMerkleRedeem.sol";
 import { IOtcMaker } from "../interface/IOtcMaker.sol";
 import { ILimitOrderBook } from "../interface/ILimitOrderBook.sol";
 import { OtcMakerStorageV1 } from "../storage/OtcMakerStorage.sol";
@@ -110,14 +111,13 @@ contract OtcMaker is SafeOwnable, EIP712Upgradeable, IOtcMaker, OtcMakerStorageV
         require(isMarginSufficient(), "OM_IM");
     }
 
-    // TODO onlyCaller -> emergency margin adjustment to manage OtcMaker's margin ratio
-    function openPosition(OpenPositionParams calldata params)
+    function openPosition(IClearingHouse.OpenPositionParams calldata params)
         external
         override
         onlyOwner
         returns (uint256 base, uint256 quote)
     {
-        revert();
+        return IClearingHouse(_clearingHouse).openPosition(params);
     }
 
     function withdraw(address token, uint256 amount) external override onlyOwner {
@@ -137,7 +137,7 @@ contract OtcMaker is SafeOwnable, EIP712Upgradeable, IOtcMaker, OtcMakerStorageV
         uint256 claimedBalance,
         bytes32[] calldata _merkleProof
     ) external override onlyOwner {
-        revert();
+        IMerkleRedeem(merkleRedeem).claimWeek(liquidityProvider, week, claimedBalance, _merkleProof);
     }
 
     //

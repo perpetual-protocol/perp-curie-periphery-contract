@@ -2,6 +2,8 @@
 pragma solidity 0.7.6;
 pragma abicoder v2;
 
+import { IClearingHouse } from "@perp/curie-contract/contracts/interface/IClearingHouse.sol";
+
 import { IOtcMakerEvent } from "./IOtcMakerEvent.sol";
 import { IOtcMakerStruct } from "./IOtcMakerStruct.sol";
 import { ILimitOrderBook } from "./ILimitOrderBook.sol";
@@ -17,7 +19,9 @@ interface IOtcMaker is IOtcMakerStruct, IOtcMakerEvent {
         bytes calldata signature
     ) external;
 
-    function openPosition(OpenPositionParams calldata params) external returns (uint256 base, uint256 quote);
+    function openPosition(IClearingHouse.OpenPositionParams calldata params)
+        external
+        returns (uint256 base, uint256 quote);
 
     function deposit(address token, uint256 amount) external;
 
