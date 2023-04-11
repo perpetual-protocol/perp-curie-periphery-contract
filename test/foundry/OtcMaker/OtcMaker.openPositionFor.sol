@@ -15,6 +15,8 @@ import { IOtcMakerStruct } from "../../../contracts/interface/IOtcMakerStruct.so
 contract OtcMakerOpenPositionForTest is OtcMakerSetup, EIP712Upgradeable {
     using PerpSafeCast for int256;
 
+    // NOTE: this test can fail due to foundry's version as getOrderHash() is dependent on contract deployment address
+    //       thus, if this test passes locally while fails in CI, reinstall foundry locally (run "foundryup" again) can solve the issue
     function test_openPositionFor() public {
         uint160 initialSqrtPriceX96 = 2505414483750479311864222358486; // ~= $1000
         perp.prepareMarket(
@@ -43,7 +45,7 @@ contract OtcMakerOpenPositionForTest is OtcMakerSetup, EIP712Upgradeable {
         bytes32 digest = perp.limitOrderBook().getOrderHash(limitOrderParams);
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(alicePrivateKey, digest);
 
-        uint256 toppedUpAmount = 100000 * 10 ** perp.usdcDecimals();
+        uint256 toppedUpAmount = 100000 * 10**perp.usdcDecimals();
         _topUpUsdc(otcMakerOwner, toppedUpAmount);
         _topUpUsdc(alice, toppedUpAmount);
 
