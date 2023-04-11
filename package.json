@@ -1,6 +1,6 @@
 {
   "name": "@perp/curie-periphery-contract",
-  "version": "1.4.2",
+  "version": "1.4.3",
   "description": "Perpetual Protocol Curie (v2) periphery contracts",
   "license": "GPL-3.0-or-later",
   "author": {

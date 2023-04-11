@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 ## [unreleased]
+
+## [1.4.3] - 2023-04-11
 ### Added
 - Add `PerpPortal.getSqrtMarketTwapX96()` to return market twap.
 
