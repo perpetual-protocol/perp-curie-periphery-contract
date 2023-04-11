@@ -13,72 +13,34 @@ import { ILimitOrderBook } from "../../../contracts/interface/ILimitOrderBook.so
 import { IOtcMakerStruct } from "../../../contracts/interface/IOtcMakerStruct.sol";
 import { IClearingHouse } from "@perp/curie-contract/contracts/interface/IClearingHouse.sol";
 
+// This test can fail due to foundry's version,
+// since "getOrderHash()" is dependent on contract deployment address,
+// if so, try re-install foundry locally by run "foundryup" to solve the issue.
 contract OtcMakerOpenPositionForTest is OtcMakerSetup, EIP712Upgradeable {
     using PerpSafeCast for int256;
 
-    // NOTE: this test can fail due to foundry's version as getOrderHash() is dependent on contract deployment address
-    //       thus, if this test passes locally while fails in CI, reinstall foundry locally (run "foundryup" again) can solve the issue
     function test_openPositionFor() public {
-        uint160 initialSqrtPriceX96 = 2505414483750479311864222358486; // ~= $1000
-        perp.prepareMarket(
-            initialSqrtPriceX96,
-            1000 * 1e8 // $1000, and priceFeed decimals is 8
-        ); // current tick: 69081
-        skip(15);
+        // initialSqrtPriceX96 ~= $1000
+        uint160 initialSqrtPriceX96 = 2505414483750479311864222358486;
 
-        // alice spend 1 quoteToken to long baseToken
-        // amount => The input amount if isExactInput is true, otherwise the output amount
-        ILimitOrderBook.LimitOrder memory limitOrderParams = ILimitOrderBook.LimitOrder(
+        // current tick: 69081
+        _prepareMarket(initialSqrtPriceX96, 1000);
+
+        ILimitOrderBook.LimitOrder memory limitOrderParams = _generateLimitOrderParams(
             ILimitOrderBook.OrderType.LimitOrder,
-            1,
-            address(alice),
+            alice,
             address(perp.baseToken()),
             false,
             true,
-            1 * 1e18,
-            0,
-            uint256(-1),
-            0,
-            "",
-            false,
-            0,
-            0
+            1e18
         );
 
         uint256 toppedUpAmount = 100000 * 10**perp.usdcDecimals();
-        _topUpUsdc(otcMakerOwner, toppedUpAmount);
-        _topUpUsdc(alice, toppedUpAmount);
+        _depositToPerpFromOtcMaker(toppedUpAmount);
+        _depositToPerpFromAlice(toppedUpAmount);
 
-        // otcMaker deposit to PERP vault
-        vm.startPrank(otcMakerOwner);
-        usdc.approve(address(otcMaker), type(uint256).max);
-        otcMaker.deposit(address(usdc), toppedUpAmount);
-        vm.stopPrank();
-
-        // alice deposit to PERP vault
-        vm.startPrank(alice);
-        usdc.approve(address(perp.vault()), type(uint256).max);
-        perp.vault().deposit(address(usdc), toppedUpAmount);
-        vm.stopPrank();
-
-        uint128 liquidity = LiquidityAmounts.getLiquidityForAmounts(
-            initialSqrtPriceX96,
-            TickMath.getSqrtRatioAtTick(69060),
-            TickMath.getSqrtRatioAtTick(69120),
-            10 * 1e18,
-            10000 * 1e18
-        );
-
-        (uint256 amount0, uint256 amount1) = LiquidityAmounts.getAmountsForLiquidity(
-            initialSqrtPriceX96,
-            TickMath.getSqrtRatioAtTick(69060),
-            TickMath.getSqrtRatioAtTick(69120),
-            liquidity
-        );
-
-        // prepare signed data
-        bytes32 digest = perp.limitOrderBook().getOrderHash(limitOrderParams);
-        (, bytes32 r, bytes32 s) = vm.sign(alicePrivateKey, digest);
+        (uint256 amount0, uint256 amount1) = _getAmountsByLiquidity(initialSqrtPriceX96);
+        (, bytes32 r, bytes32 s) = _getSignByLimitOrderParams(limitOrderParams);
 
         vm.prank(otcMakerCaller);
         otcMaker.openPositionFor(
@@ -96,72 +58,33 @@ contract OtcMakerOpenPositionForTest is OtcMakerSetup, EIP712Upgradeable {
     }
 
     function test_openPositionFor_margin_is_not_enough() public {
-        uint160 initialSqrtPriceX96 = 2505414483750479311864222358486; // ~= $1000
-        perp.prepareMarket(
-            initialSqrtPriceX96,
-            1000 * 1e8 // $1000, and priceFeed decimals is 8
-        ); // current tick: 69081
-        skip(15);
+        // initialSqrtPriceX96 ~= $1000
+        uint160 initialSqrtPriceX96 = 2505414483750479311864222358486;
 
-        // alice spend 1 quoteToken to long baseToken
-        // amount => The input amount if isExactInput is true, otherwise the output amount
-        ILimitOrderBook.LimitOrder memory limitOrderParams = ILimitOrderBook.LimitOrder(
+        // current tick: 69081
+        _prepareMarket(initialSqrtPriceX96, 1000);
+
+        ILimitOrderBook.LimitOrder memory limitOrderParams = _generateLimitOrderParams(
             ILimitOrderBook.OrderType.LimitOrder,
-            1,
-            address(alice),
+            alice,
             address(perp.baseToken()),
             false,
             true,
-            1 * 1e18,
-            0,
-            uint256(-1),
-            0,
-            "",
-            false,
-            0,
-            0
+            1e18
         );
 
         uint256 toppedUpAmount = 100000 * 10**perp.usdcDecimals();
-        _topUpUsdc(otcMakerOwner, toppedUpAmount);
-        _topUpUsdc(alice, toppedUpAmount);
-
-        // otcMaker deposit to PERP vault
-        vm.startPrank(otcMakerOwner);
-        usdc.approve(address(otcMaker), type(uint256).max);
-        otcMaker.deposit(address(usdc), toppedUpAmount);
-        vm.stopPrank();
-
-        // alice deposit to PERP vault
-        vm.startPrank(alice);
-        usdc.approve(address(perp.vault()), type(uint256).max);
-        perp.vault().deposit(address(usdc), toppedUpAmount);
-        vm.stopPrank();
-
-        uint128 liquidity = LiquidityAmounts.getLiquidityForAmounts(
-            initialSqrtPriceX96,
-            TickMath.getSqrtRatioAtTick(69060),
-            TickMath.getSqrtRatioAtTick(69120),
-            10 * 1e18,
-            10000 * 1e18
-        );
-
-        (uint256 amount0, uint256 amount1) = LiquidityAmounts.getAmountsForLiquidity(
-            initialSqrtPriceX96,
-            TickMath.getSqrtRatioAtTick(69060),
-            TickMath.getSqrtRatioAtTick(69120),
-            liquidity
-        );
-
-        // prepare signed data
-        bytes32 digest = perp.limitOrderBook().getOrderHash(limitOrderParams);
-        (, bytes32 r, bytes32 s) = vm.sign(alicePrivateKey, digest);
+        _depositToPerpFromOtcMaker(toppedUpAmount);
+        _depositToPerpFromAlice(toppedUpAmount);
 
         vm.mockCall(
             address(perp.clearingHouse()),
             abi.encodeWithSelector(IClearingHouse.getAccountValue.selector, address(otcMaker)),
             abi.encode(1)
         );
+
+        (uint256 amount0, uint256 amount1) = _getAmountsByLiquidity(initialSqrtPriceX96);
+        (, bytes32 r, bytes32 s) = _getSignByLimitOrderParams(limitOrderParams);
 
         vm.expectRevert(bytes("OM_IM"));
         vm.prank(otcMakerCaller);
@@ -173,50 +96,23 @@ contract OtcMakerOpenPositionForTest is OtcMakerSetup, EIP712Upgradeable {
     }
 
     function test_openPositionFor_order_type_is_not_limit_order() public {
-        uint160 initialSqrtPriceX96 = 2505414483750479311864222358486; // ~= $1000
-        perp.prepareMarket(
-            initialSqrtPriceX96,
-            1000 * 1e8 // $1000, and priceFeed decimals is 8
-        ); // current tick: 69081
-        skip(15);
+        // initialSqrtPriceX96 ~= $1000
+        uint160 initialSqrtPriceX96 = 2505414483750479311864222358486;
 
-        // alice spend 1 quoteToken to long baseToken
-        // amount => The input amount if isExactInput is true, otherwise the output amount
-        ILimitOrderBook.LimitOrder memory limitOrderParams = ILimitOrderBook.LimitOrder(
+        // current tick: 69081
+        _prepareMarket(initialSqrtPriceX96, 1000);
+
+        ILimitOrderBook.LimitOrder memory limitOrderParams = _generateLimitOrderParams(
             ILimitOrderBook.OrderType.StopLossLimitOrder,
-            1,
-            address(alice),
+            alice,
             address(perp.baseToken()),
             false,
             true,
-            1 * 1e18,
-            0,
-            uint256(-1),
-            0,
-            "",
-            false,
-            0,
-            0
+            1e18
         );
 
-        uint128 liquidity = LiquidityAmounts.getLiquidityForAmounts(
-            initialSqrtPriceX96,
-            TickMath.getSqrtRatioAtTick(69060),
-            TickMath.getSqrtRatioAtTick(69120),
-            10 * 1e18,
-            10000 * 1e18
-        );
-
-        (uint256 amount0, uint256 amount1) = LiquidityAmounts.getAmountsForLiquidity(
-            initialSqrtPriceX96,
-            TickMath.getSqrtRatioAtTick(69060),
-            TickMath.getSqrtRatioAtTick(69120),
-            liquidity
-        );
-
-        // prepare signed data
-        bytes32 digest = perp.limitOrderBook().getOrderHash(limitOrderParams);
-        (, bytes32 r, bytes32 s) = vm.sign(alicePrivateKey, digest);
+        (uint256 amount0, uint256 amount1) = _getAmountsByLiquidity(initialSqrtPriceX96);
+        (, bytes32 r, bytes32 s) = _getSignByLimitOrderParams(limitOrderParams);
 
         vm.expectRevert(bytes("OM_NLO"));
         vm.prank(otcMakerCaller);
@@ -225,5 +121,90 @@ contract OtcMakerOpenPositionForTest is OtcMakerSetup, EIP712Upgradeable {
             IOtcMakerStruct.JitLiquidityParams(amount0, amount1, 69060, 69120),
             abi.encodePacked(r, s, bytes1(0x1c)) // copied from `ether.js`'s `joinSignature`
         );
+    }
+
+    function _depositToPerpFromOtcMaker(uint256 amount) internal {
+        _topUpUsdc(otcMakerOwner, amount);
+
+        vm.startPrank(otcMakerOwner);
+        usdc.approve(address(otcMaker), type(uint256).max);
+        otcMaker.deposit(address(usdc), amount);
+        vm.stopPrank();
+    }
+
+    function _depositToPerpFromAlice(uint256 amount) internal {
+        _topUpUsdc(alice, amount);
+
+        vm.startPrank(alice);
+        usdc.approve(address(perp.vault()), type(uint256).max);
+        perp.vault().deposit(address(usdc), amount);
+        vm.stopPrank();
+    }
+
+    function _generateLimitOrderParams(
+        ILimitOrderBook.OrderType orderType,
+        address trader,
+        address baseToken,
+        bool isBaseToQuote,
+        bool isExactInput,
+        uint256 amount
+    ) internal returns (ILimitOrderBook.LimitOrder memory) {
+        // amount => The input amount if isExactInput is true, otherwise the output amount
+        return
+            ILimitOrderBook.LimitOrder(
+                orderType,
+                1,
+                trader,
+                baseToken,
+                isBaseToQuote,
+                isExactInput,
+                amount,
+                0,
+                uint256(-1),
+                0,
+                "",
+                false,
+                0,
+                0
+            );
+    }
+
+    function _getAmountsByLiquidity(uint160 initialSqrtPriceX96) internal returns (uint256 amount0, uint256 amount1) {
+        uint128 liquidity = LiquidityAmounts.getLiquidityForAmounts(
+            initialSqrtPriceX96,
+            TickMath.getSqrtRatioAtTick(69060),
+            TickMath.getSqrtRatioAtTick(69120),
+            10 * 1e18,
+            10000 * 1e18
+        );
+
+        return
+            LiquidityAmounts.getAmountsForLiquidity(
+                initialSqrtPriceX96,
+                TickMath.getSqrtRatioAtTick(69060),
+                TickMath.getSqrtRatioAtTick(69120),
+                liquidity
+            );
+    }
+
+    function _getSignByLimitOrderParams(ILimitOrderBook.LimitOrder memory limitOrderParams)
+        internal
+        returns (
+            uint8 v,
+            bytes32 r,
+            bytes32 s
+        )
+    {
+        // prepare signed data
+        bytes32 digest = perp.limitOrderBook().getOrderHash(limitOrderParams);
+        return vm.sign(alicePrivateKey, digest);
+    }
+
+    function _prepareMarket(uint160 initialSqrtPriceX96, uint256 price) internal {
+        perp.prepareMarket(
+            initialSqrtPriceX96,
+            price * 1e8 // priceFeed decimals is 8
+        );
+        skip(15);
     }
 }
