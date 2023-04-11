@@ -30,6 +30,7 @@ contract OtcMaker is SafeOwnable, EIP712Upgradeable, IOtcMaker, OtcMakerStorageV
     //
     // MODIFIER
     //
+
     modifier onlyCaller() {
         // OM_NC: not caller
         require(_msgSender() == _caller, "OM_NC");
@@ -39,6 +40,7 @@ contract OtcMaker is SafeOwnable, EIP712Upgradeable, IOtcMaker, OtcMakerStorageV
     //
     // EXTERNAL NON-VIEW
     //
+
     function initialize(address clearingHouseArg, address limitOrderBookArg) external initializer {
         __SafeOwnable_init();
         _caller = _msgSender();
@@ -53,6 +55,10 @@ contract OtcMaker is SafeOwnable, EIP712Upgradeable, IOtcMaker, OtcMakerStorageV
         require(newCaller != address(0), "OM_ZA");
         _caller = newCaller;
         emit UpdateCaller(_caller, newCaller);
+    }
+
+    function setMarginRatioLimit(uint24 marginRatioLimitArg) external override onlyOwner {
+        _marginRatioLimit = marginRatioLimitArg;
     }
 
     function deposit(address token, uint256 amount) external override onlyOwner {
@@ -103,9 +109,12 @@ contract OtcMaker is SafeOwnable, EIP712Upgradeable, IOtcMaker, OtcMakerStorageV
     }
 
     // TODO onlyCaller -> emergency margin adjustment to manage OtcMaker's margin ratio
-    function openPosition(
-        OpenPositionParams calldata params
-    ) external override onlyOwner returns (uint256 base, uint256 quote) {
+    function openPosition(OpenPositionParams calldata params)
+        external
+        override
+        onlyOwner
+        returns (uint256 base, uint256 quote)
+    {
         revert();
     }
 
@@ -129,13 +138,10 @@ contract OtcMaker is SafeOwnable, EIP712Upgradeable, IOtcMaker, OtcMakerStorageV
         revert();
     }
 
-    function setMarginRatioLimit(uint24 marginRatioLimitArg) external override onlyOwner {
-        _marginRatioLimit = marginRatioLimitArg;
-    }
-
     //
     // EXTERNAL VIEW
     //
+
     function getCaller() external view override returns (address) {
         return _caller;
     }
@@ -147,6 +153,7 @@ contract OtcMaker is SafeOwnable, EIP712Upgradeable, IOtcMaker, OtcMakerStorageV
     //
     // PUBLIC VIEW
     //
+
     function isMarginSufficient() public view override returns (bool) {
         int256 accountValue_18 = IClearingHouse(_clearingHouse).getAccountValue(address(this));
         int256 marginRequirement = IAccountBalance(_accountBalance)

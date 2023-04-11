@@ -211,10 +211,14 @@ contract LimitOrderBook is
     //
     // INTERNAL NON-VIEW
     //
-    function _fillLimitOrder(
-        LimitOrder memory order,
-        uint80 roundIdWhenTriggered
-    ) internal returns (int256, int256, uint256) {
+    function _fillLimitOrder(LimitOrder memory order, uint80 roundIdWhenTriggered)
+        internal
+        returns (
+            int256,
+            int256,
+            uint256
+        )
+    {
         _verifyTriggerPrice(order, roundIdWhenTriggered);
 
         int256 oldTakerPositionSize = IAccountBalance(accountBalance).getTakerPositionSize(
@@ -329,10 +333,14 @@ contract LimitOrderBook is
         return _formatDecimals(price, chainlinkPriceFeed.decimals(), 18);
     }
 
-    function _formatDecimals(uint256 price, uint8 fromDecimals, uint8 toDecimals) internal pure returns (uint256) {
+    function _formatDecimals(
+        uint256 price,
+        uint8 fromDecimals,
+        uint8 toDecimals
+    ) internal pure returns (uint256) {
         // LOB_ID: Invalid Decimals
         require(fromDecimals <= toDecimals, "LOB_ID");
 
-        return price.mul(10 ** (toDecimals.sub(fromDecimals)));
+        return price.mul(10**(toDecimals.sub(fromDecimals)));
     }
 }
