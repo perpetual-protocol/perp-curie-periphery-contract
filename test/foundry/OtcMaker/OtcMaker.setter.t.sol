@@ -33,4 +33,13 @@ contract OtcMakerSetterTest is OtcMakerSetup {
         vm.expectRevert(bytes("SO_CNO"));
         otcMaker.setMarginRatioLimit(250000);
     }
+
+    function test_fail_set_marginRatioLimit_out_of_range() public {
+        vm.startPrank(otcMakerOwner);
+        vm.expectRevert(bytes("OM_IMR"));
+        otcMaker.setMarginRatioLimit(62500);
+        vm.expectRevert(bytes("OM_IMR"));
+        otcMaker.setMarginRatioLimit(1000000);
+        vm.stopPrank();
+    }
 }

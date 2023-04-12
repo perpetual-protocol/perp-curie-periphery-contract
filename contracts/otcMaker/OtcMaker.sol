@@ -59,6 +59,7 @@ contract OtcMaker is SafeOwnable, EIP712Upgradeable, IOtcMaker, OtcMakerStorageV
     }
 
     function setMarginRatioLimit(uint24 marginRatioLimitArg) external override onlyOwner {
+        require(marginRatioLimitArg > 62500 && marginRatioLimitArg < 1000000, "OM_IMR");
         _marginRatioLimit = marginRatioLimitArg;
     }
 
