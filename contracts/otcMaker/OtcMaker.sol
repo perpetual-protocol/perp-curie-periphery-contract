@@ -149,6 +149,14 @@ contract OtcMaker is SafeOwnable, EIP712Upgradeable, IOtcMaker, OtcMakerStorageV
         return _caller;
     }
 
+    function getClearingHouse() external view override returns (address) {
+        return _clearingHouse;
+    }
+
+    function getLimitOrderBook() external view override returns (address) {
+        return _limitOrderBook;
+    }
+
     function getMarginRatioLimit() external view override returns (uint24) {
         return _marginRatioLimit;
     }

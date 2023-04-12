@@ -47,6 +47,10 @@ interface IOtcMaker is IOtcMakerStruct, IOtcMakerEvent {
 
     function getCaller() external view returns (address);
 
+    function getClearingHouse() external view returns (address);
+
+    function getLimitOrderBook() external view returns (address);
+
     function getMarginRatioLimit() external view returns (uint24);
 
     //
