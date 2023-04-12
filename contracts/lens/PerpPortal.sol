@@ -10,7 +10,7 @@ import { IOrderBook } from "@perp/curie-contract/contracts/interface/IOrderBook.
 import { IMarketRegistry } from "@perp/curie-contract/contracts/interface/IMarketRegistry.sol";
 import { IOrderBook } from "@perp/curie-contract/contracts/interface/IOrderBook.sol";
 import { IVault } from "@perp/curie-contract/contracts/interface/IVault.sol";
-import { IIndexPrice } from "@perp/curie-contract/contracts/interface/IIndexPrice.sol";
+import { IBaseToken } from "@perp/curie-contract/contracts/interface/IBaseToken.sol";
 import { AccountMarket } from "@perp/curie-contract/contracts/lib/AccountMarket.sol";
 import { OpenOrder } from "@perp/curie-contract/contracts/lib/OpenOrder.sol";
 import { Funding } from "@perp/curie-contract/contracts/lib/Funding.sol";
@@ -56,29 +56,26 @@ contract PerpPortal {
     }
 
     // long:
-    // accountValue - positionSizeOfTokenX * (indexPrice - liqPrice) =
-    //      totalPositionValue * mmRatio - positionSizeOfTokenX * (indexPrice - liqPrice) * mmRatio
-    // liqPrice = indexPrice - ((accountValue - totalPositionValue * mmRatio) /  ((1 - mmRatio) * positionSizeOfTokenX))
+    // accountValue - positionSizeOfTokenX * (markPricePrice - liqPrice) =
+    //      totalPositionValue * mmRatio - positionSizeOfTokenX * (markPrice - liqPrice) * mmRatio
+    // liqPrice = markPrice - ((accountValue - totalPositionValue * mmRatio) /  ((1 - mmRatio) * positionSizeOfTokenX))
     // short:
-    // accountValue - positionSizeOfTokenX * (indexPrice - liqPrice) =
-    //      totalPositionValue * mmRatio + positionSizeOfTokenX * (indexPrice - liqPrice) * mmRatio
-    // liqPrice = indexPrice - ((accountValue - totalPositionValue * mmRatio) /  ((1 + mmRatio) * positionSizeOfTokenX))
+    // accountValue - positionSizeOfTokenX * (markPrice - liqPrice) =
+    //      totalPositionValue * mmRatio + positionSizeOfTokenX * (markPrice - liqPrice) * mmRatio
+    // liqPrice = markPrice - ((accountValue - totalPositionValue * mmRatio) /  ((1 + mmRatio) * positionSizeOfTokenX))
     function getLiquidationPrice(address trader, address baseToken) external view returns (uint256) {
         int256 accountValue = IClearingHouse(_clearingHouse).getAccountValue(trader);
         int256 positionSize = IAccountBalance(_accountBalance).getTotalPositionSize(trader, baseToken);
 
         if (positionSize == 0) return 0;
 
-        uint256 indexPrice = IIndexPrice(baseToken).getIndexPrice(
-            IClearingHouseConfig(_clearingHouseConfig).getTwapInterval()
-        );
+        uint256 markPrice = IAccountBalance(_accountBalance).getMarkPrice(baseToken);
         uint256 totalPositionValue = IAccountBalance(_accountBalance).getTotalAbsPositionValue(trader);
         uint24 mmRatio = IClearingHouseConfig(_clearingHouseConfig).getMmRatio();
-
         int256 multiplier = positionSize > 0 ? uint256(1e6 - mmRatio).toInt256() : uint256(1e6 + mmRatio).toInt256();
         int256 remainedAccountValue = accountValue.sub(totalPositionValue.mulRatio(mmRatio).toInt256());
         int256 multipliedPositionSize = PerpMath.mulDiv(positionSize, multiplier, 1e6);
-        int256 liquidationPrice = indexPrice.toInt256().sub(remainedAccountValue.mul(1e18).div(multipliedPositionSize));
+        int256 liquidationPrice = markPrice.toInt256().sub(remainedAccountValue.mul(1e18).div(multipliedPositionSize));
 
         return liquidationPrice >= 0 ? liquidationPrice.toUint256() : 0;
     }
@@ -109,8 +106,13 @@ contract PerpPortal {
         return IExchange(_exchange).getPendingFundingPayment(trader, baseToken);
     }
 
+    /// @notice (Deprecated function, will be removed in the next release)
     function getSqrtMarkTwapX96(address baseToken, uint32 twapInterval) external view returns (uint160) {
-        return IExchange(_exchange).getSqrtMarkTwapX96(baseToken, twapInterval);
+        return IExchange(_exchange).getSqrtMarketTwapX96(baseToken, twapInterval);
+    }
+
+    function getSqrtMarketTwapX96(address baseToken, uint32 twapInterval) external view returns (uint160) {
+        return IExchange(_exchange).getSqrtMarketTwapX96(baseToken, twapInterval);
     }
 
     function getPnlToBeRealized(IExchange.RealizePnlParams memory params) external view returns (int256) {

@@ -1,6 +1,6 @@
 {
   "name": "@perp/curie-periphery-contract",
-  "version": "1.5.0-dev",
+  "version": "1.5.0-dev2",
   "description": "Perpetual Protocol Curie (v2) periphery contracts",
   "license": "GPL-3.0-or-later",
   "author": {
@@ -42,8 +42,8 @@
     "prepack": "ts-node --files scripts/prepack.ts"
   },
   "dependencies": {
-    "@perp/curie-contract": "2.4.5",
-    "@perp/perp-oracle-contract": "0.4.3",
+    "@perp/curie-contract": "2.6.0",
+    "@perp/perp-oracle-contract": "0.6.5",
     "@uniswap/v3-core": "https://github.com/Uniswap/v3-core/tarball/v1.0.0"
   },
   "devDependencies": {

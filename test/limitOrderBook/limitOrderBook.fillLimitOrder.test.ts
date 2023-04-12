@@ -10,19 +10,19 @@ import {
     Exchange,
     LimitOrderBook,
     LimitOrderRewardVault,
+    PriceFeedDispatcher,
     QuoteToken,
-    TestAggregatorV3,
     TestClearingHouse,
     TestERC20,
     TestKeeper,
     UniswapV3Pool,
     Vault,
 } from "../../typechain-types"
-import { initAndAddPool } from "../helper/marketHelper"
-import { getMaxTickRange, priceToTick } from "../helper/number"
+import { initMarket } from "../helper/marketHelper"
+import { priceToTick } from "../helper/number"
 import { mintAndDeposit, withdraw } from "../helper/token"
-import { forwardTimestamp } from "../shared/time"
-import { encodePriceSqrt, getMarketTwap, syncIndexToMarketPrice } from "../shared/utilities"
+import { forwardMockedTimestamp, getRealTimestamp } from "../shared/time"
+import { getMarketTwap, syncIndexToMarketPrice } from "../shared/utilities"
 import { createLimitOrderFixture, LimitOrderFixture } from "./fixtures"
 import { getOrderHash, getSignature, OrderStatus, OrderType } from "./orderUtils"
 
@@ -37,7 +37,7 @@ describe("LimitOrderBook fillLimitOrder", function () {
     let baseToken: BaseToken
     let quoteToken: QuoteToken
     let pool: UniswapV3Pool
-    let mockedBaseAggregator: FakeContract<TestAggregatorV3>
+    let mockedPriceFeedDispatcher: FakeContract<PriceFeedDispatcher>
     let delegateApproval: DelegateApproval
     let limitOrderBook: LimitOrderBook
     let limitOrderRewardVault: LimitOrderRewardVault
@@ -52,7 +52,7 @@ describe("LimitOrderBook fillLimitOrder", function () {
         collateral = fixture.USDC
         baseToken = fixture.baseToken
         quoteToken = fixture.quoteToken
-        mockedBaseAggregator = fixture.mockedBaseAggregator
+        mockedPriceFeedDispatcher = fixture.mockedPriceFeedDispatcher
         pool = fixture.pool
         delegateApproval = fixture.delegateApproval
         limitOrderBook = fixture.limitOrderBook
@@ -62,17 +62,9 @@ describe("LimitOrderBook fillLimitOrder", function () {
         const pool1LowerTick: number = priceToTick(2000, await pool.tickSpacing())
         const pool1UpperTick: number = priceToTick(4000, await pool.tickSpacing())
 
-        // ETH
-        await initAndAddPool(
-            fixture,
-            pool,
-            baseToken.address,
-            encodePriceSqrt("2960", "1"),
-            10000, // 1%
-            // set maxTickCrossed as maximum tick range of pool by default, that means there is no over price when swap
-            getMaxTickRange(),
-        )
-        await syncIndexToMarketPrice(mockedBaseAggregator, pool)
+        const initPrice = "2960"
+        await initMarket(fixture, initPrice)
+        await syncIndexToMarketPrice(mockedPriceFeedDispatcher, pool)
 
         // prepare collateral for maker
         await mintAndDeposit(fixture, maker, 1_000_000_000_000)
@@ -882,7 +874,7 @@ describe("LimitOrderBook fillLimitOrder", function () {
     // TODO: we should probably define a upper bound of `deadline` in backend/frontend
     describe("expiration", () => {
         it("limit order is not expired yet", async () => {
-            const now = (await waffle.provider.getBlock("latest")).timestamp
+            const now = await getRealTimestamp()
 
             // long 0.1 ETH with $300 (limit price $3000)
             const limitOrder = {
@@ -930,7 +922,7 @@ describe("LimitOrderBook fillLimitOrder", function () {
         })
 
         it("force error, limit order is already expired", async () => {
-            const now = (await waffle.provider.getBlock("latest")).timestamp
+            const now = await getRealTimestamp()
             await clearingHouse.setBlockTimestamp(now)
 
             // long 0.1 ETH with $300 (limit price $3000)
@@ -953,7 +945,7 @@ describe("LimitOrderBook fillLimitOrder", function () {
 
             const signature = await getSignature(fixture, limitOrder, trader)
 
-            await forwardTimestamp(clearingHouse, 10)
+            await forwardMockedTimestamp(clearingHouse, 10)
 
             await expect(limitOrderBook.connect(keeper).fillLimitOrder(limitOrder, signature, "0")).to.be.revertedWith(
                 "CH_TE",

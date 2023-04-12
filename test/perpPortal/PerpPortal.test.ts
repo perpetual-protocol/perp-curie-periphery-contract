@@ -3,7 +3,6 @@ import { expect } from "chai"
 import { parseEther, parseUnits } from "ethers/lib/utils"
 import { ethers, waffle } from "hardhat"
 import {
-    AccountBalance,
     BaseToken,
     ClearingHouseConfig,
     Exchange,
@@ -11,25 +10,26 @@ import {
     MarketRegistry,
     OrderBook,
     PerpPortal,
+    PriceFeedDispatcher,
     Quoter,
-    QuoteToken,
-    TestAggregatorV3,
+    TestAccountBalance,
     TestClearingHouse,
     TestERC20,
     UniswapV3Pool,
     Vault,
 } from "../../typechain-types"
 import { createClearingHouseFixture } from "../clearingHouse/fixtures"
-import { getMaxTickRange } from "../helper/number"
+import { initMarket } from "../helper/marketHelper"
 import { deposit } from "../helper/token"
-import { encodePriceSqrt, formatSqrtPriceX96ToPrice } from "../shared/utilities"
+import { initiateBothTimestamps } from "../shared/time"
+import { syncIndexToMarketPrice, syncMarkPriceToMarketPrice } from "../shared/utilities"
 
 describe("PerpPortal test", () => {
     const [admin, alice, bob] = waffle.provider.getWallets()
     const loadFixture: ReturnType<typeof waffle.createFixtureLoader> = waffle.createFixtureLoader([admin])
     let clearingHouse: TestClearingHouse
     let clearingHouseConfig: ClearingHouseConfig
-    let accountBalance: AccountBalance
+    let accountBalance: TestAccountBalance
     let insuranceFund: InsuranceFund
     let marketRegistry: MarketRegistry
     let exchange: Exchange
@@ -38,26 +38,15 @@ describe("PerpPortal test", () => {
     let collateral: TestERC20
     let baseToken: BaseToken
     let baseToken2: BaseToken
-    let quoteToken: QuoteToken
     let pool: UniswapV3Pool
     let pool2: UniswapV3Pool
-    let mockedBaseAggregator: FakeContract<TestAggregatorV3>
-    let mockedBaseAggregator2: FakeContract<TestAggregatorV3>
+    let mockedPriceFeedDispatcher: FakeContract<PriceFeedDispatcher>
+    let mockedPriceFeedDispatcher2: FakeContract<PriceFeedDispatcher>
     let collateralDecimals: number
     let quoter: Quoter
     let lowerTick: number
     let upperTick: number
     let perpPortal: PerpPortal
-    const oracleDecimals = 6
-
-    async function syncIndexToMarketPrice(aggregator: FakeContract<TestAggregatorV3>, pool: UniswapV3Pool) {
-        const slot0 = await pool.slot0()
-        const sqrtPrice = slot0.sqrtPriceX96
-        const price = formatSqrtPriceX96ToPrice(sqrtPrice, oracleDecimals)
-        aggregator.latestRoundData.returns(() => {
-            return [0, parseUnits(price, oracleDecimals), 0, 0, 0]
-        })
-    }
 
     beforeEach(async () => {
         const _clearingHouseFixture = await loadFixture(createClearingHouseFixture())
@@ -72,23 +61,20 @@ describe("PerpPortal test", () => {
         collateral = _clearingHouseFixture.USDC
         baseToken = _clearingHouseFixture.baseToken
         baseToken2 = _clearingHouseFixture.baseToken2
-        quoteToken = _clearingHouseFixture.quoteToken
         pool = _clearingHouseFixture.pool
         pool2 = _clearingHouseFixture.pool2
-        mockedBaseAggregator = _clearingHouseFixture.mockedBaseAggregator
-        mockedBaseAggregator2 = _clearingHouseFixture.mockedBaseAggregator2
+        mockedPriceFeedDispatcher = _clearingHouseFixture.mockedPriceFeedDispatcher
+        mockedPriceFeedDispatcher2 = _clearingHouseFixture.mockedPriceFeedDispatcher2
         collateralDecimals = await collateral.decimals()
 
-        await pool.initialize(encodePriceSqrt(151.3733069, 1))
-        await syncIndexToMarketPrice(mockedBaseAggregator, pool)
-        await marketRegistry.addPool(baseToken.address, "10000")
+        const initPrice = "151.3733069"
+        await initMarket(_clearingHouseFixture, initPrice)
+        await initMarket(_clearingHouseFixture, initPrice, undefined, undefined, undefined, baseToken2.address)
 
-        await pool2.initialize(encodePriceSqrt(151.3733069, 1))
-        await syncIndexToMarketPrice(mockedBaseAggregator2, pool2)
-        await marketRegistry.addPool(baseToken2.address, "10000")
-
-        await exchange.setMaxTickCrossedWithinBlock(baseToken.address, getMaxTickRange())
-        await exchange.setMaxTickCrossedWithinBlock(baseToken2.address, getMaxTickRange())
+        await syncMarkPriceToMarketPrice(accountBalance, baseToken.address, pool)
+        await syncMarkPriceToMarketPrice(accountBalance, baseToken2.address, pool2)
+        await syncIndexToMarketPrice(mockedPriceFeedDispatcher, pool)
+        await syncIndexToMarketPrice(mockedPriceFeedDispatcher2, pool2)
 
         const quoterFactory = await ethers.getContractFactory("Quoter")
         quoter = (await quoterFactory.deploy(marketRegistry.address)) as Quoter
@@ -138,6 +124,8 @@ describe("PerpPortal test", () => {
             marketRegistry.address,
             vault.address,
         )) as PerpPortal
+
+        await initiateBothTimestamps(clearingHouse)
     })
 
     describe("# getLiquidationPrice", async () => {
@@ -153,13 +141,11 @@ describe("PerpPortal test", () => {
                 referralCode: ethers.constants.HashZero,
             })
 
-            await syncIndexToMarketPrice(mockedBaseAggregator, pool)
+            await syncMarkPriceToMarketPrice(accountBalance, baseToken.address, pool)
 
             const liquidationPrice = await perpPortal.getLiquidationPrice(bob.address, baseToken.address)
 
-            mockedBaseAggregator.latestRoundData.returns(() => {
-                return [0, liquidationPrice.div(1e12), 0, 0, 0]
-            })
+            accountBalance.mockMarkPrice(baseToken.address, liquidationPrice)
 
             const accountValue = await clearingHouse.getAccountValue(bob.address)
             const mmRequirement = await accountBalance.getMarginRequirementForLiquidation(bob.address)
@@ -179,13 +165,11 @@ describe("PerpPortal test", () => {
                 referralCode: ethers.constants.HashZero,
             })
 
-            await syncIndexToMarketPrice(mockedBaseAggregator, pool)
+            await syncMarkPriceToMarketPrice(accountBalance, baseToken.address, pool)
 
             const liquidationPrice = await perpPortal.getLiquidationPrice(bob.address, baseToken.address)
 
-            mockedBaseAggregator.latestRoundData.returns(() => {
-                return [0, liquidationPrice.div(1e12), 0, 0, 0]
-            })
+            accountBalance.mockMarkPrice(baseToken.address, liquidationPrice)
 
             const accountValue = await clearingHouse.getAccountValue(bob.address)
             const mmRequirement = await accountBalance.getMarginRequirementForLiquidation(bob.address)
@@ -205,7 +189,7 @@ describe("PerpPortal test", () => {
                 referralCode: ethers.constants.HashZero,
             })
 
-            await syncIndexToMarketPrice(mockedBaseAggregator, pool)
+            await syncMarkPriceToMarketPrice(accountBalance, baseToken.address, pool)
 
             const liquidationPrice = await perpPortal.getLiquidationPrice(bob.address, baseToken.address)
             expect(liquidationPrice).to.be.eq(parseEther("0"))
@@ -223,13 +207,11 @@ describe("PerpPortal test", () => {
                 referralCode: ethers.constants.HashZero,
             })
 
-            await syncIndexToMarketPrice(mockedBaseAggregator, pool)
+            await syncMarkPriceToMarketPrice(accountBalance, baseToken.address, pool)
 
             const liquidationPrice = await perpPortal.getLiquidationPrice(bob.address, baseToken.address)
 
-            mockedBaseAggregator.latestRoundData.returns(() => {
-                return [0, liquidationPrice.div(1e12), 0, 0, 0]
-            })
+            await accountBalance.mockMarkPrice(baseToken.address, liquidationPrice)
 
             const accountValue = await clearingHouse.getAccountValue(bob.address)
             const mmRequirement = await accountBalance.getMarginRequirementForLiquidation(bob.address)
@@ -266,10 +248,9 @@ describe("PerpPortal test", () => {
                 referralCode: ethers.constants.HashZero,
             })
 
-            // set index price to 50 so the trade can be liquidated right now
-            const indexPrice = parseUnits("50", 6)
-            mockedBaseAggregator.latestRoundData.returns(() => {
-                return [0, indexPrice, 0, 0, 0]
+            accountBalance.mockMarkPrice(baseToken.address, parseEther("50"))
+            mockedPriceFeedDispatcher.getDispatchedPrice.returns(() => {
+                return parseEther("50")
             })
 
             const liquidationPrice = await perpPortal.getLiquidationPrice(bob.address, baseToken.address)
@@ -293,15 +274,17 @@ describe("PerpPortal test", () => {
                 deadline: ethers.constants.MaxUint256,
                 referralCode: ethers.constants.HashZero,
             })
-            mockedBaseAggregator.latestRoundData.returns(() => {
-                return [0, parseUnits("50", oracleDecimals), 0, 0, 0]
-            })
+
+            accountBalance.mockMarkPrice(baseToken.address, parseEther("50"))
+            mockedPriceFeedDispatcher.getDispatchedPrice.returns(parseEther("50"))
+
             // account value: -1038.80514917
             expect(await clearingHouse.getAccountValue(bob.address)).to.be.lt("0")
             expect(await perpPortal.getAccountLeverage(bob.address)).to.be.eq("-1")
         })
 
         it("account value > total position value", async () => {
+            await syncMarkPriceToMarketPrice(accountBalance, baseToken.address, pool)
             await clearingHouse.connect(bob).openPosition({
                 baseToken: baseToken.address,
                 isBaseToQuote: false,
@@ -312,11 +295,15 @@ describe("PerpPortal test", () => {
                 deadline: ethers.constants.MaxUint256,
                 referralCode: ethers.constants.HashZero,
             })
+
             // account value: 996.38873205
             // total position value: 296.38873205
             expect(await clearingHouse.getAccountValue(bob.address)).to.be.gt("300")
             // get account leverage: 296.38873205 / 996.38873205 = 0.29746295
-            expect(await perpPortal.getAccountLeverage(bob.address)).to.be.eq(parseEther("0.297462950488980192"))
+            expect(await perpPortal.getAccountLeverage(bob.address)).to.be.closeTo(
+                parseEther("0.297462950488980192"),
+                parseEther("0.001"),
+            )
         })
 
         it("0 < account value < total position value", async () => {
@@ -340,7 +327,10 @@ describe("PerpPortal test", () => {
             expect(bobAccountValue).to.be.lt(bobPositionValue)
 
             // account leverage: 5704.69430511 / 704.69430511 = 8.09527516
-            expect(await perpPortal.getAccountLeverage(bob.address)).to.be.eq(parseEther("8.095275163483218890"))
+            expect(await perpPortal.getAccountLeverage(bob.address)).to.be.closeTo(
+                parseEther("8.095275163483218890"),
+                parseEther("0.001"),
+            )
         })
 
         it("no position value", async () => {
