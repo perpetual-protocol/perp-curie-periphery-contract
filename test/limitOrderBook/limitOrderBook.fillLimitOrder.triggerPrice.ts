@@ -11,6 +11,7 @@ import {
     DelegateApproval,
     Exchange,
     LimitOrderRewardVault,
+    PriceFeedDispatcher,
     QuoteToken,
     TestAggregatorV3,
     TestClearingHouse,
@@ -19,10 +20,11 @@ import {
     UniswapV3Pool,
     Vault,
 } from "../../typechain-types"
-import { initAndAddPool } from "../helper/marketHelper"
-import { getMaxTickRange, priceToTick } from "../helper/number"
+import { initMarket } from "../helper/marketHelper"
+import { priceToTick } from "../helper/number"
 import { mintAndDeposit } from "../helper/token"
-import { encodePriceSqrt, syncIndexToMarketPrice } from "../shared/utilities"
+import { getRealTimestamp } from "../shared/time"
+import { syncIndexToMarketPrice } from "../shared/utilities"
 import { createLimitOrderFixture, LimitOrderFixture } from "./fixtures"
 import { getOrderHash, getSignature, OrderType } from "./orderUtils"
 
@@ -60,7 +62,8 @@ describe("LimitOrderBook fillLimitOrder advanced order types", function () {
     let baseToken: BaseToken
     let quoteToken: QuoteToken
     let pool: UniswapV3Pool
-    let mockedBaseAggregator: FakeContract<TestAggregatorV3>
+    let mockedPriceFeedDispatcher: FakeContract<PriceFeedDispatcher>
+    let mockedAggregator: FakeContract<TestAggregatorV3>
     let delegateApproval: DelegateApproval
     let limitOrderBook: TestLimitOrderBook
     let limitOrderRewardVault: LimitOrderRewardVault
@@ -77,28 +80,22 @@ describe("LimitOrderBook fillLimitOrder advanced order types", function () {
         collateral = fixture.USDC
         baseToken = fixture.baseToken
         quoteToken = fixture.quoteToken
-        mockedBaseAggregator = fixture.mockedBaseAggregator
+        mockedPriceFeedDispatcher = fixture.mockedPriceFeedDispatcher
+        mockedAggregator = fixture.mockedAggregator
         pool = fixture.pool
         delegateApproval = fixture.delegateApproval
         limitOrderBook = fixture.limitOrderBook
         limitOrderRewardVault = fixture.limitOrderRewardVault
         rewardToken = fixture.rewardToken
-        priceFeedDecimals = await mockedBaseAggregator.decimals()
+        priceFeedDecimals = await mockedPriceFeedDispatcher.decimals()
 
         const pool1LowerTick: number = priceToTick(2000, await pool.tickSpacing())
         const pool1UpperTick: number = priceToTick(4000, await pool.tickSpacing())
 
-        // ETH
-        await initAndAddPool(
-            fixture,
-            pool,
-            baseToken.address,
-            encodePriceSqrt("2960", "1"),
-            10000, // 1%
-            // set maxTickCrossed as maximum tick range of pool by default, that means there is no over price when swap
-            getMaxTickRange(),
-        )
-        await syncIndexToMarketPrice(mockedBaseAggregator, pool)
+        const initPrice = "2960"
+        await initMarket(fixture, initPrice)
+
+        await syncIndexToMarketPrice(mockedPriceFeedDispatcher, pool)
 
         // prepare collateral for maker
         await mintAndDeposit(fixture, maker, 1_000_000_000_000)
@@ -122,14 +119,14 @@ describe("LimitOrderBook fillLimitOrder advanced order types", function () {
         // trader allows limitOrderBook to open position
         await delegateApproval.connect(trader).approve(limitOrderBook.address, fixture.clearingHouseOpenPositionAction)
 
-        currentTime = (await waffle.provider.getBlock("latest")).timestamp
-        await setRoundData(mockedBaseAggregator, computeRoundId(1, 1), "2700", currentTime)
-        await setRoundData(mockedBaseAggregator, computeRoundId(1, 2), "2800", currentTime + 15 * 1)
-        await setRoundData(mockedBaseAggregator, computeRoundId(1, 3), "2900", currentTime + 15 * 2)
-        await setRoundData(mockedBaseAggregator, computeRoundId(1, 4), "3000", currentTime + 15 * 3)
-        await setRoundData(mockedBaseAggregator, computeRoundId(2, 1), "3100", currentTime + 15 * 4)
-        await setRoundData(mockedBaseAggregator, computeRoundId(2, 2), "3200", currentTime + 15 * 5)
-        await setRoundData(mockedBaseAggregator, computeRoundId(2, 3), "3300", currentTime + 15 * 6)
+        currentTime = await getRealTimestamp()
+        await setRoundData(mockedAggregator, computeRoundId(1, 1), "2700", currentTime)
+        await setRoundData(mockedAggregator, computeRoundId(1, 2), "2800", currentTime + 15 * 1)
+        await setRoundData(mockedAggregator, computeRoundId(1, 3), "2900", currentTime + 15 * 2)
+        await setRoundData(mockedAggregator, computeRoundId(1, 4), "3000", currentTime + 15 * 3)
+        await setRoundData(mockedAggregator, computeRoundId(2, 1), "3100", currentTime + 15 * 4)
+        await setRoundData(mockedAggregator, computeRoundId(2, 2), "3200", currentTime + 15 * 5)
+        await setRoundData(mockedAggregator, computeRoundId(2, 3), "3300", currentTime + 15 * 6)
     })
 
     describe("verify trigger price", async () => {

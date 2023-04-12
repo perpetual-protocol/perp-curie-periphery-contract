@@ -1,6 +1,6 @@
 {
   "name": "@perp/curie-periphery-contract",
-  "version": "1.4.1",
+  "version": "1.4.3",
   "description": "Perpetual Protocol Curie (v2) periphery contracts",
   "license": "GPL-3.0-or-later",
   "author": {
@@ -41,8 +41,8 @@
     "prepack": "ts-node --files scripts/prepack.ts"
   },
   "dependencies": {
-    "@perp/curie-contract": "2.1.0",
-    "@perp/perp-oracle-contract": "0.4.3"
+    "@perp/curie-contract": "2.6.0",
+    "@perp/perp-oracle-contract": "0.6.5"
   },
   "devDependencies": {
     "@defi-wonderland/smock": "2.0.7",

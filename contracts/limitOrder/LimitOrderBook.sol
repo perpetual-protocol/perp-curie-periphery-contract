@@ -18,7 +18,9 @@ import { ReentrancyGuardUpgradeable } from "@openzeppelin/contracts-upgradeable/
 import { IClearingHouse } from "@perp/curie-contract/contracts/interface/IClearingHouse.sol";
 import { IAccountBalance } from "@perp/curie-contract/contracts/interface/IAccountBalance.sol";
 import { IBaseToken } from "@perp/curie-contract/contracts/interface/IBaseToken.sol";
-import { ChainlinkPriceFeed } from "@perp/perp-oracle-contract/contracts/ChainlinkPriceFeed.sol";
+import { ChainlinkPriceFeedV3 } from "@perp/perp-oracle-contract/contracts/ChainlinkPriceFeedV3.sol";
+import { PriceFeedDispatcher } from "@perp/perp-oracle-contract/contracts/PriceFeedDispatcher.sol";
+import { AggregatorV3Interface } from "@chainlink/contracts/src/v0.6/interfaces/AggregatorV3Interface.sol";
 
 contract LimitOrderBook is
     ILimitOrderBook,
@@ -322,9 +324,21 @@ contract LimitOrderBook is
     }
 
     function _getPriceByRoundId(address baseToken, uint80 roundId) internal view returns (uint256) {
-        ChainlinkPriceFeed chainlinkPriceFeed = ChainlinkPriceFeed(IBaseToken(baseToken).getPriceFeed());
-        (uint256 price, ) = chainlinkPriceFeed.getRoundData(roundId);
-        return _formatDecimals(price, chainlinkPriceFeed.decimals(), 18);
+        PriceFeedDispatcher priceFeedDispatcher = PriceFeedDispatcher(IBaseToken(baseToken).getPriceFeed());
+        // NOTE: we don't check "priceFeedDispatcher.getStatus() == Chainlink" as roundId is only used for verifying
+        // whether trigger price (not limit price) is matched or not after a stop loss order is created
+        // if the trigger price is matched, the stop loss order becomes a regular limit order
+        ChainlinkPriceFeedV3 chainlinkPriceFeed = ChainlinkPriceFeedV3(priceFeedDispatcher.getChainlinkPriceFeedV3());
+        AggregatorV3Interface aggregator = AggregatorV3Interface(chainlinkPriceFeed.getAggregator());
+
+        // Copied from ChainlinkPriceFeedV2.getRoundData()
+        (, int256 price, , uint256 updatedAt, ) = aggregator.getRoundData(roundId);
+        // CPF_IP: Invalid Price
+        require(price > 0, "CPF_IP");
+        // CPF_RINC: Round Is Not Complete
+        require(updatedAt > 0, "CPF_RINC");
+
+        return _formatDecimals(uint256(price), chainlinkPriceFeed.decimals(), 18);
     }
 
     function _formatDecimals(

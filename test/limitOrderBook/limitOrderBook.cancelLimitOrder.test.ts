@@ -9,17 +9,17 @@ import {
     DelegateApproval,
     LimitOrderBook,
     LimitOrderRewardVault,
+    PriceFeedDispatcher,
     QuoteToken,
-    TestAggregatorV3,
     TestClearingHouse,
     TestERC20,
     UniswapV3Pool,
     Vault,
 } from "../../typechain-types"
-import { initAndAddPool } from "../helper/marketHelper"
-import { getMaxTickRange, priceToTick } from "../helper/number"
+import { initMarket } from "../helper/marketHelper"
+import { priceToTick } from "../helper/number"
 import { mintAndDeposit } from "../helper/token"
-import { encodePriceSqrt, syncIndexToMarketPrice } from "../shared/utilities"
+import { syncIndexToMarketPrice } from "../shared/utilities"
 import { createLimitOrderFixture, LimitOrderFixture } from "./fixtures"
 import { getOrderHash, getSignature, OrderStatus, OrderType } from "./orderUtils"
 
@@ -33,7 +33,7 @@ describe("LimitOrderBook cancelLimitOrder", function () {
     let baseToken: BaseToken
     let quoteToken: QuoteToken
     let pool: UniswapV3Pool
-    let mockedBaseAggregator: FakeContract<TestAggregatorV3>
+    let mockedPriceFeedDispatcher: FakeContract<PriceFeedDispatcher>
     let delegateApproval: DelegateApproval
     let limitOrderBook: LimitOrderBook
     let limitOrderRewardVault: LimitOrderRewardVault
@@ -47,7 +47,7 @@ describe("LimitOrderBook cancelLimitOrder", function () {
         collateral = fixture.USDC
         baseToken = fixture.baseToken
         quoteToken = fixture.quoteToken
-        mockedBaseAggregator = fixture.mockedBaseAggregator
+        mockedPriceFeedDispatcher = fixture.mockedPriceFeedDispatcher
         pool = fixture.pool
         delegateApproval = fixture.delegateApproval
         limitOrderBook = fixture.limitOrderBook
@@ -57,18 +57,9 @@ describe("LimitOrderBook cancelLimitOrder", function () {
         const pool1LowerTick: number = priceToTick(2000, await pool.tickSpacing())
         const pool1UpperTick: number = priceToTick(4000, await pool.tickSpacing())
 
-        // ETH
-        await initAndAddPool(
-            fixture,
-            pool,
-            baseToken.address,
-            encodePriceSqrt("2960", "1"),
-            10000, // 1%
-            // set maxTickCrossed as maximum tick range of pool by default, that means there is no over price when swap
-            getMaxTickRange(),
-        )
-        await syncIndexToMarketPrice(mockedBaseAggregator, pool)
-
+        const initPrice = "2960"
+        await initMarket(fixture, initPrice)
+        await syncIndexToMarketPrice(mockedPriceFeedDispatcher, pool)
         // prepare collateral for maker
         await mintAndDeposit(fixture, maker, 1_000_000_000_000)
 
