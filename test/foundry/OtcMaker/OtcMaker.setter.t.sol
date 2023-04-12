@@ -1,9 +1,13 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 pragma solidity 0.7.6;
 
+import { PerpSafeCast } from "@perp/curie-contract/contracts/lib/PerpSafeCast.sol";
+
 import { OtcMakerSetup } from "./helper/OtcMakerSetup.sol";
 
 contract OtcMakerSetterTest is OtcMakerSetup {
+    using PerpSafeCast for uint24;
+
     function test_set_caller() public {
         assertFalse(otcMaker.getCaller() == alice);
         vm.prank(otcMakerOwner);
@@ -15,9 +19,18 @@ contract OtcMakerSetterTest is OtcMakerSetup {
         vm.prank(alice);
         vm.expectRevert(bytes("SO_CNO"));
         otcMaker.setCaller(alice);
+    }
 
-        vm.prank(otcMakerCaller);
+    function test_set_marginRatioLimit() public {
+        assertFalse(otcMaker.getMarginRatioLimit() == 250000);
+        vm.prank(otcMakerOwner);
+        otcMaker.setMarginRatioLimit(250000);
+        assertEq(otcMaker.getMarginRatioLimit().toUint256(), 250000);
+    }
+
+    function test_fail_set_marginRatioLimit_by_non_owner() public {
+        vm.prank(alice);
         vm.expectRevert(bytes("SO_CNO"));
-        otcMaker.setCaller(otcMakerCaller);
+        otcMaker.setMarginRatioLimit(250000);
     }
 }

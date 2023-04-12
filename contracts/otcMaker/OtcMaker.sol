@@ -148,6 +148,10 @@ contract OtcMaker is SafeOwnable, EIP712Upgradeable, IOtcMaker, OtcMakerStorageV
         return _caller;
     }
 
+    function getMarginRatioLimit() external view override returns (uint24) {
+        return _marginRatioLimit;
+    }
+
     //
     // PUBLIC NON-VIEW
     //
