@@ -24,7 +24,10 @@ contract OtcMakerOpenPositionForTest is OtcMakerSetup, EIP712Upgradeable {
         uint160 initialSqrtPriceX96 = 2505414483750479311864222358486;
 
         // current tick: 69081
-        _prepareMarket(initialSqrtPriceX96, 1000);
+        perp.prepareMarket(
+            initialSqrtPriceX96,
+            1000 * 1e8 // priceFeed decimals is 8
+        );
 
         ILimitOrderBook.LimitOrder memory limitOrderParams = _generateLimitOrderParams(
             ILimitOrderBook.OrderType.LimitOrder,
@@ -35,7 +38,7 @@ contract OtcMakerOpenPositionForTest is OtcMakerSetup, EIP712Upgradeable {
             1e18
         );
 
-        uint256 toppedUpAmount = 100000 * 10**perp.usdcDecimals();
+        uint256 toppedUpAmount = 100000 * 10 ** perp.usdcDecimals();
         _depositToPerpFromOtcMaker(toppedUpAmount);
         _depositToPerpFromAlice(toppedUpAmount);
 
@@ -76,7 +79,10 @@ contract OtcMakerOpenPositionForTest is OtcMakerSetup, EIP712Upgradeable {
         uint160 initialSqrtPriceX96 = 2505414483750479311864222358486;
 
         // current tick: 69081
-        _prepareMarket(initialSqrtPriceX96, 1000);
+        perp.prepareMarket(
+            initialSqrtPriceX96,
+            1000 * 1e8 // priceFeed decimals is 8
+        );
 
         ILimitOrderBook.LimitOrder memory limitOrderParams = _generateLimitOrderParams(
             ILimitOrderBook.OrderType.LimitOrder,
@@ -87,7 +93,7 @@ contract OtcMakerOpenPositionForTest is OtcMakerSetup, EIP712Upgradeable {
             1e18
         );
 
-        uint256 toppedUpAmount = 100000 * 10**perp.usdcDecimals();
+        uint256 toppedUpAmount = 100000 * 10 ** perp.usdcDecimals();
         _depositToPerpFromOtcMaker(toppedUpAmount);
         _depositToPerpFromAlice(toppedUpAmount);
 
@@ -128,7 +134,10 @@ contract OtcMakerOpenPositionForTest is OtcMakerSetup, EIP712Upgradeable {
         uint160 initialSqrtPriceX96 = 2505414483750479311864222358486;
 
         // current tick: 69081
-        _prepareMarket(initialSqrtPriceX96, 1000);
+        perp.prepareMarket(
+            initialSqrtPriceX96,
+            1000 * 1e8 // priceFeed decimals is 8
+        );
 
         ILimitOrderBook.LimitOrder memory limitOrderParams = _generateLimitOrderParams(
             ILimitOrderBook.OrderType.StopLossLimitOrder,
@@ -211,21 +220,13 @@ contract OtcMakerOpenPositionForTest is OtcMakerSetup, EIP712Upgradeable {
             );
     }
 
-    function _signLimitOrderParams(uint256 pk, ILimitOrderBook.LimitOrder memory limitOrderParams)
-        internal
-        returns (bytes memory)
-    {
+    function _signLimitOrderParams(
+        uint256 pk,
+        ILimitOrderBook.LimitOrder memory limitOrderParams
+    ) internal returns (bytes memory) {
         // prepare signed data
         bytes32 digest = perp.limitOrderBook().getOrderHash(limitOrderParams);
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(pk, digest);
         return abi.encodePacked(r, s, bytes1(0x1c)); // copied from `ether.js`'s `joinSignature`
-    }
-
-    function _prepareMarket(uint160 initialSqrtPriceX96, uint256 price) internal {
-        perp.prepareMarket(
-            initialSqrtPriceX96,
-            price * 1e8 // priceFeed decimals is 8
-        );
-        skip(15);
     }
 }

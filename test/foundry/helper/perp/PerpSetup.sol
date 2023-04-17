@@ -18,7 +18,7 @@ import { Vault } from "@perp/curie-contract/contracts/Vault.sol";
 import { QuoteToken } from "@perp/curie-contract/contracts/QuoteToken.sol";
 import { BaseToken } from "@perp/curie-contract/contracts/BaseToken.sol";
 import { IClearingHouse } from "@perp/curie-contract/contracts/interface/IClearingHouse.sol";
-import { IPriceFeed } from "@perp/perp-oracle-contract/contracts/interface/IPriceFeed.sol";
+import { IPriceFeedDispatcher } from "@perp/perp-oracle-contract/contracts/interface/IPriceFeedDispatcher.sol";
 import { IUniswapV3Factory } from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Factory.sol";
 import { IUniswapV3Pool } from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
 
@@ -139,7 +139,7 @@ contract PerpSetup is Test, DeployConfig {
         }
         // NOTE: put faked code on price feed address, must have contract code to make mockCall
         vm.etch(baseTokenPriceFeed, "_PRICE_FEED");
-        vm.mockCall(baseTokenPriceFeed, abi.encodeWithSelector(IPriceFeed.decimals.selector), abi.encode(8));
+        vm.mockCall(baseTokenPriceFeed, abi.encodeWithSelector(IPriceFeedDispatcher.decimals.selector), abi.encode(8));
         newBaseToken.initialize(tokenName, tokenName, baseTokenPriceFeed);
         return newBaseToken;
     }
@@ -288,9 +288,11 @@ contract PerpSetup is Test, DeployConfig {
         // mock priceFeed oracle
         vm.mockCall(
             _BASE_TOKEN_PRICE_FEED,
-            abi.encodeWithSelector(IPriceFeed.getPrice.selector),
+            abi.encodeWithSelector(IPriceFeedDispatcher.getDispatchedPrice.selector),
             abi.encode(initialPriceFeedPrice)
         );
+
+        skip(2000); // to make sure that market has enough historical data (at least 30 min)
     }
 
     function _setter() internal {
