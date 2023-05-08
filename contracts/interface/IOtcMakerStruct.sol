@@ -7,5 +7,7 @@ interface IOtcMakerStruct {
         uint256 liquidityQuote;
         int24 lowerTick;
         int24 upperTick;
+        uint256 minLiquidityBase;
+        uint256 minLiquidityQuote;
     }
 }

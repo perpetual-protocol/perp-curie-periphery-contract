@@ -85,8 +85,8 @@ contract OtcMaker is SafeOwnable, EIP712Upgradeable, IOtcMaker, OtcMakerStorageV
                 quote: jitLiquidityParams.liquidityQuote,
                 lowerTick: jitLiquidityParams.lowerTick,
                 upperTick: jitLiquidityParams.upperTick,
-                minBase: FullMath.mulDiv(jitLiquidityParams.liquidityBase, 9, 10),
-                minQuote: FullMath.mulDiv(jitLiquidityParams.liquidityQuote, 9, 10),
+                minBase: jitLiquidityParams.minLiquidityBase,
+                minQuote: jitLiquidityParams.minLiquidityQuote,
                 useTakerBalance: false,
                 deadline: block.timestamp
             })
@@ -102,8 +102,8 @@ contract OtcMaker is SafeOwnable, EIP712Upgradeable, IOtcMaker, OtcMakerStorageV
                 lowerTick: jitLiquidityParams.lowerTick,
                 upperTick: jitLiquidityParams.upperTick,
                 liquidity: addLiquidityResponse.liquidity.toUint128(),
-                minBase: FullMath.mulDiv(jitLiquidityParams.liquidityBase, 9, 10),
-                minQuote: FullMath.mulDiv(jitLiquidityParams.liquidityQuote, 9, 10),
+                minBase: 0,
+                minQuote: 0,
                 deadline: block.timestamp
             })
         );

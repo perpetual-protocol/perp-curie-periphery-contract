@@ -38,7 +38,7 @@ contract OtcMakerOpenPositionForTest is OtcMakerSetup, EIP712Upgradeable {
             1e18
         );
 
-        uint256 toppedUpAmount = 100000 * 10 ** perp.usdcDecimals();
+        uint256 toppedUpAmount = 100000 * 10**perp.usdcDecimals();
         _depositToPerpFromOtcMaker(toppedUpAmount);
         _depositToPerpFromAlice(toppedUpAmount);
 
@@ -62,7 +62,7 @@ contract OtcMakerOpenPositionForTest is OtcMakerSetup, EIP712Upgradeable {
         vm.prank(otcMakerCaller);
         otcMaker.openPositionFor(
             limitOrderParams,
-            IOtcMakerStruct.JitLiquidityParams(amount0, amount1, 69060, 69120),
+            IOtcMakerStruct.JitLiquidityParams(amount0, amount1, 69060, 69120, 0, 0),
             signature
         );
 
@@ -93,7 +93,7 @@ contract OtcMakerOpenPositionForTest is OtcMakerSetup, EIP712Upgradeable {
             1e18
         );
 
-        uint256 toppedUpAmount = 100000 * 10 ** perp.usdcDecimals();
+        uint256 toppedUpAmount = 100000 * 10**perp.usdcDecimals();
         _depositToPerpFromOtcMaker(toppedUpAmount);
         _depositToPerpFromAlice(toppedUpAmount);
 
@@ -124,7 +124,7 @@ contract OtcMakerOpenPositionForTest is OtcMakerSetup, EIP712Upgradeable {
         vm.prank(otcMakerCaller);
         otcMaker.openPositionFor(
             limitOrderParams,
-            IOtcMakerStruct.JitLiquidityParams(amount0, amount1, 69060, 69120),
+            IOtcMakerStruct.JitLiquidityParams(amount0, amount1, 69060, 69120, 0, 0),
             signature
         );
     }
@@ -169,7 +169,7 @@ contract OtcMakerOpenPositionForTest is OtcMakerSetup, EIP712Upgradeable {
         vm.prank(otcMakerCaller);
         otcMaker.openPositionFor(
             limitOrderParams,
-            IOtcMakerStruct.JitLiquidityParams(amount0, amount1, 69060, 69120),
+            IOtcMakerStruct.JitLiquidityParams(amount0, amount1, 69060, 69120, 0, 0),
             signature
         );
     }
@@ -220,10 +220,10 @@ contract OtcMakerOpenPositionForTest is OtcMakerSetup, EIP712Upgradeable {
             );
     }
 
-    function _signLimitOrderParams(
-        uint256 pk,
-        ILimitOrderBook.LimitOrder memory limitOrderParams
-    ) internal returns (bytes memory) {
+    function _signLimitOrderParams(uint256 pk, ILimitOrderBook.LimitOrder memory limitOrderParams)
+        internal
+        returns (bytes memory)
+    {
         // prepare signed data
         bytes32 digest = perp.limitOrderBook().getOrderHash(limitOrderParams);
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(pk, digest);
