@@ -12,7 +12,7 @@ import { PerpMath } from "@perp/curie-contract/contracts/lib/PerpMath.sol";
 import { PerpSafeCast } from "@perp/curie-contract/contracts/lib/PerpSafeCast.sol";
 import { ILimitOrderBook } from "../interface/ILimitOrderBook.sol";
 import { ILimitOrderRewardVault } from "../interface/ILimitOrderRewardVault.sol";
-import { LimitOrderBookStorageV1 } from "../storage/LimitOrderBookStorage.sol";
+import { LimitOrderBookStorageV2 } from "../storage/LimitOrderBookStorage.sol";
 import { OwnerPausable } from "../base/OwnerPausable.sol";
 import { ReentrancyGuardUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
 import { IClearingHouse } from "@perp/curie-contract/contracts/interface/IClearingHouse.sol";
@@ -28,7 +28,7 @@ contract LimitOrderBook is
     ReentrancyGuardUpgradeable,
     OwnerPausable,
     EIP712Upgradeable,
-    LimitOrderBookStorageV1
+    LimitOrderBookStorageV2
 {
     using AddressUpgradeable for address;
     using PerpMath for int256;
@@ -49,7 +49,6 @@ contract LimitOrderBook is
     //
     // EXTERNAL NON-VIEW
     //
-
     function initialize(
         string memory name,
         string memory version,
@@ -108,6 +107,12 @@ contract LimitOrderBook is
         emit LimitOrderRewardVaultChanged(limitOrderRewardVaultArg);
     }
 
+    function setWhitelistContractCaller(address caller, bool enable) external onlyOwner {
+        // LOB_NCA: Not contract address
+        require(caller.isContract(), "LOB_NCA");
+        _whitelistedContractCaller[caller] = enable;
+    }
+
     /// @inheritdoc ILimitOrderBook
     function fillLimitOrder(
         LimitOrder memory order,
@@ -118,7 +123,7 @@ contract LimitOrderBook is
 
         // short term solution: mitigate that attacker can drain LimitOrderRewardVault
         // LOB_SMBE: Sender Must Be EOA
-        require(!sender.isContract(), "LOB_SMBE");
+        require(!sender.isContract() || isWhitelistContractCaller(sender), "LOB_SMBE");
 
         (, bytes32 orderHash) = _verifySigner(order, signature);
 
@@ -193,9 +198,12 @@ contract LimitOrderBook is
     //
     // PUBLIC VIEW
     //
-
     function getOrderHash(LimitOrder memory order) public view override returns (bytes32) {
         return _hashTypedDataV4(keccak256(abi.encode(LIMIT_ORDER_TYPEHASH, order)));
+    }
+
+    function isWhitelistContractCaller(address caller) public view override returns (bool) {
+        return _whitelistedContractCaller[caller];
     }
 
     function getOrderStatus(bytes32 orderHash) external view override returns (ILimitOrderBook.OrderStatus) {
@@ -205,7 +213,6 @@ contract LimitOrderBook is
     //
     // INTERNAL NON-VIEW
     //
-
     function _fillLimitOrder(LimitOrder memory order, uint80 roundIdWhenTriggered)
         internal
         returns (
@@ -270,7 +277,6 @@ contract LimitOrderBook is
     //
     // INTERNAL VIEW
     //
-
     function _verifySigner(LimitOrder memory order, bytes memory signature) internal view returns (address, bytes32) {
         bytes32 orderHash = getOrderHash(order);
         address signer = ECDSAUpgradeable.recover(orderHash, signature);

@@ -878,6 +878,15 @@
     "@openzeppelin/contracts-upgradeable" "3.4.2"
     "@uniswap/v3-core" "https://github.com/Uniswap/uniswap-v3-core/tarball/v1.0.0"
 
+"@perp/voting-escrow@1.2.0":
+  version "1.2.0"
+  resolved "https://registry.yarnpkg.com/@perp/voting-escrow/-/voting-escrow-1.2.0.tgz#c45f0702dc68826902a97f66bc1113d2fac60680"
+  integrity sha512-ZoUbpQHLMYqYQfb/YZvQzdeqf/B1Jq59CaFrGcC2Wkz7MDRaWhN1Ldx0XVZyMyStGvemp+A7eoMh7HJLFONC5Q==
+  dependencies:
+    "@openzeppelin/contracts" "3.4.0"
+    "@openzeppelin/contracts-upgradeable" "3.4.2"
+    "@uniswap/v3-core" "https://github.com/Uniswap/uniswap-v3-core/tarball/v1.0.0"
+
 "@resolver-engine/core@^0.3.3":
   version "0.3.3"
   resolved "https://registry.yarnpkg.com/@resolver-engine/core/-/core-0.3.3.tgz#590f77d85d45bc7ecc4e06c654f41345db6ca967"
@@ -1373,7 +1382,13 @@
 
 "@uniswap/v3-core@1.0.0", "@uniswap/v3-core@https://github.com/Uniswap/uniswap-v3-core/tarball/v1.0.0":
   version "1.0.0"
+  uid b3712e2b235ad2eeb7a0dfcac216a659cc450e28
   resolved "https://github.com/Uniswap/uniswap-v3-core/tarball/v1.0.0#b3712e2b235ad2eeb7a0dfcac216a659cc450e28"
+
+"@uniswap/v3-core@https://github.com/Uniswap/v3-core/tarball/v1.0.0":
+  version "1.0.0"
+  uid b3712e2b235ad2eeb7a0dfcac216a659cc450e28
+  resolved "https://github.com/Uniswap/v3-core/tarball/v1.0.0#b3712e2b235ad2eeb7a0dfcac216a659cc450e28"
 
 "@uniswap/v3-periphery@1.0.1":
   version "1.0.1"

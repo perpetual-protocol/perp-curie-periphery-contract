@@ -118,4 +118,6 @@ interface ILimitOrderBook {
     function getOrderStatus(bytes32 orderHash) external view returns (ILimitOrderBook.OrderStatus);
 
     function getOrderHash(LimitOrder memory order) external view returns (bytes32);
+
+    function isWhitelistContractCaller(address caller) external view returns (bool);
 }
