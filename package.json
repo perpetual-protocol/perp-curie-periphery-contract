@@ -38,7 +38,8 @@
     "lint": "npm run lint-contracts && npm run lint-tests",
     "lint-contracts": "solhint 'contracts/**/*.sol'",
     "lint-tests": "if grep -qr 'test' -e '.only('; then echo 'found .only() in tests'; exit 1; else echo 'not found .only() in tests'; fi",
-    "prepack": "ts-node --files scripts/prepack.ts"
+    "prepack": "ts-node --files scripts/prepack.ts",
+    "slither": "ts-node --files scripts/slither.ts"
   },
   "dependencies": {
     "@perp/curie-contract": "2.6.0",
@@ -73,6 +74,7 @@
     "solc": "0.7.6",
     "solhint": "3.3.7",
     "solhint-plugin-prettier": "0.0.5",
+    "truffle-flattener": "1.6.0",
     "ts-node": "10.7.0",
     "typechain": "8.0.0",
     "typescript": "4.6.3"
