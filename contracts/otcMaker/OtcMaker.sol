@@ -44,6 +44,12 @@ contract OtcMaker is SafeOwnable, EIP712Upgradeable, IOtcMaker, OtcMakerStorageV
         _;
     }
 
+    modifier onlyPositionManager() {
+        // OM_NPM: not position manager
+        require(_msgSender() == _positionManager, "OM_NPM");
+        _;
+    }
+
     //
     // EXTERNAL NON-VIEW
     //
@@ -137,7 +143,7 @@ contract OtcMaker is SafeOwnable, EIP712Upgradeable, IOtcMaker, OtcMakerStorageV
     function openPosition(IClearingHouse.OpenPositionParams calldata params)
         external
         override
-        onlyOwner
+        onlyPositionManager
         returns (uint256 base, uint256 quote)
     {
         return IClearingHouse(_clearingHouse).openPosition(params);
