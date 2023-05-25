@@ -14,6 +14,8 @@ contract OtcMakerSetup is Test {
     address public alice;
     uint256 public alicePrivateKey;
     address public otcMakerCaller = makeAddr("otcMakerCaller");
+    address public otcMakerFundOwner = makeAddr("otcMakerFundOwner");
+    address public otcMakerPositionManager = makeAddr("otcMakerPositionManager");
     TestERC20 public usdc;
 
     PerpSetup public perp;
@@ -27,6 +29,8 @@ contract OtcMakerSetup is Test {
         otcMaker = new OtcMaker();
         otcMaker.initialize(address(perp.clearingHouse()), address(perp.limitOrderBook()));
         otcMaker.setCaller(otcMakerCaller);
+        otcMaker.setFundOwner(otcMakerFundOwner);
+        otcMaker.setPositionManager(otcMakerPositionManager);
         otcMaker.setOwner(otcMakerOwner);
         otcMaker.setMarginRatioLimit(500_000); // ratio: 50%, max leverage: 2x
         vm.startPrank(perp.limitOrderBookOwner());
@@ -64,6 +68,14 @@ contract OtcMakerSetup is Test {
     modifier prepareOwner(uint256 balance) {
         _topUpUsdc(otcMakerOwner, balance);
         vm.startPrank(otcMakerOwner);
+        usdc.approve(address(otcMaker), type(uint256).max);
+        _;
+        vm.stopPrank();
+    }
+
+    modifier prepareFundOwner(uint256 balance) {
+        _topUpUsdc(otcMakerFundOwner, balance);
+        vm.startPrank(otcMakerFundOwner);
         usdc.approve(address(otcMaker), type(uint256).max);
         _;
         vm.stopPrank();

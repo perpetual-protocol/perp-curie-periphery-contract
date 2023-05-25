@@ -37,8 +37,6 @@ interface IOtcMaker is IOtcMakerStruct, IOtcMakerEvent {
         bytes32[] calldata _merkleProof
     ) external;
 
-    function setMarginRatioLimit(uint24 openMarginRatioLimitArg) external;
-
     //
     // EXTERNAL VIEW
     //

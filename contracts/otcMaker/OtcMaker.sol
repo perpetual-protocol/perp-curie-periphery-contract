@@ -38,6 +38,12 @@ contract OtcMaker is SafeOwnable, EIP712Upgradeable, IOtcMaker, OtcMakerStorageV
         _;
     }
 
+    modifier onlyFundOwner() {
+        // OM_NFO: not fund owner
+        require(_msgSender() == _fundOwner, "OM_NFO");
+        _;
+    }
+
     //
     // EXTERNAL NON-VIEW
     //
@@ -74,13 +80,13 @@ contract OtcMaker is SafeOwnable, EIP712Upgradeable, IOtcMaker, OtcMakerStorageV
         emit PositionManagerUpdated(oldPositionManager, newPositionManager);
     }
 
-    function setMarginRatioLimit(uint24 marginRatioLimitArg) external override onlyOwner {
+    function setMarginRatioLimit(uint24 marginRatioLimitArg) external onlyOwner {
         require(marginRatioLimitArg > 62500 && marginRatioLimitArg < 1000000, "OM_IMR");
         _marginRatioLimit = marginRatioLimitArg;
     }
 
-    function deposit(address token, uint256 amount) external override onlyOwner {
-        SafeERC20Upgradeable.safeTransferFrom(IERC20Upgradeable(token), owner(), address(this), amount);
+    function deposit(address token, uint256 amount) external override onlyFundOwner {
+        SafeERC20Upgradeable.safeTransferFrom(IERC20Upgradeable(token), _fundOwner, address(this), amount);
         IERC20Upgradeable(token).approve(_vault, amount);
         IVault(_vault).deposit(token, amount);
     }
@@ -137,14 +143,14 @@ contract OtcMaker is SafeOwnable, EIP712Upgradeable, IOtcMaker, OtcMakerStorageV
         return IClearingHouse(_clearingHouse).openPosition(params);
     }
 
-    function withdraw(address token, uint256 amount) external override onlyOwner {
+    function withdraw(address token, uint256 amount) external override onlyFundOwner {
         IVault(_vault).withdraw(token, amount);
-        SafeERC20Upgradeable.safeTransfer(IERC20Upgradeable(token), owner(), amount);
+        SafeERC20Upgradeable.safeTransfer(IERC20Upgradeable(token), _fundOwner, amount);
     }
 
-    function withdrawToken(address token) external override onlyOwner {
+    function withdrawToken(address token) external override onlyFundOwner {
         uint256 amount = IERC20Upgradeable(token).balanceOf(address(this));
-        SafeERC20Upgradeable.safeTransfer(IERC20Upgradeable(token), owner(), amount);
+        SafeERC20Upgradeable.safeTransfer(IERC20Upgradeable(token), _fundOwner, amount);
     }
 
     function claimWeek(
@@ -153,7 +159,7 @@ contract OtcMaker is SafeOwnable, EIP712Upgradeable, IOtcMaker, OtcMakerStorageV
         uint256 week,
         uint256 claimedBalance,
         bytes32[] calldata _merkleProof
-    ) external override onlyOwner {
+    ) external override onlyFundOwner {
         IMerkleRedeem(merkleRedeem).claimWeek(liquidityProvider, week, claimedBalance, _merkleProof);
     }
 

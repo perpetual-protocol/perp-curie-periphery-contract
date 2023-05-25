@@ -34,7 +34,7 @@ contract OtcMakerSetterTest is OtcMakerSetup {
         assertFalse(otcMaker.getFundOwner() == alice);
 
         vm.expectEmit(false, false, false, true);
-        emit FundOwnerUpdated(otcMaker.getFundOwner(), alice);
+        emit FundOwnerUpdated(otcMakerFundOwner, alice);
 
         vm.prank(otcMakerOwner);
         otcMaker.setFundOwner(alice);
@@ -52,7 +52,7 @@ contract OtcMakerSetterTest is OtcMakerSetup {
         assertFalse(otcMaker.getPositionManager() == alice);
 
         vm.expectEmit(false, false, false, true);
-        emit PositionManagerUpdated(otcMaker.getPositionManager(), alice);
+        emit PositionManagerUpdated(otcMakerPositionManager, alice);
 
         vm.prank(otcMakerOwner);
         otcMaker.setPositionManager(alice);
