@@ -37,8 +37,6 @@ interface IOtcMaker is IOtcMakerStruct, IOtcMakerEvent {
         bytes32[] calldata _merkleProof
     ) external;
 
-    function setCaller(address newCaller) external;
-
     function setMarginRatioLimit(uint24 openMarginRatioLimitArg) external;
 
     //
@@ -46,6 +44,10 @@ interface IOtcMaker is IOtcMakerStruct, IOtcMakerEvent {
     //
 
     function getCaller() external view returns (address);
+
+    function getFundOwner() external view returns (address);
+
+    function getPositionManager() external view returns (address);
 
     function getClearingHouse() external view returns (address);
 

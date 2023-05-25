@@ -9,14 +9,18 @@ contract OtcMakerSetterTest is OtcMakerSetup {
     using PerpSafeCast for uint24;
 
     event CallerUpdated(address oldCaller, address newCaller);
+    event FundOwnerUpdated(address oldFundOwner, address newFundOwner);
+    event PositionManagerUpdated(address oldPositionManager, address newPositionManager);
 
     function test_set_caller() public {
         assertFalse(otcMaker.getCaller() == alice);
-        vm.startPrank(otcMakerOwner);
-        vm.expectEmit(false, false, false, false);
-        emit CallerUpdated(otcMaker.getCaller(), alice);
+
+        vm.expectEmit(true, false, false, true);
+        emit CallerUpdated(otcMakerCaller, alice);
+
+        vm.prank(otcMakerOwner);
         otcMaker.setCaller(alice);
-        vm.stopPrank();
+
         assertEq(otcMaker.getCaller(), alice);
     }
 
@@ -24,6 +28,42 @@ contract OtcMakerSetterTest is OtcMakerSetup {
         vm.prank(alice);
         vm.expectRevert(bytes("SO_CNO"));
         otcMaker.setCaller(alice);
+    }
+
+    function test_set_fundOwner() public {
+        assertFalse(otcMaker.getFundOwner() == alice);
+
+        vm.expectEmit(false, false, false, true);
+        emit FundOwnerUpdated(otcMaker.getFundOwner(), alice);
+
+        vm.prank(otcMakerOwner);
+        otcMaker.setFundOwner(alice);
+
+        assertEq(otcMaker.getFundOwner(), alice);
+    }
+
+    function test_fail_set_fundOwner_by_non_owner() public {
+        vm.prank(alice);
+        vm.expectRevert(bytes("SO_CNO"));
+        otcMaker.setFundOwner(alice);
+    }
+
+    function test_set_positionManager() public {
+        assertFalse(otcMaker.getPositionManager() == alice);
+
+        vm.expectEmit(false, false, false, true);
+        emit PositionManagerUpdated(otcMaker.getPositionManager(), alice);
+
+        vm.prank(otcMakerOwner);
+        otcMaker.setPositionManager(alice);
+
+        assertEq(otcMaker.getPositionManager(), alice);
+    }
+
+    function test_fail_set_positionManager_by_non_owner() public {
+        vm.prank(alice);
+        vm.expectRevert(bytes("SO_CNO"));
+        otcMaker.setPositionManager(alice);
     }
 
     function test_set_marginRatioLimit() public {

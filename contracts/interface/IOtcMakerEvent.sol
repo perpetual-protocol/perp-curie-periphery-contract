@@ -4,4 +4,6 @@ pragma abicoder v2;
 
 interface IOtcMakerEvent {
     event CallerUpdated(address oldCaller, address newCaller);
+    event FundOwnerUpdated(address oldFundOwner, address newFundOwner);
+    event PositionManagerUpdated(address oldPositionManager, address newPositionManager);
 }

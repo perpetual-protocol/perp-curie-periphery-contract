@@ -20,9 +20,9 @@ import { SafeOwnable } from "../base/SafeOwnable.sol";
 import { IMerkleRedeem } from "../interface/IMerkleRedeem.sol";
 import { IOtcMaker } from "../interface/IOtcMaker.sol";
 import { ILimitOrderBook } from "../interface/ILimitOrderBook.sol";
-import { OtcMakerStorageV1 } from "../storage/OtcMakerStorage.sol";
+import { OtcMakerStorageV2 } from "../storage/OtcMakerStorage.sol";
 
-contract OtcMaker is SafeOwnable, EIP712Upgradeable, IOtcMaker, OtcMakerStorageV1 {
+contract OtcMaker is SafeOwnable, EIP712Upgradeable, IOtcMaker, OtcMakerStorageV2 {
     using PerpMath for int256;
     using PerpMath for uint256;
     using PerpSafeCast for int256;
@@ -45,17 +45,33 @@ contract OtcMaker is SafeOwnable, EIP712Upgradeable, IOtcMaker, OtcMakerStorageV
     function initialize(address clearingHouseArg, address limitOrderBookArg) external initializer {
         __SafeOwnable_init();
         _caller = _msgSender();
+        _fundOwner = _msgSender();
+        _positionManager = _msgSender();
         _clearingHouse = clearingHouseArg;
         _limitOrderBook = limitOrderBookArg;
         _vault = IClearingHouse(_clearingHouse).getVault();
         _accountBalance = IClearingHouse(_clearingHouse).getAccountBalance();
     }
 
-    function setCaller(address newCaller) external override onlyOwner {
-        // OM_ZA: zero address
-        require(newCaller != address(0), "OM_ZA");
+    function setCaller(address newCaller) external onlyOwner {
+        _requireNonZeroAddress(newCaller);
+        address oldCaller = _caller;
         _caller = newCaller;
-        emit CallerUpdated(_caller, newCaller);
+        emit CallerUpdated(oldCaller, newCaller);
+    }
+
+    function setFundOwner(address newFundOwner) external onlyOwner {
+        _requireNonZeroAddress(newFundOwner);
+        address oldFundOwner = _fundOwner;
+        _fundOwner = newFundOwner;
+        emit FundOwnerUpdated(oldFundOwner, newFundOwner);
+    }
+
+    function setPositionManager(address newPositionManager) external onlyOwner {
+        _requireNonZeroAddress(newPositionManager);
+        address oldPositionManager = _positionManager;
+        _positionManager = newPositionManager;
+        emit PositionManagerUpdated(oldPositionManager, newPositionManager);
     }
 
     function setMarginRatioLimit(uint24 marginRatioLimitArg) external override onlyOwner {
@@ -149,6 +165,14 @@ contract OtcMaker is SafeOwnable, EIP712Upgradeable, IOtcMaker, OtcMakerStorageV
         return _caller;
     }
 
+    function getFundOwner() external view override returns (address) {
+        return _fundOwner;
+    }
+
+    function getPositionManager() external view override returns (address) {
+        return _positionManager;
+    }
+
     function getClearingHouse() external view override returns (address) {
         return _clearingHouse;
     }
@@ -189,4 +213,9 @@ contract OtcMaker is SafeOwnable, EIP712Upgradeable, IOtcMaker, OtcMakerStorageV
     //
     // INTERNAL PURE
     //
+
+    function _requireNonZeroAddress(address addressArg) internal pure {
+        // OM_ZA: zero address
+        require(addressArg != address(0), "OM_ZA");
+    }
 }
