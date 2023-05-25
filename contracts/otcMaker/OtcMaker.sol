@@ -55,7 +55,7 @@ contract OtcMaker is SafeOwnable, EIP712Upgradeable, IOtcMaker, OtcMakerStorageV
         // OM_ZA: zero address
         require(newCaller != address(0), "OM_ZA");
         _caller = newCaller;
-        emit UpdateCaller(_caller, newCaller);
+        emit CallerUpdated(_caller, newCaller);
     }
 
     function setMarginRatioLimit(uint24 marginRatioLimitArg) external override onlyOwner {

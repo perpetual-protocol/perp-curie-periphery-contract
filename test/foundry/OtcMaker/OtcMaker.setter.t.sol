@@ -8,10 +8,15 @@ import { OtcMakerSetup } from "./helper/OtcMakerSetup.sol";
 contract OtcMakerSetterTest is OtcMakerSetup {
     using PerpSafeCast for uint24;
 
+    event CallerUpdated(address oldCaller, address newCaller);
+
     function test_set_caller() public {
         assertFalse(otcMaker.getCaller() == alice);
-        vm.prank(otcMakerOwner);
+        vm.startPrank(otcMakerOwner);
+        vm.expectEmit(false, false, false, false);
+        emit CallerUpdated(otcMaker.getCaller(), alice);
         otcMaker.setCaller(alice);
+        vm.stopPrank();
         assertEq(otcMaker.getCaller(), alice);
     }
 
