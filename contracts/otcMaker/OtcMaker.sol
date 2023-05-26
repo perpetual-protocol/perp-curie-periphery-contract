@@ -67,23 +67,20 @@ contract OtcMaker is SafeOwnable, EIP712Upgradeable, IOtcMaker, OtcMakerStorageV
 
     function setCaller(address newCaller) external onlyOwner {
         _requireNonZeroAddress(newCaller);
-        address oldCaller = _caller;
+        emit CallerUpdated(_caller, newCaller);
         _caller = newCaller;
-        emit CallerUpdated(oldCaller, newCaller);
     }
 
     function setFundOwner(address newFundOwner) external onlyOwner {
         _requireNonZeroAddress(newFundOwner);
-        address oldFundOwner = _fundOwner;
+        emit FundOwnerUpdated(_fundOwner, newFundOwner);
         _fundOwner = newFundOwner;
-        emit FundOwnerUpdated(oldFundOwner, newFundOwner);
     }
 
     function setPositionManager(address newPositionManager) external onlyOwner {
         _requireNonZeroAddress(newPositionManager);
-        address oldPositionManager = _positionManager;
+        emit PositionManagerUpdated(_positionManager, newPositionManager);
         _positionManager = newPositionManager;
-        emit PositionManagerUpdated(oldPositionManager, newPositionManager);
     }
 
     function setMarginRatioLimit(uint24 marginRatioLimitArg) external onlyOwner {

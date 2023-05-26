@@ -15,7 +15,7 @@ contract OtcMakerSetterTest is OtcMakerSetup {
     function test_set_caller() public {
         assertFalse(otcMaker.getCaller() == alice);
 
-        vm.expectEmit(true, false, false, true);
+        vm.expectEmit(false, false, false, true);
         emit CallerUpdated(otcMakerCaller, alice);
 
         vm.prank(otcMakerOwner);
