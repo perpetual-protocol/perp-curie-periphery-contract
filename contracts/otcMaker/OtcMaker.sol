@@ -4,6 +4,7 @@ pragma abicoder v2;
 
 import { SafeERC20Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC20/SafeERC20Upgradeable.sol";
 import { IERC20Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC20/SafeERC20Upgradeable.sol";
+import { SignedSafeMathUpgradeable } from "@openzeppelin/contracts-upgradeable/math/SignedSafeMathUpgradeable.sol";
 import { ECDSAUpgradeable } from "@openzeppelin/contracts-upgradeable/cryptography/ECDSAUpgradeable.sol";
 import { EIP712Upgradeable } from "@openzeppelin/contracts-upgradeable/drafts/EIP712Upgradeable.sol";
 import { FullMath } from "@uniswap/v3-core/contracts/libraries/FullMath.sol";
@@ -14,6 +15,7 @@ import { IClearingHouse } from "@perp/curie-contract/contracts/interface/ICleari
 import { IClearingHouseConfig } from "@perp/curie-contract/contracts/interface/IClearingHouseConfig.sol";
 import { IVault } from "@perp/curie-contract/contracts/interface/IVault.sol";
 import { IAccountBalance } from "@perp/curie-contract/contracts/interface/IAccountBalance.sol";
+import { AccountMarket } from "@perp/curie-contract/contracts/lib/AccountMarket.sol";
 
 import { SafeOwnable } from "../base/SafeOwnable.sol";
 
@@ -23,6 +25,7 @@ import { ILimitOrderBook } from "../interface/ILimitOrderBook.sol";
 import { OtcMakerStorageV2 } from "../storage/OtcMakerStorage.sol";
 
 contract OtcMaker is SafeOwnable, EIP712Upgradeable, IOtcMaker, OtcMakerStorageV2 {
+    using SignedSafeMathUpgradeable for int256;
     using PerpMath for int256;
     using PerpMath for uint256;
     using PerpSafeCast for int256;
@@ -101,9 +104,15 @@ contract OtcMaker is SafeOwnable, EIP712Upgradeable, IOtcMaker, OtcMakerStorageV
         ILimitOrderBook.LimitOrder calldata limitOrderParams,
         JitLiquidityParams calldata jitLiquidityParams,
         bytes calldata signature
-    ) external override onlyCaller {
+    ) external override onlyCaller returns (OpenPositionForResponse memory) {
         // OM_NLO: not limit order
         require(limitOrderParams.orderType == ILimitOrderBook.OrderType.LimitOrder, "OM_NLO");
+
+        // IAccountBalance -> get before takerPositionSize, takerPositionNotional
+        AccountMarket.Info memory accountInfoBefore = IAccountBalance(_accountBalance).getAccountInfo(
+            address(this),
+            limitOrderParams.baseToken
+        );
 
         // TODO should we set minBase & minQuote's percentage as a constant in contract?
         IClearingHouse.AddLiquidityResponse memory addLiquidityResponse = IClearingHouse(_clearingHouse).addLiquidity(
@@ -138,6 +147,17 @@ contract OtcMaker is SafeOwnable, EIP712Upgradeable, IOtcMaker, OtcMakerStorageV
 
         // OM_IM: insufficient margin
         require(isMarginSufficient(), "OM_IM");
+
+        // IAccountBalance -> get after takerPositionSize, takerPositionNotional
+        AccountMarket.Info memory accountInfoAfter = IAccountBalance(_accountBalance).getAccountInfo(
+            address(this),
+            limitOrderParams.baseToken
+        );
+        return
+            OpenPositionForResponse({
+                exchangedPositionSize: accountInfoAfter.takerPositionSize.sub(accountInfoBefore.takerPositionSize),
+                exchangedPositionNotional: accountInfoAfter.takerOpenNotional.sub(accountInfoBefore.takerOpenNotional)
+            });
     }
 
     function openPosition(IClearingHouse.OpenPositionParams calldata params)

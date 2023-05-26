@@ -10,4 +10,9 @@ interface IOtcMakerStruct {
         uint256 minLiquidityBase;
         uint256 minLiquidityQuote;
     }
+
+    struct OpenPositionForResponse {
+        int256 exchangedPositionSize;
+        int256 exchangedPositionNotional;
+    }
 }
