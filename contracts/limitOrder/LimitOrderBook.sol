@@ -107,10 +107,10 @@ contract LimitOrderBook is
         emit LimitOrderRewardVaultChanged(limitOrderRewardVaultArg);
     }
 
-    function setWhitelistContractCaller(address caller, bool enable) external onlyOwner {
+    function setWhitelistContractCaller(address caller, bool isEnabled) external onlyOwner {
         // LOB_NCA: Not contract address
         require(caller.isContract(), "LOB_NCA");
-        _whitelistedContractCaller[caller] = enable;
+        _whitelistedContractCaller[caller] = isEnabled;
     }
 
     /// @inheritdoc ILimitOrderBook
