@@ -105,8 +105,8 @@ contract OtcMaker is SafeOwnable, EIP712Upgradeable, IOtcMaker, OtcMakerStorageV
         JitLiquidityParams calldata jitLiquidityParams,
         bytes calldata signature
     ) external override onlyCaller returns (OpenPositionForResponse memory) {
-        // OM_NLO: not limit order
-        require(limitOrderParams.orderType == ILimitOrderBook.OrderType.LimitOrder, "OM_NLO");
+        // OM_NOMO: not otc maker order
+        require(limitOrderParams.orderType == ILimitOrderBook.OrderType.OtcMakerOrder, "OM_NOMO");
 
         // IAccountBalance -> get before takerPositionSize, takerPositionNotional
         AccountMarket.Info memory accountInfoBefore = IAccountBalance(_accountBalance).getAccountInfo(

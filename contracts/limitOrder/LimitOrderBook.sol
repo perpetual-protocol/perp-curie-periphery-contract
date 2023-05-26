@@ -288,7 +288,10 @@ contract LimitOrderBook is
     }
 
     function _verifyTriggerPrice(LimitOrder memory order, uint80 roundIdWhenTriggered) internal view {
-        if (order.orderType == ILimitOrderBook.OrderType.LimitOrder) {
+        if (
+            order.orderType == ILimitOrderBook.OrderType.LimitOrder ||
+            order.orderType == ILimitOrderBook.OrderType.OtcMakerOrder
+        ) {
             return;
         }
 

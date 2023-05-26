@@ -168,7 +168,7 @@ contract OtcMakerOpenPositionForTest is OtcMakerSetup, EIP712Upgradeable {
 
         bytes memory signature = _signLimitOrderParams(alicePrivateKey, limitOrderParams);
 
-        vm.expectRevert(bytes("OM_NLO"));
+        vm.expectRevert(bytes("OM_NOMO"));
         vm.prank(otcMakerCaller);
         otcMaker.openPositionFor(
             limitOrderParams,
