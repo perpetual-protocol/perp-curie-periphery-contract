@@ -196,6 +196,13 @@ contract LimitOrderBook is
     }
 
     //
+    // EXTERNAL VIEW
+    //
+    function getOrderStatus(bytes32 orderHash) external view override returns (ILimitOrderBook.OrderStatus) {
+        return _ordersStatus[orderHash];
+    }
+
+    //
     // PUBLIC VIEW
     //
     function getOrderHash(LimitOrder memory order) public view override returns (bytes32) {
@@ -204,10 +211,6 @@ contract LimitOrderBook is
 
     function isWhitelistContractCaller(address caller) public view override returns (bool) {
         return _whitelistedContractCaller[caller];
-    }
-
-    function getOrderStatus(bytes32 orderHash) external view override returns (ILimitOrderBook.OrderStatus) {
-        return _ordersStatus[orderHash];
     }
 
     //
