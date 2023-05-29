@@ -30,7 +30,7 @@ contract OtcMakerOpenPositionForTest is OtcMakerSetup, EIP712Upgradeable {
         );
 
         ILimitOrderBook.LimitOrder memory limitOrderParams = _generateLimitOrderParams(
-            ILimitOrderBook.OrderType.LimitOrder,
+            ILimitOrderBook.OrderType.OtcMakerOrder,
             alice,
             address(perp.baseToken()),
             false,
@@ -88,7 +88,7 @@ contract OtcMakerOpenPositionForTest is OtcMakerSetup, EIP712Upgradeable {
         );
 
         ILimitOrderBook.LimitOrder memory limitOrderParams = _generateLimitOrderParams(
-            ILimitOrderBook.OrderType.LimitOrder,
+            ILimitOrderBook.OrderType.OtcMakerOrder,
             alice,
             address(perp.baseToken()),
             false,

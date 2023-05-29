@@ -5,7 +5,7 @@ import "forge-std/Test.sol";
 import "../../../contracts/interface/ILimitOrderBook.sol";
 import "../../../contracts/test/TestLimitOrderBook.sol";
 
-contract LimitOrderBook_Signing is Test {
+contract LimitOrderBookSigningTest is Test {
     TestLimitOrderBook limitOrderBook;
 
     function setUp() public {
