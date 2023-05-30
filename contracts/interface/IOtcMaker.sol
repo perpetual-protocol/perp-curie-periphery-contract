@@ -24,7 +24,7 @@ interface IOtcMaker is IOtcMakerStruct, IOtcMakerEvent {
         ILimitOrderBook.LimitOrder calldata limitOrderParams,
         JitLiquidityParams calldata jitLiquidityParams,
         bytes calldata signature
-    ) external returns (int256 exchangedPositionSize, int256 exchangedPositionNotional);
+    ) external returns (int256, int256);
 
     /// @notice Opens a position in the clearing house using the provided parameters.
     /// @dev This function can only be called by the designated position manager.
