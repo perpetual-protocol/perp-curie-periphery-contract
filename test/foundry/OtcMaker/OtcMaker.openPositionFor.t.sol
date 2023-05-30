@@ -60,7 +60,7 @@ contract OtcMakerOpenPositionForTest is OtcMakerSetup, EIP712Upgradeable {
         bytes memory signature = _signLimitOrderParams(alicePrivateKey, limitOrderParams);
 
         vm.prank(otcMakerCaller);
-        IOtcMakerStruct.OpenPositionForResponse memory response = otcMaker.openPositionFor(
+        (int256 exchangedPositionSize, int256 exchangedPositionNotional) = otcMaker.openPositionFor(
             limitOrderParams,
             IOtcMakerStruct.JitLiquidityParams(amount0, amount1, 69060, 69120, 0, 0),
             signature
@@ -73,8 +73,8 @@ contract OtcMakerOpenPositionForTest is OtcMakerSetup, EIP712Upgradeable {
             1
         );
 
-        assertApproxEqAbs(response.exchangedPositionSize, -1e18, 1);
-        assertEq(response.exchangedPositionNotional, 1000194805226376838505); // ≈$1000
+        assertApproxEqAbs(exchangedPositionSize, -1e18, 1);
+        assertEq(exchangedPositionNotional, 1000194805226376838505); // ≈$1000
     }
 
     function test_fail_open_position_for_margin_is_not_enough() public {

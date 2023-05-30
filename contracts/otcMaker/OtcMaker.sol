@@ -105,7 +105,7 @@ contract OtcMaker is SafeOwnable, EIP712Upgradeable, IOtcMaker, OtcMakerStorageV
         ILimitOrderBook.LimitOrder calldata limitOrderParams,
         JitLiquidityParams calldata jitLiquidityParams,
         bytes calldata signature
-    ) external override onlyCaller returns (OpenPositionForResponse memory) {
+    ) external override onlyCaller returns (int256, int256) {
         // OM_NLO: not limit order
         require(limitOrderParams.orderType == ILimitOrderBook.OrderType.LimitOrder, "OM_NLO");
 
@@ -154,11 +154,10 @@ contract OtcMaker is SafeOwnable, EIP712Upgradeable, IOtcMaker, OtcMakerStorageV
             address(this),
             limitOrderParams.baseToken
         );
-        return
-            OpenPositionForResponse({
-                exchangedPositionSize: accountInfoAfter.takerPositionSize.sub(accountInfoBefore.takerPositionSize),
-                exchangedPositionNotional: accountInfoAfter.takerOpenNotional.sub(accountInfoBefore.takerOpenNotional)
-            });
+        return (
+            accountInfoAfter.takerPositionSize.sub(accountInfoBefore.takerPositionSize),
+            accountInfoAfter.takerOpenNotional.sub(accountInfoBefore.takerOpenNotional)
+        );
     }
 
     function openPosition(IClearingHouse.OpenPositionParams calldata params)

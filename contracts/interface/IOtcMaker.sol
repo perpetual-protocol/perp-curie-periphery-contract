@@ -17,7 +17,7 @@ interface IOtcMaker is IOtcMakerStruct, IOtcMakerEvent {
         ILimitOrderBook.LimitOrder calldata limitOrderParams,
         JitLiquidityParams calldata jitLiquidityParams,
         bytes calldata signature
-    ) external returns (OpenPositionForResponse memory);
+    ) external returns (int256 exchangedPositionSize, int256 exchangedPositionNotional);
 
     function openPosition(IClearingHouse.OpenPositionParams calldata params)
         external
