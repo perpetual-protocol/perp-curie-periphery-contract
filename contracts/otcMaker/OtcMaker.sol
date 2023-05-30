@@ -185,9 +185,9 @@ contract OtcMaker is SafeOwnable, EIP712Upgradeable, IOtcMaker, OtcMakerStorageV
         address liquidityProvider,
         uint256 week,
         uint256 claimedBalance,
-        bytes32[] calldata _merkleProof
+        bytes32[] calldata merkleProof
     ) external override onlyFundOwner {
-        IMerkleRedeem(merkleRedeem).claimWeek(liquidityProvider, week, claimedBalance, _merkleProof);
+        IMerkleRedeem(merkleRedeem).claimWeek(liquidityProvider, week, claimedBalance, merkleProof);
     }
 
     //
