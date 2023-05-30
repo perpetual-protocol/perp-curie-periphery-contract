@@ -3,7 +3,7 @@ pragma solidity 0.7.6;
 pragma abicoder v2;
 
 import { SafeERC20Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC20/SafeERC20Upgradeable.sol";
-import { IERC20Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC20/SafeERC20Upgradeable.sol";
+import { IERC20Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
 import { SignedSafeMathUpgradeable } from "@openzeppelin/contracts-upgradeable/math/SignedSafeMathUpgradeable.sol";
 import { ECDSAUpgradeable } from "@openzeppelin/contracts-upgradeable/cryptography/ECDSAUpgradeable.sol";
 import { EIP712Upgradeable } from "@openzeppelin/contracts-upgradeable/drafts/EIP712Upgradeable.sol";
@@ -90,7 +90,8 @@ contract OtcMaker is SafeOwnable, EIP712Upgradeable, IOtcMaker, OtcMakerStorageV
     }
 
     function setMarginRatioLimit(uint24 marginRatioLimitArg) external onlyOwner {
-        require(marginRatioLimitArg > 62500 && marginRatioLimitArg < 1000000, "OM_IMR");
+        uint24 mmRatio = IClearingHouseConfig(IClearingHouse(_clearingHouse).getClearingHouseConfig()).getMmRatio();
+        require(marginRatioLimitArg > mmRatio && marginRatioLimitArg < 1000000, "OM_IMR");
         _marginRatioLimit = marginRatioLimitArg;
     }
 
@@ -104,7 +105,7 @@ contract OtcMaker is SafeOwnable, EIP712Upgradeable, IOtcMaker, OtcMakerStorageV
         ILimitOrderBook.LimitOrder calldata limitOrderParams,
         JitLiquidityParams calldata jitLiquidityParams,
         bytes calldata signature
-    ) external override onlyCaller returns (OpenPositionForResponse memory) {
+    ) external override onlyCaller returns (int256, int256) {
         // OM_NOMO: not otc maker order
         require(limitOrderParams.orderType == ILimitOrderBook.OrderType.OtcMakerOrder, "OM_NOMO");
 
@@ -153,11 +154,10 @@ contract OtcMaker is SafeOwnable, EIP712Upgradeable, IOtcMaker, OtcMakerStorageV
             address(this),
             limitOrderParams.baseToken
         );
-        return
-            OpenPositionForResponse({
-                exchangedPositionSize: accountInfoAfter.takerPositionSize.sub(accountInfoBefore.takerPositionSize),
-                exchangedPositionNotional: accountInfoAfter.takerOpenNotional.sub(accountInfoBefore.takerOpenNotional)
-            });
+        return (
+            accountInfoAfter.takerPositionSize.sub(accountInfoBefore.takerPositionSize),
+            accountInfoAfter.takerOpenNotional.sub(accountInfoBefore.takerOpenNotional)
+        );
     }
 
     function openPosition(IClearingHouse.OpenPositionParams calldata params)
@@ -184,9 +184,9 @@ contract OtcMaker is SafeOwnable, EIP712Upgradeable, IOtcMaker, OtcMakerStorageV
         address liquidityProvider,
         uint256 week,
         uint256 claimedBalance,
-        bytes32[] calldata _merkleProof
+        bytes32[] calldata merkleProof
     ) external override onlyFundOwner {
-        IMerkleRedeem(merkleRedeem).claimWeek(liquidityProvider, week, claimedBalance, _merkleProof);
+        IMerkleRedeem(merkleRedeem).claimWeek(liquidityProvider, week, claimedBalance, merkleProof);
     }
 
     //
