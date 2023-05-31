@@ -19,12 +19,13 @@ interface IOtcMaker is IOtcMakerStruct, IOtcMakerEvent {
     /// @param limitOrderParams The parameters of the limit order.
     /// @param jitLiquidityParams The JIT liquidity parameters.
     /// @param signature The signature associated with the limit order.
-    /// @return The response includes the exchanged position size and notional on OTCMaker.
+    /// @return exchangedPositionSize The exchanged position size of OTCMaker.
+    /// @return exchangedPositionNotional The exchanged position notional of OTCMaker.
     function openPositionFor(
         ILimitOrderBook.LimitOrder calldata limitOrderParams,
         JitLiquidityParams calldata jitLiquidityParams,
         bytes calldata signature
-    ) external returns (int256, int256);
+    ) external returns (int256 exchangedPositionSize, int256 exchangedPositionNotional);
 
     /// @notice Opens a position in the clearing house using the provided parameters.
     /// @dev This function can only be called by the designated position manager.
