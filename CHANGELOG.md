@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Add `OtcMaker` contract.
 - Update `LimitOrderBook` for supporting whitelisted contract can call fillLimitOrder.
+- Update `ILimitOrderBook` for supporting new OrderType OtcMakerOrder.
 
 ## [1.4.3] - 2023-04-11
 ### Added
