@@ -19,7 +19,7 @@ import { IClearingHouse } from "@perp/curie-contract/contracts/interface/ICleari
 contract OtcMakerOpenPositionForTest is OtcMakerSetup, EIP712Upgradeable {
     using PerpSafeCast for int256;
 
-    function test_openPositionFor() public {
+    function test_success_open_position_for() public {
         // initialSqrtPriceX96 ~= $1000
         uint160 initialSqrtPriceX96 = 2505414483750479311864222358486;
 
@@ -30,11 +30,11 @@ contract OtcMakerOpenPositionForTest is OtcMakerSetup, EIP712Upgradeable {
         );
 
         ILimitOrderBook.LimitOrder memory limitOrderParams = _generateLimitOrderParams(
-            ILimitOrderBook.OrderType.LimitOrder,
+            ILimitOrderBook.OrderType.OtcMakerOrder,
             alice,
             address(perp.baseToken()),
             false,
-            true,
+            false,
             1e18
         );
 
@@ -60,7 +60,7 @@ contract OtcMakerOpenPositionForTest is OtcMakerSetup, EIP712Upgradeable {
         bytes memory signature = _signLimitOrderParams(alicePrivateKey, limitOrderParams);
 
         vm.prank(otcMakerCaller);
-        otcMaker.openPositionFor(
+        (int256 exchangedPositionSize, int256 exchangedPositionNotional) = otcMaker.openPositionFor(
             limitOrderParams,
             IOtcMakerStruct.JitLiquidityParams(amount0, amount1, 69060, 69120, 0, 0),
             signature
@@ -72,9 +72,12 @@ contract OtcMakerOpenPositionForTest is OtcMakerSetup, EIP712Upgradeable {
             perp.accountBalance().getTakerPositionSize(address(alice), address(perp.baseToken())).toUint256(),
             1
         );
+
+        assertApproxEqAbs(exchangedPositionSize, -1e18, 1);
+        assertEq(exchangedPositionNotional, 1000194805226376838505); // ≈$1000
     }
 
-    function test_openPositionFor_margin_is_not_enough() public {
+    function test_fail_open_position_for_margin_is_not_enough() public {
         // initialSqrtPriceX96 ~= $1000
         uint160 initialSqrtPriceX96 = 2505414483750479311864222358486;
 
@@ -85,7 +88,7 @@ contract OtcMakerOpenPositionForTest is OtcMakerSetup, EIP712Upgradeable {
         );
 
         ILimitOrderBook.LimitOrder memory limitOrderParams = _generateLimitOrderParams(
-            ILimitOrderBook.OrderType.LimitOrder,
+            ILimitOrderBook.OrderType.OtcMakerOrder,
             alice,
             address(perp.baseToken()),
             false,
@@ -129,7 +132,7 @@ contract OtcMakerOpenPositionForTest is OtcMakerSetup, EIP712Upgradeable {
         );
     }
 
-    function test_openPositionFor_order_type_is_not_limit_order() public {
+    function test_fail_open_position_for_order_type_is_not_limit_order() public {
         // initialSqrtPriceX96 ~= $1000
         uint160 initialSqrtPriceX96 = 2505414483750479311864222358486;
 
@@ -165,7 +168,7 @@ contract OtcMakerOpenPositionForTest is OtcMakerSetup, EIP712Upgradeable {
 
         bytes memory signature = _signLimitOrderParams(alicePrivateKey, limitOrderParams);
 
-        vm.expectRevert(bytes("OM_NLO"));
+        vm.expectRevert(bytes("OM_NOMO"));
         vm.prank(otcMakerCaller);
         otcMaker.openPositionFor(
             limitOrderParams,
@@ -175,9 +178,9 @@ contract OtcMakerOpenPositionForTest is OtcMakerSetup, EIP712Upgradeable {
     }
 
     function _depositToPerpFromOtcMaker(uint256 amount) internal {
-        _topUpUsdc(otcMakerOwner, amount);
+        _topUpUsdc(otcMakerFundOwner, amount);
 
-        vm.startPrank(otcMakerOwner);
+        vm.startPrank(otcMakerFundOwner);
         usdc.approve(address(otcMaker), type(uint256).max);
         otcMaker.deposit(address(usdc), amount);
         vm.stopPrank();
@@ -199,7 +202,7 @@ contract OtcMakerOpenPositionForTest is OtcMakerSetup, EIP712Upgradeable {
         bool isBaseToQuote,
         bool isExactInput,
         uint256 amount
-    ) internal returns (ILimitOrderBook.LimitOrder memory) {
+    ) internal pure returns (ILimitOrderBook.LimitOrder memory) {
         // amount => The input amount if isExactInput is true, otherwise the output amount
         return
             ILimitOrderBook.LimitOrder(
@@ -227,6 +230,6 @@ contract OtcMakerOpenPositionForTest is OtcMakerSetup, EIP712Upgradeable {
         // prepare signed data
         bytes32 digest = perp.limitOrderBook().getOrderHash(limitOrderParams);
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(pk, digest);
-        return abi.encodePacked(r, s, bytes1(0x1c)); // copied from `ether.js`'s `joinSignature`
+        return abi.encodePacked(r, s, v);
     }
 }

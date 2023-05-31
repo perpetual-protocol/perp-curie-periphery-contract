@@ -3,7 +3,8 @@ pragma solidity 0.7.6;
 pragma abicoder v2;
 
 import { SafeERC20Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC20/SafeERC20Upgradeable.sol";
-import { IERC20Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC20/SafeERC20Upgradeable.sol";
+import { IERC20Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
+import { SignedSafeMathUpgradeable } from "@openzeppelin/contracts-upgradeable/math/SignedSafeMathUpgradeable.sol";
 import { ECDSAUpgradeable } from "@openzeppelin/contracts-upgradeable/cryptography/ECDSAUpgradeable.sol";
 import { EIP712Upgradeable } from "@openzeppelin/contracts-upgradeable/drafts/EIP712Upgradeable.sol";
 import { FullMath } from "@uniswap/v3-core/contracts/libraries/FullMath.sol";
@@ -14,15 +15,17 @@ import { IClearingHouse } from "@perp/curie-contract/contracts/interface/ICleari
 import { IClearingHouseConfig } from "@perp/curie-contract/contracts/interface/IClearingHouseConfig.sol";
 import { IVault } from "@perp/curie-contract/contracts/interface/IVault.sol";
 import { IAccountBalance } from "@perp/curie-contract/contracts/interface/IAccountBalance.sol";
+import { AccountMarket } from "@perp/curie-contract/contracts/lib/AccountMarket.sol";
 
 import { SafeOwnable } from "../base/SafeOwnable.sol";
 
 import { IMerkleRedeem } from "../interface/IMerkleRedeem.sol";
 import { IOtcMaker } from "../interface/IOtcMaker.sol";
 import { ILimitOrderBook } from "../interface/ILimitOrderBook.sol";
-import { OtcMakerStorageV1 } from "../storage/OtcMakerStorage.sol";
+import { OtcMakerStorageV2 } from "../storage/OtcMakerStorage.sol";
 
-contract OtcMaker is SafeOwnable, EIP712Upgradeable, IOtcMaker, OtcMakerStorageV1 {
+contract OtcMaker is SafeOwnable, EIP712Upgradeable, IOtcMaker, OtcMakerStorageV2 {
+    using SignedSafeMathUpgradeable for int256;
     using PerpMath for int256;
     using PerpMath for uint256;
     using PerpSafeCast for int256;
@@ -38,6 +41,18 @@ contract OtcMaker is SafeOwnable, EIP712Upgradeable, IOtcMaker, OtcMakerStorageV
         _;
     }
 
+    modifier onlyFundOwner() {
+        // OM_NFO: not fund owner
+        require(_msgSender() == _fundOwner, "OM_NFO");
+        _;
+    }
+
+    modifier onlyPositionManager() {
+        // OM_NPM: not position manager
+        require(_msgSender() == _positionManager, "OM_NPM");
+        _;
+    }
+
     //
     // EXTERNAL NON-VIEW
     //
@@ -45,26 +60,43 @@ contract OtcMaker is SafeOwnable, EIP712Upgradeable, IOtcMaker, OtcMakerStorageV
     function initialize(address clearingHouseArg, address limitOrderBookArg) external initializer {
         __SafeOwnable_init();
         _caller = _msgSender();
+        _fundOwner = _msgSender();
+        _positionManager = _msgSender();
         _clearingHouse = clearingHouseArg;
         _limitOrderBook = limitOrderBookArg;
         _vault = IClearingHouse(_clearingHouse).getVault();
         _accountBalance = IClearingHouse(_clearingHouse).getAccountBalance();
     }
 
-    function setCaller(address newCaller) external override onlyOwner {
-        // OM_ZA: zero address
-        require(newCaller != address(0), "OM_ZA");
+    function setCaller(address newCaller) external onlyOwner {
+        _requireNonZeroAddress(newCaller);
+        address oldCaller = _caller;
         _caller = newCaller;
-        emit UpdateCaller(_caller, newCaller);
+        emit CallerUpdated(oldCaller, newCaller);
     }
 
-    function setMarginRatioLimit(uint24 marginRatioLimitArg) external override onlyOwner {
-        require(marginRatioLimitArg > 62500 && marginRatioLimitArg < 1000000, "OM_IMR");
+    function setFundOwner(address newFundOwner) external onlyOwner {
+        _requireNonZeroAddress(newFundOwner);
+        address oldFundOwner = _fundOwner;
+        _fundOwner = newFundOwner;
+        emit FundOwnerUpdated(oldFundOwner, newFundOwner);
+    }
+
+    function setPositionManager(address newPositionManager) external onlyOwner {
+        _requireNonZeroAddress(newPositionManager);
+        address oldPositionManager = _positionManager;
+        _positionManager = newPositionManager;
+        emit PositionManagerUpdated(oldPositionManager, newPositionManager);
+    }
+
+    function setMarginRatioLimit(uint24 marginRatioLimitArg) external onlyOwner {
+        uint24 mmRatio = IClearingHouseConfig(IClearingHouse(_clearingHouse).getClearingHouseConfig()).getMmRatio();
+        require(marginRatioLimitArg > mmRatio && marginRatioLimitArg < 1000000, "OM_IMR");
         _marginRatioLimit = marginRatioLimitArg;
     }
 
-    function deposit(address token, uint256 amount) external override onlyOwner {
-        SafeERC20Upgradeable.safeTransferFrom(IERC20Upgradeable(token), owner(), address(this), amount);
+    function deposit(address token, uint256 amount) external override onlyFundOwner {
+        SafeERC20Upgradeable.safeTransferFrom(IERC20Upgradeable(token), _fundOwner, address(this), amount);
         IERC20Upgradeable(token).approve(_vault, amount);
         IVault(_vault).deposit(token, amount);
     }
@@ -73,9 +105,15 @@ contract OtcMaker is SafeOwnable, EIP712Upgradeable, IOtcMaker, OtcMakerStorageV
         ILimitOrderBook.LimitOrder calldata limitOrderParams,
         JitLiquidityParams calldata jitLiquidityParams,
         bytes calldata signature
-    ) external override onlyCaller {
-        // OM_NLO: not limit order
-        require(limitOrderParams.orderType == ILimitOrderBook.OrderType.LimitOrder, "OM_NLO");
+    ) external override onlyCaller returns (int256, int256) {
+        // OM_NOMO: not otc maker order
+        require(limitOrderParams.orderType == ILimitOrderBook.OrderType.OtcMakerOrder, "OM_NOMO");
+
+        // IAccountBalance -> get before takerPositionSize, takerPositionNotional
+        AccountMarket.Info memory accountInfoBefore = IAccountBalance(_accountBalance).getAccountInfo(
+            address(this),
+            limitOrderParams.baseToken
+        );
 
         // TODO should we set minBase & minQuote's percentage as a constant in contract?
         IClearingHouse.AddLiquidityResponse memory addLiquidityResponse = IClearingHouse(_clearingHouse).addLiquidity(
@@ -110,25 +148,35 @@ contract OtcMaker is SafeOwnable, EIP712Upgradeable, IOtcMaker, OtcMakerStorageV
 
         // OM_IM: insufficient margin
         require(isMarginSufficient(), "OM_IM");
+
+        // IAccountBalance -> get after takerPositionSize, takerPositionNotional
+        AccountMarket.Info memory accountInfoAfter = IAccountBalance(_accountBalance).getAccountInfo(
+            address(this),
+            limitOrderParams.baseToken
+        );
+        return (
+            accountInfoAfter.takerPositionSize.sub(accountInfoBefore.takerPositionSize),
+            accountInfoAfter.takerOpenNotional.sub(accountInfoBefore.takerOpenNotional)
+        );
     }
 
     function openPosition(IClearingHouse.OpenPositionParams calldata params)
         external
         override
-        onlyOwner
+        onlyPositionManager
         returns (uint256 base, uint256 quote)
     {
         return IClearingHouse(_clearingHouse).openPosition(params);
     }
 
-    function withdraw(address token, uint256 amount) external override onlyOwner {
+    function withdraw(address token, uint256 amount) external override onlyFundOwner {
         IVault(_vault).withdraw(token, amount);
-        SafeERC20Upgradeable.safeTransfer(IERC20Upgradeable(token), owner(), amount);
+        SafeERC20Upgradeable.safeTransfer(IERC20Upgradeable(token), _fundOwner, amount);
     }
 
-    function withdrawToken(address token) external override onlyOwner {
+    function withdrawToken(address token) external override onlyFundOwner {
         uint256 amount = IERC20Upgradeable(token).balanceOf(address(this));
-        SafeERC20Upgradeable.safeTransfer(IERC20Upgradeable(token), owner(), amount);
+        SafeERC20Upgradeable.safeTransfer(IERC20Upgradeable(token), _fundOwner, amount);
     }
 
     function claimWeek(
@@ -136,9 +184,9 @@ contract OtcMaker is SafeOwnable, EIP712Upgradeable, IOtcMaker, OtcMakerStorageV
         address liquidityProvider,
         uint256 week,
         uint256 claimedBalance,
-        bytes32[] calldata _merkleProof
-    ) external override onlyOwner {
-        IMerkleRedeem(merkleRedeem).claimWeek(liquidityProvider, week, claimedBalance, _merkleProof);
+        bytes32[] calldata merkleProof
+    ) external override onlyFundOwner {
+        IMerkleRedeem(merkleRedeem).claimWeek(liquidityProvider, week, claimedBalance, merkleProof);
     }
 
     //
@@ -147,6 +195,14 @@ contract OtcMaker is SafeOwnable, EIP712Upgradeable, IOtcMaker, OtcMakerStorageV
 
     function getCaller() external view override returns (address) {
         return _caller;
+    }
+
+    function getFundOwner() external view override returns (address) {
+        return _fundOwner;
+    }
+
+    function getPositionManager() external view override returns (address) {
+        return _positionManager;
     }
 
     function getClearingHouse() external view override returns (address) {
@@ -189,4 +245,9 @@ contract OtcMaker is SafeOwnable, EIP712Upgradeable, IOtcMaker, OtcMakerStorageV
     //
     // INTERNAL PURE
     //
+
+    function _requireNonZeroAddress(address addressArg) internal pure {
+        // OM_ZA: zero address
+        require(addressArg != address(0), "OM_ZA");
+    }
 }

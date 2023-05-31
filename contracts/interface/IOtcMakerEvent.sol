@@ -3,5 +3,7 @@ pragma solidity 0.7.6;
 pragma abicoder v2;
 
 interface IOtcMakerEvent {
-    event UpdateCaller(address oldCaller, address newCaller);
+    event CallerUpdated(address oldCaller, address newCaller);
+    event FundOwnerUpdated(address oldFundOwner, address newFundOwner);
+    event PositionManagerUpdated(address oldPositionManager, address newPositionManager);
 }

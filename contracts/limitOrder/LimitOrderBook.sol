@@ -107,10 +107,10 @@ contract LimitOrderBook is
         emit LimitOrderRewardVaultChanged(limitOrderRewardVaultArg);
     }
 
-    function setWhitelistContractCaller(address caller, bool enable) external onlyOwner {
+    function setWhitelistContractCaller(address caller, bool isEnabled) external onlyOwner {
         // LOB_NCA: Not contract address
         require(caller.isContract(), "LOB_NCA");
-        _whitelistedContractCaller[caller] = enable;
+        _whitelistedContractCaller[caller] = isEnabled;
     }
 
     /// @inheritdoc ILimitOrderBook
@@ -196,6 +196,13 @@ contract LimitOrderBook is
     }
 
     //
+    // EXTERNAL VIEW
+    //
+    function getOrderStatus(bytes32 orderHash) external view override returns (ILimitOrderBook.OrderStatus) {
+        return _ordersStatus[orderHash];
+    }
+
+    //
     // PUBLIC VIEW
     //
     function getOrderHash(LimitOrder memory order) public view override returns (bytes32) {
@@ -204,10 +211,6 @@ contract LimitOrderBook is
 
     function isWhitelistContractCaller(address caller) public view override returns (bool) {
         return _whitelistedContractCaller[caller];
-    }
-
-    function getOrderStatus(bytes32 orderHash) external view override returns (ILimitOrderBook.OrderStatus) {
-        return _ordersStatus[orderHash];
     }
 
     //
@@ -288,7 +291,10 @@ contract LimitOrderBook is
     }
 
     function _verifyTriggerPrice(LimitOrder memory order, uint80 roundIdWhenTriggered) internal view {
-        if (order.orderType == ILimitOrderBook.OrderType.LimitOrder) {
+        if (
+            order.orderType == ILimitOrderBook.OrderType.LimitOrder ||
+            order.orderType == ILimitOrderBook.OrderType.OtcMakerOrder
+        ) {
             return;
         }
 

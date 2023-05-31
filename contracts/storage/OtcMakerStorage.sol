@@ -12,3 +12,8 @@ abstract contract OtcMakerStorageV1 {
     address internal _accountBalance;
     uint24 internal _marginRatioLimit;
 }
+
+abstract contract OtcMakerStorageV2 is OtcMakerStorageV1 {
+    address internal _fundOwner;
+    address internal _positionManager;
+}

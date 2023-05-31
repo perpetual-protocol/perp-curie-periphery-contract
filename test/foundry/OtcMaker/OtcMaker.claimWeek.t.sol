@@ -9,7 +9,8 @@ import { IMerkleRedeem } from "../../../contracts/interface/IMerkleRedeem.sol";
 import { MockMerkleRedeem } from "./mocks/MockMerkleRedeem.sol";
 
 contract OtcMakerClaimWeekTest is OtcMakerSetup {
-    function testClaimWeek() public prepareOwner(0) {
+    function test_claimWeek() public {
+        vm.startPrank(otcMakerFundOwner);
         address merkleRedeem = address(new MockMerkleRedeem());
 
         bytes32[] memory proof = new bytes32[](1);
@@ -25,5 +26,6 @@ contract OtcMakerClaimWeekTest is OtcMakerSetup {
 
         vm.expectCall(merkleRedeem, callData);
         otcMaker.claimWeek(merkleRedeem, address(perp.vault()), 100, 200, proof);
+        vm.stopPrank();
     }
 }
