@@ -5,7 +5,7 @@ import "forge-std/Test.sol";
 import "../../../contracts/interface/ILimitOrderBook.sol";
 import "../../../contracts/test/TestLimitOrderBook.sol";
 
-contract LimitOrderBook_Signing is Test {
+contract LimitOrderBookSigningTest is Test {
     TestLimitOrderBook limitOrderBook;
 
     function setUp() public {
@@ -18,8 +18,9 @@ contract LimitOrderBook_Signing is Test {
         assertEq(uint256(ILimitOrderBook.OrderStatus.Unfilled), uint256(orderStatus));
     }
 
-    // NOTE: this test can fail due to foundry's version as getOrderHash() is dependent on contract deployment address
-    //       thus, if this test passes locally while fails in CI, reinstall foundry locally can solve the issue
+    // This test can fail due to foundry's version,
+    // since "getOrderHash()" is dependent on contract deployment address,
+    // if so, try re-install foundry locally by run "foundryup" to solve the issue.
     function testGetOrderHash_verify_hash_of_a_limit_order() public {
         address trader = address(0x70997970C51812dc3A010C7d01b50e0d17dc79C8);
         address baseToken = address(0x2279B7A0a67DB372996a5FaB50D91eAA73d2eBe6);

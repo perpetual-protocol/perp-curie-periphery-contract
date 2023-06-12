@@ -14,3 +14,7 @@ abstract contract LimitOrderBookStorageV1 {
     address public limitOrderRewardVault;
     uint256 public minOrderValue;
 }
+
+abstract contract LimitOrderBookStorageV2 is LimitOrderBookStorageV1 {
+    mapping(address => bool) internal _whitelistedContractCaller;
+}

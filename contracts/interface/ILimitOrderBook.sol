@@ -7,7 +7,8 @@ interface ILimitOrderBook {
     enum OrderType {
         LimitOrder,
         StopLossLimitOrder,
-        TakeProfitLimitOrder
+        TakeProfitLimitOrder,
+        OtcMakerOrder
     }
 
     // Do NOT change the order of enum values because it will break backwards compatibility
@@ -118,4 +119,6 @@ interface ILimitOrderBook {
     function getOrderStatus(bytes32 orderHash) external view returns (ILimitOrderBook.OrderStatus);
 
     function getOrderHash(LimitOrder memory order) external view returns (bytes32);
+
+    function isWhitelistContractCaller(address caller) external view returns (bool);
 }
